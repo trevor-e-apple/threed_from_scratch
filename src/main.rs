@@ -3,7 +3,6 @@ extern crate sdl2;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
 use sdl2::render::TextureAccess;
 use std::mem::size_of;
 use std::time::Duration;
@@ -28,7 +27,7 @@ pub fn main() {
     // TODO: handle errors
     let mut canvas = window.into_canvas().build().unwrap();
 
-    let color_buffer: Vec<u32> = Vec::with_capacity(WINDOW_WIDTH as usize * WINDOW_HEIGHT as usize);
+    let mut color_buffer: Vec<u32> = vec![0; WINDOW_WIDTH as usize * WINDOW_HEIGHT as usize];
 
     let texture_creator = canvas.texture_creator();
     let mut texture = match texture_creator.create_texture(
@@ -68,6 +67,10 @@ pub fn main() {
 
         // RENDER
         {
+            for pixel in &mut color_buffer {
+                *pixel = 0xFFFF0000;
+            }
+
             let color_buffer_conversion: &[u8] = unsafe {
                 std::slice::from_raw_parts(
                     color_buffer.as_ptr() as *const u8,
@@ -76,14 +79,27 @@ pub fn main() {
             };
 
             // TODO: Error handling
-            let update_result = texture.update(
+            match texture.update(
                 None,
                 color_buffer_conversion,
                 (WINDOW_WIDTH as usize) * size_of::<u32>(),
-            );
+            ) {
+                Err(err) => {
+                    println!("Texture update failed: {:?}", err);
+                    break 'running;
+                },
+                _ => {},
+            };
+
             // TODO: error handling
-            let copy_result = canvas.copy(&texture, None, None);
-            
+            match canvas.copy(&texture, None, None) {
+                Err(err) => {
+                    println!("Canvas copy failed: {:?}", err);
+                    break 'running;
+                },
+                _ => {},
+            };
+
             canvas.present();
         }
 
