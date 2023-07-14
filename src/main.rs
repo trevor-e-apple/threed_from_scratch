@@ -4,6 +4,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::render::TextureAccess;
+use sdl2::video::FullscreenType;
 use std::mem::size_of;
 use std::time::Duration;
 
@@ -14,27 +15,48 @@ pub fn main() {
     // TODO: handle errors
     let video_subsystem = sdl_context.video().unwrap();
 
-    const WINDOW_WIDTH: u32 = 800;
-    const WINDOW_HEIGHT: u32 = 600;
+    // get display mode to make full screen possible
+    let display_mode = match video_subsystem.current_display_mode(0) {
+        Ok(value) => value,
+        Err(err) => {
+            println!("Failed to get display mode with error: {:?}", err);
+            assert!(false);
+            return;
+        },
+    };
+
+    let fullscreen_width = display_mode.w as u32;
+    let fullscreen_height = display_mode.h as u32;
+
+    let window_width = fullscreen_width;
+    let window_height = fullscreen_height;
 
     // TODO: handle errors
-    let window = video_subsystem
-        .window("rust-sdl2 demo", WINDOW_WIDTH, WINDOW_HEIGHT)
+    let mut window = video_subsystem
+        .window("rust-sdl2 demo", window_width, window_height)
         .position_centered()
         .build()
         .unwrap();
 
+    match window.set_fullscreen(FullscreenType::True) {
+        Err(err) => {
+            println!("Error setting to fullscreen: {:?}", err);
+        },
+        _ => {},
+    };
+
+
     // TODO: handle errors
     let mut canvas = window.into_canvas().build().unwrap();
 
-    let mut color_buffer: Vec<u32> = vec![0; WINDOW_WIDTH as usize * WINDOW_HEIGHT as usize];
+    let mut color_buffer: Vec<u32> = vec![0; window_width as usize * window_height as usize];
 
     let texture_creator = canvas.texture_creator();
     let mut texture = match texture_creator.create_texture(
         None,
         TextureAccess::Streaming,
-        WINDOW_WIDTH,
-        WINDOW_HEIGHT,
+        window_width,
+        window_height,
     ) {
         Ok(result) => result,
         Err(_) => todo!(),
@@ -82,7 +104,7 @@ pub fn main() {
             match texture.update(
                 None,
                 color_buffer_conversion,
-                (WINDOW_WIDTH as usize) * size_of::<u32>(),
+                (window_width as usize) * size_of::<u32>(),
             ) {
                 Err(err) => {
                     println!("Texture update failed: {:?}", err);
