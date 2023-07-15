@@ -8,6 +8,61 @@ use sdl2::video::FullscreenType;
 use std::mem::size_of;
 use std::time::Duration;
 
+struct ColorBuffer {
+    buffer: Vec<u32>,
+    width: usize,
+    height: usize,
+}
+
+impl ColorBuffer {
+    // TODO: documentation
+    pub fn new(width: usize, height: usize) -> Self {
+        Self {
+            buffer: vec![0; width * height],
+            width,
+            height,
+        }
+    }
+
+    // TODO: documentation
+    pub fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut u32> {
+        let index = y * self.width + x;
+        return self.buffer.get_mut(index);
+    }
+
+    pub fn clear(&mut self, color: u32) {
+        for pixel in &mut self.buffer {
+            *pixel = color;
+        }
+    }
+
+    pub unsafe fn get_raw_data(&mut self) -> &[u8] {
+        std::slice::from_raw_parts(
+            self.buffer.as_ptr() as *const u8,
+            self.buffer.len() * size_of::<u32>(),
+        )
+    }
+}
+
+fn draw_grid(
+    color_buffer: &mut ColorBuffer,
+    width_interval: usize,
+    height_interval: usize,
+    color: u32,
+) {
+    for y in 0..color_buffer.height {
+        for x in 0..color_buffer.width {
+            if (x % width_interval == 0) || (y % height_interval == 0) {
+                let pixel = match color_buffer.get_mut(x, y) {
+                    Some(value) => value,
+                    None => todo!(),
+                };
+                *pixel = color;
+            }
+        }
+    }
+}
+
 pub fn main() {
     // TODO: Handle errors
     let sdl_context = sdl2::init().unwrap();
@@ -22,7 +77,7 @@ pub fn main() {
             println!("Failed to get display mode with error: {:?}", err);
             assert!(false);
             return;
-        },
+        }
     };
 
     let fullscreen_width = display_mode.w as u32;
@@ -41,15 +96,14 @@ pub fn main() {
     match window.set_fullscreen(FullscreenType::True) {
         Err(err) => {
             println!("Error setting to fullscreen: {:?}", err);
-        },
-        _ => {},
+        }
+        _ => {}
     };
-
 
     // TODO: handle errors
     let mut canvas = window.into_canvas().build().unwrap();
 
-    let mut color_buffer: Vec<u32> = vec![0; window_width as usize * window_height as usize];
+    let mut color_buffer = ColorBuffer::new(window_width as usize, window_height as usize);
 
     let texture_creator = canvas.texture_creator();
     let mut texture = match texture_creator.create_texture(
@@ -89,28 +143,21 @@ pub fn main() {
 
         // RENDER
         {
-            for pixel in &mut color_buffer {
-                *pixel = 0xFFFF0000;
-            }
+            color_buffer.clear(0xFFFF0000);
 
-            let color_buffer_conversion: &[u8] = unsafe {
-                std::slice::from_raw_parts(
-                    color_buffer.as_ptr() as *const u8,
-                    color_buffer.len() * size_of::<u32>(),
-                )
-            };
+            draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
 
             // TODO: Error handling
             match texture.update(
                 None,
-                color_buffer_conversion,
+                unsafe { color_buffer.get_raw_data() },
                 (window_width as usize) * size_of::<u32>(),
             ) {
                 Err(err) => {
                     println!("Texture update failed: {:?}", err);
                     break 'running;
-                },
-                _ => {},
+                }
+                _ => {}
             };
 
             // TODO: error handling
@@ -118,8 +165,8 @@ pub fn main() {
                 Err(err) => {
                     println!("Canvas copy failed: {:?}", err);
                     break 'running;
-                },
-                _ => {},
+                }
+                _ => {}
             };
 
             canvas.present();
