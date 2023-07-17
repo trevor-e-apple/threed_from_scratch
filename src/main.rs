@@ -63,6 +63,67 @@ fn draw_grid(
     }
 }
 
+fn draw_rect(
+    color_buffer: &mut ColorBuffer,
+    top_left_x: i32,
+    top_left_y: i32,
+    width: i32,
+    height: i32,
+    color: u32,
+) {
+    // calculate start / stop x coordinates
+    let (start_x, end_x) = {
+        let mut start_x = top_left_x;
+        let buffer_width = color_buffer.width as i32;
+
+        if start_x < 0 {
+            start_x = 0;
+        } else if start_x > buffer_width {
+            start_x = buffer_width;
+        }
+
+        let mut end_x = top_left_x + width;
+        if end_x < 0 {
+            end_x = 0;
+        } else if end_x > buffer_width {
+            end_x = buffer_width;
+        }
+
+        (start_x, end_x)
+    };
+
+    // calculate start / stop y coordinates
+    let (start_y, end_y) = {
+        let mut start_y = top_left_y;
+        let buffer_height = color_buffer.height as i32;
+
+        if start_y < 0 {
+            start_y = 0;
+        } else if start_y > buffer_height {
+            start_y = buffer_height;
+        }
+
+        let mut end_y = top_left_y + height;
+        if end_y < 0 {
+            end_y = 0;
+        } else if end_y > buffer_height {
+            end_y = buffer_height;
+        }
+
+        (start_y, end_y)
+    };
+
+    for y in start_y..end_y {
+        for x in start_x..end_x {
+            let pixel = match color_buffer.get_mut(x as usize, y as usize) {
+                Some(value) => value,
+                None => todo!(),
+            };
+            *pixel = color;
+        }
+    }
+}
+
 pub fn main() {
     // TODO: Handle errors
     let sdl_context = sdl2::init().unwrap();
@@ -146,6 +207,12 @@ pub fn main() {
             color_buffer.clear(0xFFFF0000);
 
             draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
+
+            {
+                let rect_width = (color_buffer.width / 10) as i32;
+                let rect_height = (color_buffer.height / 10) as i32;
+                draw_rect(&mut color_buffer, 0, 0, rect_width, rect_height, 0xFF000000);
+            }
 
             // TODO: Error handling
             match texture.update(
