@@ -10,7 +10,7 @@ use sdl2::render::TextureAccess;
 use sdl2::video::FullscreenType;
 use std::time::Duration;
 
-use crate::render::{ColorBuffer, render};
+use crate::{render::{ColorBuffer, render}, vector::Vec3};
 
 pub fn main() {
     // TODO: Handle errors
@@ -68,6 +68,24 @@ pub fn main() {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
     canvas.present();
+
+    // setup cube points
+    const CUBE_POINT_DIM: usize = 9;
+    const CUBE_POINT_COUNT: usize = CUBE_POINT_DIM * CUBE_POINT_DIM * CUBE_POINT_DIM;
+    let mut cube_points: Vec<Vec3> = Vec::with_capacity(CUBE_POINT_COUNT);
+    for x_index in 0..CUBE_POINT_DIM {
+        for y_index in 0..CUBE_POINT_DIM {
+            for z_index in 0..CUBE_POINT_DIM {
+                cube_points.push(
+                    Vec3::new(
+                        x_index as f32 * 0.25 - 1.0,
+                        y_index as f32 * 0.25 - 1.0,
+                        z_index as f32 * 0.25 - 1.0,
+                    )
+                );
+            }
+        }
+    }
 
     // TODO: handle errors
     let mut event_pump = sdl_context.event_pump().unwrap();
