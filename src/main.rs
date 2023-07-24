@@ -15,7 +15,7 @@ use crate::{
     vector::{Vec2, Vec3},
 };
 
-const FOV_FACTOR: f32 = 640.0;
+const FOV_FACTOR: f32 = 160.0;
 
 pub fn orthographic_projection(point: &Vec3) -> Vec2 {
     Vec2 {
