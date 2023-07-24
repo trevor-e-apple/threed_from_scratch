@@ -49,7 +49,7 @@ pub fn draw_grid(
 ) {
     for y in 0..color_buffer.height {
         for x in 0..color_buffer.width {
-            if (x % width_interval == 0) || (y % height_interval == 0) {
+            if (x % width_interval == 0) && (y % height_interval == 0) {
                 let pixel = match color_buffer.get_mut(x, y) {
                     Some(value) => value,
                     None => todo!(),
@@ -129,8 +129,7 @@ pub fn draw_pixel(color_buffer: &mut ColorBuffer, x: i32, y: i32, color: u32) {
     *pixel = color;
 }
 
-
-/// 
+/// Renders a color buffer to the screen
 /// color_buffer: the color_buffer that contains the render data
 /// canvas: the sdl canvas to draw to
 /// texture: the texture to copy the color buffer to
@@ -139,16 +138,6 @@ pub fn render(
     canvas: &mut Canvas<Window>,
     texture: &mut Texture,
 ) -> bool {
-    color_buffer.clear(0xFFFF0000);
-
-    draw_grid(color_buffer, 10, 10, 0xFFFFFFFF);
-
-    {
-        let rect_width = (color_buffer.width / 10) as i32;
-        let rect_height = (color_buffer.height / 10) as i32;
-        draw_rect(color_buffer, 0, 0, rect_width, rect_height, 0xFF000000);
-    }
-
     let window_width = color_buffer.width;
 
     // TODO: Error handling
