@@ -15,7 +15,7 @@ use crate::{
     vector::{Vec2, Vec3},
 };
 
-const FOV_FACTOR: f32 = 160.0;
+const FOV_FACTOR: f32 = 640.0;
 
 pub fn orthographic_projection(point: &Vec3) -> Vec2 {
     Vec2 {
@@ -24,10 +24,17 @@ pub fn orthographic_projection(point: &Vec3) -> Vec2 {
     }
 }
 
+pub fn perspective_projection(point: &Vec3) -> Vec2 {
+    Vec2 {
+        x: (FOV_FACTOR * point.x) / point.z,
+        y: (FOV_FACTOR * point.y) / point.z,
+    }
+}
+
 pub fn main() {
     // TODO: Handle errors
     let sdl_context = sdl2::init().unwrap();
-    
+
     let video_subsystem = match sdl_context.video() {
         Ok(video_subsystem) => video_subsystem,
         Err(_) => todo!(),
@@ -62,6 +69,12 @@ pub fn main() {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
     canvas.present();
+
+    let camera_position = Vec3 {
+        x: 0.0,
+        y: 0.0,
+        z: -5.0,
+    };
 
     // setup cube points
     const CUBE_POINT_DIM: usize = 9;
@@ -107,7 +120,11 @@ pub fn main() {
                     Some(projected_point) => projected_point,
                     None => todo!(),
                 };
-                *projected_point = orthographic_projection(cube_point);
+                *projected_point = perspective_projection(&Vec3 {
+                    x: cube_point.x,
+                    y: cube_point.y,
+                    z: cube_point.z - camera_position.z,
+                });
             }
         }
 
@@ -118,7 +135,7 @@ pub fn main() {
             draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
 
             let window_width_over_two = window_width as f32 / 2.0;
-            let window_height_over_two = window_height as f32 / 2.0; 
+            let window_height_over_two = window_height as f32 / 2.0;
             for point in &projected_cube_points {
                 draw_rect(
                     &mut color_buffer,
