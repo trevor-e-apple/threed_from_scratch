@@ -8,14 +8,19 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::render::TextureAccess;
-use std::time::Duration;
+use std::{
+    thread::sleep,
+    time::{Duration, Instant},
+};
 
 use crate::{
     render::{draw_grid, draw_rect, render, ColorBuffer},
-    vector::{Vec2, Vec3, rotate_vec3},
+    vector::{rotate_vec3, Vec2, Vec3},
 };
 
 const FOV_FACTOR: f32 = 640.0;
+const FRAMES_PER_SECOND: f64 = 60.0;
+const FRAME_TIME_MS: f64 = 1000.0 / FRAMES_PER_SECOND;
 
 pub fn orthographic_projection(point: &Vec3) -> Vec2 {
     Vec2 {
@@ -98,13 +103,15 @@ pub fn main() {
         CUBE_POINT_COUNT
     ];
 
-    // TODO: handle errors
     let mut x_rotation = 0.0;
     let mut y_rotation = 0.0;
     let mut z_rotation = 0.0;
 
+    // TODO: handle errors
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
+        let start = Instant::now();
+
         // process inputs
         for event in event_pump.poll_iter() {
             match event {
@@ -119,9 +126,9 @@ pub fn main() {
 
         // UPDATE
         {
-            x_rotation += 0.05;
-            y_rotation += 0.05;
-            z_rotation += 0.05;
+            x_rotation += 0.02;
+            y_rotation += 0.02;
+            z_rotation += 0.02;
             for (index, cube_point) in cube_points.iter().enumerate() {
                 // rotate
                 let rotated_point = rotate_vec3(&cube_point, x_rotation, y_rotation, z_rotation);
@@ -165,6 +172,13 @@ pub fn main() {
             }
         }
 
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+        // SLEEP
+        let end = Instant::now();
+        let mut sleep_duration = FRAME_TIME_MS - end.duration_since(start).as_millis() as f64;
+        if sleep_duration < 0.0 {
+            sleep_duration = 0.0;
+        }
+        // assumes that our sleep time is never more than 1 second
+        sleep(Duration::new(0, (1000.0 * sleep_duration) as u32));
     }
 }
