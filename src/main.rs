@@ -12,7 +12,7 @@ use std::time::Duration;
 
 use crate::{
     render::{draw_grid, draw_rect, render, ColorBuffer},
-    vector::{Vec2, Vec3},
+    vector::{Vec2, Vec3, rotate_vec3},
 };
 
 const FOV_FACTOR: f32 = 640.0;
@@ -99,6 +99,10 @@ pub fn main() {
     ];
 
     // TODO: handle errors
+    let mut x_rotation = 0.0;
+    let mut y_rotation = 0.0;
+    let mut z_rotation = 0.0;
+
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
         // process inputs
@@ -115,15 +119,22 @@ pub fn main() {
 
         // UPDATE
         {
+            x_rotation += 0.05;
+            y_rotation += 0.05;
+            z_rotation += 0.05;
             for (index, cube_point) in cube_points.iter().enumerate() {
+                // rotate
+                let rotated_point = rotate_vec3(&cube_point, x_rotation, y_rotation, z_rotation);
+
+                // project
                 let projected_point = match projected_cube_points.get_mut(index) {
                     Some(projected_point) => projected_point,
                     None => todo!(),
                 };
                 *projected_point = perspective_projection(&Vec3 {
-                    x: cube_point.x,
-                    y: cube_point.y,
-                    z: cube_point.z - camera_position.z,
+                    x: rotated_point.x,
+                    y: rotated_point.y,
+                    z: rotated_point.z - camera_position.z,
                 });
             }
         }
