@@ -118,21 +118,7 @@ pub fn main() {
             x_rotation += 0.02;
             y_rotation += 0.02;
             z_rotation += 0.02;
-            // for (index, cube_point) in cube_points.iter().enumerate() {
-            //     // rotate
-            //     let rotated_point = rotate_vec3(&cube_point, x_rotation, y_rotation, z_rotation);
 
-            //     // project
-            //     let projected_point = match projected_cube_points.get_mut(index) {
-            //         Some(projected_point) => projected_point,
-            //         None => todo!(),
-            //     };
-            //     *projected_point = perspective_projection(&Vec3 {
-            //         x: rotated_point.x,
-            //         y: rotated_point.y,
-            //         z: rotated_point.z - camera_position.z,
-            //     });
-            // }
             for (face_index, face) in (&MESH_FACES).into_iter().enumerate() {
                 let mesh_vertices: [Vec3; 3] = [
                     MESH_VERTICES[face.a - 1],
