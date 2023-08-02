@@ -1,8 +1,10 @@
 extern crate sdl2;
 
-pub mod display;
-pub mod render;
-pub mod vector;
+mod display;
+mod mesh;
+mod render;
+mod triangle;
+mod vector;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -12,8 +14,10 @@ use std::{
     thread::sleep,
     time::{Duration, Instant},
 };
+use triangle::Triangle;
 
 use crate::{
+    mesh::{MESH_FACES, MESH_VERTICES},
     render::{draw_grid, draw_rect, render, ColorBuffer},
     vector::{rotate_vec3, Vec2, Vec3},
 };
@@ -81,26 +85,11 @@ pub fn main() {
         z: -5.0,
     };
 
-    // setup cube points
-    const CUBE_POINT_DIM: usize = 9;
-    const CUBE_POINT_COUNT: usize = CUBE_POINT_DIM * CUBE_POINT_DIM * CUBE_POINT_DIM;
-    let mut cube_points: Vec<Vec3> = Vec::with_capacity(CUBE_POINT_COUNT);
-    for x_index in 0..CUBE_POINT_DIM {
-        for y_index in 0..CUBE_POINT_DIM {
-            for z_index in 0..CUBE_POINT_DIM {
-                cube_points.push(Vec3 {
-                    x: x_index as f32 * 0.25 - 1.0,
-                    y: y_index as f32 * 0.25 - 1.0,
-                    z: z_index as f32 * 0.25 - 1.0,
-                });
-            }
-        }
-    }
-    let mut projected_cube_points: Vec<Vec2> = vec![
-        Vec2 {
+    let mut triangles_to_render: Vec<Triangle> = vec![
+        Triangle {
             ..Default::default()
         };
-        CUBE_POINT_COUNT
+        MESH_FACES.len()
     ];
 
     let mut x_rotation = 0.0;
@@ -129,20 +118,43 @@ pub fn main() {
             x_rotation += 0.02;
             y_rotation += 0.02;
             z_rotation += 0.02;
-            for (index, cube_point) in cube_points.iter().enumerate() {
-                // rotate
-                let rotated_point = rotate_vec3(&cube_point, x_rotation, y_rotation, z_rotation);
+            // for (index, cube_point) in cube_points.iter().enumerate() {
+            //     // rotate
+            //     let rotated_point = rotate_vec3(&cube_point, x_rotation, y_rotation, z_rotation);
 
-                // project
-                let projected_point = match projected_cube_points.get_mut(index) {
-                    Some(projected_point) => projected_point,
-                    None => todo!(),
+            //     // project
+            //     let projected_point = match projected_cube_points.get_mut(index) {
+            //         Some(projected_point) => projected_point,
+            //         None => todo!(),
+            //     };
+            //     *projected_point = perspective_projection(&Vec3 {
+            //         x: rotated_point.x,
+            //         y: rotated_point.y,
+            //         z: rotated_point.z - camera_position.z,
+            //     });
+            // }
+            for (face_index, face) in (&MESH_FACES).into_iter().enumerate() {
+                let mesh_vertices: [Vec3; 3] = [
+                    MESH_VERTICES[face.a - 1],
+                    MESH_VERTICES[face.b - 1],
+                    MESH_VERTICES[face.c - 1],
+                ];
+
+                let triangle = match triangles_to_render.get_mut(face_index) {
+                    Some(triangle) => triangle,
+                    None => {
+                        // handle error path
+                        todo!()
+                    }
                 };
-                *projected_point = perspective_projection(&Vec3 {
-                    x: rotated_point.x,
-                    y: rotated_point.y,
-                    z: rotated_point.z - camera_position.z,
-                });
+                for (vertex_index, vertex) in (&mesh_vertices).into_iter().enumerate() {
+                    let rotated_point = rotate_vec3(vertex, x_rotation, y_rotation, z_rotation);
+                    let projected_point = perspective_projection(&Vec3 {
+                        z: rotated_point.z - camera_position.z,
+                        ..rotated_point
+                    });
+                    triangle.points[vertex_index] = projected_point;
+                }
             }
         }
 
@@ -154,15 +166,17 @@ pub fn main() {
 
             let window_width_over_two = window_width as f32 / 2.0;
             let window_height_over_two = window_height as f32 / 2.0;
-            for point in &projected_cube_points {
-                draw_rect(
-                    &mut color_buffer,
-                    (point.x + window_width_over_two) as i32,
-                    (point.y + window_height_over_two) as i32,
-                    4,
-                    4,
-                    0xFFFFFF00,
-                );
+            for triangle in &triangles_to_render {
+                for point in &triangle.points {
+                    draw_rect(
+                        &mut color_buffer,
+                        (point.x + window_width_over_two) as i32,
+                        (point.y + window_height_over_two) as i32,
+                        4,
+                        4,
+                        0xFFFFFF00,
+                    );
+                }
             }
 
             let render_result = render(&mut color_buffer, &mut canvas, &mut texture);
