@@ -129,6 +129,46 @@ pub fn draw_pixel(color_buffer: &mut ColorBuffer, x: i32, y: i32, color: u32) {
     *pixel = color;
 }
 
+pub fn draw_line(color_buffer: &mut ColorBuffer, x0: i32, y0: i32, x1: i32, y1: i32, color: u32) {
+    let delta_x = x1 - x0;
+    let delta_y = y1 - y0;
+    let longest_side_length = if delta_x.abs() > delta_y.abs() {
+        delta_x.abs()
+    } else {
+        delta_y.abs()
+    };
+    let x_inc = delta_x as f32 / longest_side_length as f32;
+    let y_inc = delta_y as f32 / longest_side_length as f32;
+
+    let mut current_x = x0 as f32;
+    let mut current_y = y0 as f32;
+    for _ in 0..longest_side_length {
+        draw_pixel(
+            color_buffer,
+            current_x.round() as i32,
+            current_y.round() as i32,
+            color,
+        );
+        current_x += x_inc;
+        current_y += y_inc;
+    }
+}
+
+pub fn draw_triangle(
+    color_buffer: &mut ColorBuffer,
+    x0: i32,
+    y0: i32,
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
+    color: u32,
+) {
+    draw_line(color_buffer, x0, y0, x1, y1, color);
+    draw_line(color_buffer, x0, y0, x2, y2, color);
+    draw_line(color_buffer, x1, y1, x2, y2, color);
+}
+
 /// Renders a color buffer to the screen
 /// color_buffer: the color_buffer that contains the render data
 /// canvas: the sdl canvas to draw to

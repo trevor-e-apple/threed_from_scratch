@@ -18,7 +18,7 @@ use triangle::Triangle;
 
 use crate::{
     mesh::{MESH_FACES, MESH_VERTICES},
-    render::{draw_grid, draw_rect, render, ColorBuffer},
+    render::{draw_grid, draw_rect, draw_triangle, render, ColorBuffer},
     vector::{rotate_vec3, Vec2, Vec3},
 };
 
@@ -115,6 +115,9 @@ pub fn main() {
 
         // UPDATE
         {
+            let window_width_over_two = window_width as f32 / 2.0;
+            let window_height_over_two = window_height as f32 / 2.0;
+
             x_rotation += 0.02;
             y_rotation += 0.02;
             z_rotation += 0.02;
@@ -135,10 +138,15 @@ pub fn main() {
                 };
                 for (vertex_index, vertex) in (&mesh_vertices).into_iter().enumerate() {
                     let rotated_point = rotate_vec3(vertex, x_rotation, y_rotation, z_rotation);
-                    let projected_point = perspective_projection(&Vec3 {
+                    let mut projected_point = perspective_projection(&Vec3 {
                         z: rotated_point.z - camera_position.z,
                         ..rotated_point
                     });
+
+                    // center our points
+                    projected_point.x += window_width_over_two as f32;
+                    projected_point.y += window_height_over_two as f32;
+
                     triangle.points[vertex_index] = projected_point;
                 }
             }
@@ -150,19 +158,28 @@ pub fn main() {
 
             draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
 
-            let window_width_over_two = window_width as f32 / 2.0;
-            let window_height_over_two = window_height as f32 / 2.0;
             for triangle in &triangles_to_render {
-                for point in &triangle.points {
+                for point in triangle.points {
                     draw_rect(
                         &mut color_buffer,
-                        (point.x + window_width_over_two) as i32,
-                        (point.y + window_height_over_two) as i32,
+                        point.x as i32,
+                        point.y as i32,
                         4,
                         4,
                         0xFFFFFF00,
                     );
                 }
+
+                draw_triangle(
+                    &mut color_buffer,
+                    triangle.points[0].x as i32,
+                    triangle.points[0].y as i32,
+                    triangle.points[1].x as i32,
+                    triangle.points[1].y as i32,
+                    triangle.points[2].x as i32,
+                    triangle.points[2].y as i32,
+                    0xFF00FF00,
+                );
             }
 
             let render_result = render(&mut color_buffer, &mut canvas, &mut texture);
