@@ -1,7 +1,13 @@
 use crate::triangle::Face;
 use crate::vector::Vec3;
 
-pub const MESH_VERTICES: [Vec3; 8] = [
+pub struct Mesh {
+    pub vertices: Vec<Vec3>,
+    pub faces: Vec<Face>,
+    pub rotation: Vec3,
+}
+
+const CUBE_VERTICES: [Vec3; 8] = [
     Vec3 {
         x: -1.0,
         y: -1.0,
@@ -44,7 +50,7 @@ pub const MESH_VERTICES: [Vec3; 8] = [
     },
 ];
 
-pub const MESH_FACES: [Face; 12] = [
+const CUBE_FACES: [Face; 12] = [
     // front
     Face { a: 1, b: 2, c: 3 },
     Face { a: 1, b: 3, c: 4 },
@@ -64,3 +70,13 @@ pub const MESH_FACES: [Face; 12] = [
     Face { a: 6, b: 8, c: 1 },
     Face { a: 6, b: 1, c: 4 },
 ];
+
+pub fn load_cube_mesh() -> Mesh {
+    Mesh {
+        vertices: CUBE_VERTICES.to_vec(),
+        faces: CUBE_FACES.to_vec(),
+        rotation: Vec3 {
+            ..Default::default()
+        },
+    }
+}

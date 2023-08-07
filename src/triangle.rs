@@ -1,5 +1,6 @@
 use crate::vector::Vec2;
 
+#[derive(Clone)]
 pub struct Face {
     pub a: usize,
     pub b: usize,

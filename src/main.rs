@@ -17,7 +17,7 @@ use std::{
 use triangle::Triangle;
 
 use crate::{
-    mesh::{MESH_FACES, MESH_VERTICES},
+    mesh::load_cube_mesh,
     render::{draw_grid, draw_rect, draw_triangle, render, ColorBuffer},
     vector::{rotate_vec3, Vec2, Vec3},
 };
@@ -54,7 +54,7 @@ pub fn main() {
 
     // TODO: handle errors
     let window = video_subsystem
-        .window("rust-sdl2 demo", window_width, window_height)
+        .window("3d from scratch", window_width, window_height)
         .position_centered()
         .build()
         .unwrap();
@@ -85,16 +85,14 @@ pub fn main() {
         z: -5.0,
     };
 
+    let mut cube_mesh = load_cube_mesh();
+
     let mut triangles_to_render: Vec<Triangle> = vec![
         Triangle {
             ..Default::default()
         };
-        MESH_FACES.len()
+        cube_mesh.faces.len()
     ];
-
-    let mut x_rotation = 0.0;
-    let mut y_rotation = 0.0;
-    let mut z_rotation = 0.0;
 
     // TODO: handle errors
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -118,15 +116,16 @@ pub fn main() {
             let window_width_over_two = window_width as f32 / 2.0;
             let window_height_over_two = window_height as f32 / 2.0;
 
-            x_rotation += 0.02;
-            y_rotation += 0.02;
-            z_rotation += 0.02;
+            cube_mesh.rotation.x += 0.02;
+            cube_mesh.rotation.y += 0.02;
+            cube_mesh.rotation.z += 0.02;
+            let rotation = cube_mesh.rotation;
 
-            for (face_index, face) in (&MESH_FACES).into_iter().enumerate() {
+            for (face_index, face) in (&cube_mesh.faces).into_iter().enumerate() {
                 let mesh_vertices: [Vec3; 3] = [
-                    MESH_VERTICES[face.a - 1],
-                    MESH_VERTICES[face.b - 1],
-                    MESH_VERTICES[face.c - 1],
+                    cube_mesh.vertices[face.a - 1],
+                    cube_mesh.vertices[face.b - 1],
+                    cube_mesh.vertices[face.c - 1],
                 ];
 
                 let triangle = match triangles_to_render.get_mut(face_index) {
@@ -137,7 +136,7 @@ pub fn main() {
                     }
                 };
                 for (vertex_index, vertex) in (&mesh_vertices).into_iter().enumerate() {
-                    let rotated_point = rotate_vec3(vertex, x_rotation, y_rotation, z_rotation);
+                    let rotated_point = rotate_vec3(vertex, rotation.x, rotation.y, rotation.z);
                     let mut projected_point = perspective_projection(&Vec3 {
                         z: rotated_point.z - camera_position.z,
                         ..rotated_point
