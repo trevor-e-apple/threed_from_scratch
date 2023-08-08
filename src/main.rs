@@ -6,13 +6,14 @@ mod render;
 mod triangle;
 mod vector;
 
+use mesh::load_mesh;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::render::TextureAccess;
 use std::{
     thread::sleep,
-    time::{Duration, Instant},
+    time::{Duration, Instant}, env, println,
 };
 use triangle::Triangle;
 
@@ -42,6 +43,9 @@ pub fn perspective_projection(point: &Vec3) -> Vec2 {
 
 pub fn main() {
     // TODO: Handle errors
+    let args: Vec<String> = env::args().collect();
+    let mesh_data_path: Option<&String> = args.get(1);
+
     let sdl_context = sdl2::init().unwrap();
 
     let video_subsystem = match sdl_context.video() {
@@ -85,13 +89,24 @@ pub fn main() {
         z: -5.0,
     };
 
-    let mut cube_mesh = load_cube_mesh();
+    let mut test_mesh = match mesh_data_path {
+        Some(path) => match load_mesh(path) {
+            Ok(mesh) => mesh,
+            Err(err) => {
+                println!("Unable to load mesh at {:?}", path);
+                println!("Error: {:?}", err);
+                assert!(false);
+                return;
+            },
+        },
+        None => load_cube_mesh(),
+    };
 
     let mut triangles_to_render: Vec<Triangle> = vec![
         Triangle {
             ..Default::default()
         };
-        cube_mesh.faces.len()
+        test_mesh.faces.len()
     ];
 
     // TODO: handle errors
@@ -116,16 +131,16 @@ pub fn main() {
             let window_width_over_two = window_width as f32 / 2.0;
             let window_height_over_two = window_height as f32 / 2.0;
 
-            cube_mesh.rotation.x += 0.02;
-            cube_mesh.rotation.y += 0.02;
-            cube_mesh.rotation.z += 0.02;
-            let rotation = cube_mesh.rotation;
+            test_mesh.rotation.x += 0.02;
+            test_mesh.rotation.y += 0.02;
+            test_mesh.rotation.z += 0.02;
+            let rotation = test_mesh.rotation;
 
-            for (face_index, face) in (&cube_mesh.faces).into_iter().enumerate() {
+            for (face_index, face) in (&test_mesh.faces).into_iter().enumerate() {
                 let mesh_vertices: [Vec3; 3] = [
-                    cube_mesh.vertices[face.a - 1],
-                    cube_mesh.vertices[face.b - 1],
-                    cube_mesh.vertices[face.c - 1],
+                    test_mesh.vertices[face.a - 1],
+                    test_mesh.vertices[face.b - 1],
+                    test_mesh.vertices[face.c - 1],
                 ];
 
                 let triangle = match triangles_to_render.get_mut(face_index) {

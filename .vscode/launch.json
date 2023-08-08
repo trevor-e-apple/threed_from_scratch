@@ -7,7 +7,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'threed_from_scratch'",
+            "name": "Debug",
             "cargo": {
                 "args": [
                     "build",
@@ -25,7 +25,25 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'threed_from_scratch'",
+            "name": "Debug with test asset",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=threed_from_scratch",
+                    "--package=threed_from_scratch"
+                ],
+                "filter": {
+                    "name": "threed_from_scratch",
+                    "kind": "bin"
+                }
+            },
+            "args": ["./test_assets/cube.obj"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests",
             "cargo": {
                 "args": [
                     "test",
