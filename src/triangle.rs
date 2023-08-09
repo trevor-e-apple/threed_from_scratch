@@ -1,4 +1,4 @@
-use crate::vector::Vec2;
+use crate::vector2::Vec2;
 
 #[derive(Clone)]
 pub struct Face {

@@ -4,7 +4,8 @@ mod display;
 mod mesh;
 mod render;
 mod triangle;
-mod vector;
+mod vector2;
+mod vector3;
 
 use mesh::load_mesh;
 use sdl2::event::Event;
@@ -12,15 +13,17 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::render::TextureAccess;
 use std::{
+    env, println,
     thread::sleep,
-    time::{Duration, Instant}, env, println,
+    time::{Duration, Instant},
 };
 use triangle::Triangle;
 
 use crate::{
     mesh::load_cube_mesh,
     render::{draw_grid, draw_rect, draw_triangle, render, ColorBuffer},
-    vector::{rotate_vec3, Vec2, Vec3},
+    vector2::Vec2,
+    vector3::{rotate_vec3, Vec3},
 };
 
 const FOV_FACTOR: f32 = 640.0;
@@ -97,7 +100,7 @@ pub fn main() {
                 println!("Error: {:?}", err);
                 assert!(false);
                 return;
-            },
+            }
         },
         None => load_cube_mesh(),
     };
