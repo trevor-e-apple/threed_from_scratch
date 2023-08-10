@@ -16,6 +16,7 @@ use std::{
     env, println,
     thread::sleep,
     time::{Duration, Instant},
+    todo,
 };
 use triangle::Triangle;
 
@@ -23,7 +24,7 @@ use crate::{
     mesh::load_cube_mesh,
     render::{draw_grid, draw_rect, draw_triangle, render, ColorBuffer},
     vector2::Vec2,
-    vector3::{rotate_vec3, Vec3},
+    vector3::{cross_product, rotate_vec3, Vec3},
 };
 
 const FOV_FACTOR: f32 = 640.0;
@@ -89,7 +90,7 @@ pub fn main() {
     let camera_position = Vec3 {
         x: 0.0,
         y: 0.0,
-        z: -5.0,
+        z: 0.0,
     };
 
     let mut test_mesh = match mesh_data_path {
@@ -139,25 +140,53 @@ pub fn main() {
             test_mesh.rotation.z += 0.02;
             let rotation = test_mesh.rotation;
 
-            for (face_index, face) in (&test_mesh.faces).into_iter().enumerate() {
-                let mesh_vertices: [Vec3; 3] = [
+            triangles_to_render.clear();
+
+            for face in &test_mesh.faces {
+                let mut mesh_vertices: [Vec3; 3] = [
                     test_mesh.vertices[face.a - 1],
                     test_mesh.vertices[face.b - 1],
                     test_mesh.vertices[face.c - 1],
                 ];
 
-                let triangle = match triangles_to_render.get_mut(face_index) {
-                    Some(triangle) => triangle,
-                    None => {
-                        // handle error path
-                        todo!()
-                    }
+                for vertex in &mut mesh_vertices {
+                    *vertex = rotate_vec3(vertex, rotation.x, rotation.y, rotation.z);
+                    // move all vertices farther from the monitor
+                    vertex.z += 5.0;
+                }
+
+                // backface cull check
+                let should_cull: bool = {
+                    // find the vectors which define the surface
+                    let a = mesh_vertices[0];
+                    let b = mesh_vertices[1];
+                    let c = mesh_vertices[2];
+
+                    let ab = b - a;
+                    let ac = c - a;
+
+                    // calculate the cross product of those vectors to find
+                    // -- the surface normal (left-handed system)
+                    let surface_normal = cross_product(&ab, &ac);
+
+                    // find the vector to the camera from the surface
+                    let ray_to_camera = camera_position - a;
+
+                    // find the dot product between the vector to the camera and
+                    // -- the surface normal
+                    let dot_product = vector3::dot(&ray_to_camera, &surface_normal);
+
+                    dot_product <= 0.0
                 };
+                if should_cull {
+                    continue;
+                }
+
+                let mut triangle = Triangle {..Default::default()};
                 for (vertex_index, vertex) in (&mesh_vertices).into_iter().enumerate() {
-                    let rotated_point = rotate_vec3(vertex, rotation.x, rotation.y, rotation.z);
                     let mut projected_point = perspective_projection(&Vec3 {
-                        z: rotated_point.z - camera_position.z,
-                        ..rotated_point
+                        z: vertex.z - camera_position.z,
+                        ..*vertex
                     });
 
                     // center our points
@@ -166,6 +195,8 @@ pub fn main() {
 
                     triangle.points[vertex_index] = projected_point;
                 }
+
+                triangles_to_render.push(triangle);
             }
         }
 
