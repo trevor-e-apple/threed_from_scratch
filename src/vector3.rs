@@ -18,7 +18,7 @@ impl Add<Self> for Vec3 {
 
     fn add(self, _rhs: Self) -> Self {
         Self {
-            x: self.x + _rhs.y,
+            x: self.x + _rhs.x,
             y: self.y + _rhs.y,
             z: self.z + _rhs.z,
         }
@@ -30,7 +30,7 @@ impl Sub<Self> for Vec3 {
 
     fn sub(self, _rhs: Self) -> Self {
         Self {
-            x: self.x - _rhs.y,
+            x: self.x - _rhs.x,
             y: self.y - _rhs.y,
             z: self.z - _rhs.z,
         }

@@ -8,6 +8,7 @@ mod vector2;
 mod vector3;
 
 use mesh::load_mesh;
+use render::draw_line;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -135,9 +136,9 @@ pub fn main() {
             let window_width_over_two = window_width as f32 / 2.0;
             let window_height_over_two = window_height as f32 / 2.0;
 
-            test_mesh.rotation.x += 0.02;
-            test_mesh.rotation.y += 0.02;
-            test_mesh.rotation.z += 0.02;
+            test_mesh.rotation.x += 0.005;
+            test_mesh.rotation.y += 0.005;
+            test_mesh.rotation.z += 0.01;
             let rotation = test_mesh.rotation;
 
             triangles_to_render.clear();
@@ -170,11 +171,11 @@ pub fn main() {
                     let surface_normal = cross_product(&ab, &ac);
 
                     // find the vector to the camera from the surface
-                    let ray_to_camera = camera_position - a;
+                    let camera_ray = camera_position - a;
 
                     // find the dot product between the vector to the camera and
                     // -- the surface normal
-                    let dot_product = vector3::dot(&ray_to_camera, &surface_normal);
+                    let dot_product = vector3::dot(&camera_ray, &surface_normal);
 
                     dot_product <= 0.0
                 };
@@ -184,10 +185,7 @@ pub fn main() {
 
                 let mut triangle = Triangle {..Default::default()};
                 for (vertex_index, vertex) in (&mesh_vertices).into_iter().enumerate() {
-                    let mut projected_point = perspective_projection(&Vec3 {
-                        z: vertex.z - camera_position.z,
-                        ..*vertex
-                    });
+                    let mut projected_point = perspective_projection(vertex);
 
                     // center our points
                     projected_point.x += window_width_over_two as f32;
