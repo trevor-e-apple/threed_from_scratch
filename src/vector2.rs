@@ -17,7 +17,7 @@ impl Add<Self> for Vec2 {
 
     fn add(self, _rhs: Self) -> Self {
         Self {
-            x: self.x + _rhs.y,
+            x: self.x + _rhs.x,
             y: self.y + _rhs.y,
         }
     }
@@ -28,7 +28,7 @@ impl Sub<Self> for Vec2 {
 
     fn sub(self, _rhs: Self) -> Self {
         Self {
-            x: self.x - _rhs.y,
+            x: self.x - _rhs.x,
             y: self.y - _rhs.y,
         }
     }
