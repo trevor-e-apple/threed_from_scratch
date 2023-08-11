@@ -8,7 +8,6 @@ mod vector2;
 mod vector3;
 
 use mesh::load_mesh;
-use render::draw_line;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -25,7 +24,7 @@ use crate::{
     mesh::load_cube_mesh,
     render::{draw_grid, draw_rect, draw_triangle, render, ColorBuffer},
     vector2::Vec2,
-    vector3::{cross_product, rotate_vec3, Vec3},
+    vector3::{rotate_vec3, unit_normal, Vec3},
 };
 
 const FOV_FACTOR: f32 = 640.0;
@@ -168,7 +167,7 @@ pub fn main() {
 
                     // calculate the cross product of those vectors to find
                     // -- the surface normal (left-handed system)
-                    let surface_normal = cross_product(&ab, &ac);
+                    let surface_normal = unit_normal(&ab, &ac);
 
                     // find the vector to the camera from the surface
                     let camera_ray = camera_position - a;
@@ -183,7 +182,9 @@ pub fn main() {
                     continue;
                 }
 
-                let mut triangle = Triangle {..Default::default()};
+                let mut triangle = Triangle {
+                    ..Default::default()
+                };
                 for (vertex_index, vertex) in (&mesh_vertices).into_iter().enumerate() {
                     let mut projected_point = perspective_projection(vertex);
 

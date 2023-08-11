@@ -74,10 +74,14 @@ pub fn cross_product(a: &Vec3, b: &Vec3) -> Vec3 {
     }
 }
 
+pub fn normalize(a: &Vec3) -> Vec3 {
+    (1.0 / a.magnitude()) * *a
+}
+
 /// find the normal vector to a and b of length 1
 pub fn unit_normal(a: &Vec3, b: &Vec3) -> Vec3 {
     let vec = cross_product(a, b);
-    (1.0 / vec.magnitude()) * vec
+    normalize(&vec)
 }
 
 fn x_axis_rotate(vector: &Vec3, degrees: f32) -> Vec3 {

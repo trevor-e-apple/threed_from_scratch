@@ -60,6 +60,10 @@ pub fn dot(a: &Vec2, b: &Vec2) -> f32 {
     a.x * b.x + a.y * b.y
 }
 
+pub fn normalize(a: &Vec2) -> Vec2 {
+    (1.0 / a.magnitude()) * *a
+}
+
 pub fn rotate_vec2(vector: &Vec2, degrees: f32) -> Vec2 {
     let cos_degrees = degrees.cos();
     let sin_degrees = degrees.sin();
