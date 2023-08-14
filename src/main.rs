@@ -8,6 +8,7 @@ mod vector2;
 mod vector3;
 
 use mesh::load_mesh;
+use render::draw_line;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -18,7 +19,7 @@ use std::{
     time::{Duration, Instant},
     todo,
 };
-use triangle::Triangle;
+use triangle::{get_split_triangle_point, Triangle};
 
 use crate::{
     mesh::load_cube_mesh,
@@ -205,29 +206,59 @@ pub fn main() {
 
             draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
 
-            for triangle in &triangles_to_render {
-                for point in triangle.points {
-                    draw_rect(
-                        &mut color_buffer,
-                        point.x as i32,
-                        point.y as i32,
-                        4,
-                        4,
-                        0xFFFFFF00,
-                    );
-                }
+            // TODO: bring this back
+            // for triangle in &triangles_to_render {
+            //     for point in triangle.points {
+            //         draw_rect(
+            //             &mut color_buffer,
+            //             point.x as i32,
+            //             point.y as i32,
+            //             4,
+            //             4,
+            //             0xFFFFFF00,
+            //         );
+            //     }
 
-                draw_triangle(
-                    &mut color_buffer,
-                    triangle.points[0].x as i32,
-                    triangle.points[0].y as i32,
-                    triangle.points[1].x as i32,
-                    triangle.points[1].y as i32,
-                    triangle.points[2].x as i32,
-                    triangle.points[2].y as i32,
-                    0xFF00FF00,
-                );
-            }
+            //     draw_triangle(
+            //         &mut color_buffer,
+            //         triangle.points[0].x as i32,
+            //         triangle.points[0].y as i32,
+            //         triangle.points[1].x as i32,
+            //         triangle.points[1].y as i32,
+            //         triangle.points[2].x as i32,
+            //         triangle.points[2].y as i32,
+            //         0xFF00FF00,
+            //     );
+            // }
+
+            let temp_triangle = Triangle {
+                points: [
+                    Vec2 { x: 300.0, y: 100.0 },
+                    Vec2 { x: 50.0, y: 400.0 },
+                    Vec2 { x: 100.0, y: 150.0 },
+                ],
+            };
+
+            let (middle, ray_intersection) = get_split_triangle_point(&temp_triangle);
+
+            draw_triangle(
+                &mut color_buffer,
+                temp_triangle.points[0].x as i32,
+                temp_triangle.points[0].y as i32,
+                temp_triangle.points[1].x as i32,
+                temp_triangle.points[1].y as i32,
+                temp_triangle.points[2].x as i32,
+                temp_triangle.points[2].y as i32,
+                0xFF00FF00,
+            );
+            draw_line(
+                &mut color_buffer,
+                middle.x as i32,
+                middle.y as i32,
+                ray_intersection.x as i32,
+                ray_intersection.y as i32,
+                0xFFFFFF00,
+            );
 
             let render_result = render(&mut color_buffer, &mut canvas, &mut texture);
 
