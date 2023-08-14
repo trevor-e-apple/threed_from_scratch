@@ -5,6 +5,8 @@ use sdl2::{
     video::Window,
 };
 
+use crate::triangle::{Triangle, get_split_triangle_point};
+
 pub struct ColorBuffer {
     buffer: Vec<u32>,
     width: usize,
@@ -167,6 +169,33 @@ pub fn draw_triangle(
     draw_line(color_buffer, x0, y0, x1, y1, color);
     draw_line(color_buffer, x0, y0, x2, y2, color);
     draw_line(color_buffer, x1, y1, x2, y2, color);
+}
+
+pub fn draw_filled_triangle(
+    color_buffer: &mut ColorBuffer,
+    triangle: &Triangle,
+    color: u32,
+) {
+    let (middle, ray_intersection) = get_split_triangle_point(triangle);
+
+    draw_triangle(
+        color_buffer,
+        triangle.points[0].x as i32,
+        triangle.points[0].y as i32,
+        triangle.points[1].x as i32,
+        triangle.points[1].y as i32,
+        triangle.points[2].x as i32,
+        triangle.points[2].y as i32,
+        color,
+    );
+    draw_line(
+        color_buffer,
+        middle.x as i32,
+        middle.y as i32,
+        ray_intersection.x as i32,
+        ray_intersection.y as i32,
+        color,
+    );
 }
 
 /// Renders a color buffer to the screen

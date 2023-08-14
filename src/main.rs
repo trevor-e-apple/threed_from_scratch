@@ -8,7 +8,7 @@ mod vector2;
 mod vector3;
 
 use mesh::load_mesh;
-use render::draw_line;
+use render::{draw_line, draw_filled_triangle};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -219,15 +219,10 @@ pub fn main() {
             //         );
             //     }
 
-            //     draw_triangle(
+            //     draw_filled_triangle(
             //         &mut color_buffer,
-            //         triangle.points[0].x as i32,
-            //         triangle.points[0].y as i32,
-            //         triangle.points[1].x as i32,
-            //         triangle.points[1].y as i32,
-            //         triangle.points[2].x as i32,
-            //         triangle.points[2].y as i32,
-            //         0xFF00FF00,
+            //         triangle,
+            //         0xFF00FF00
             //     );
             // }
 
@@ -239,26 +234,7 @@ pub fn main() {
                 ],
             };
 
-            let (middle, ray_intersection) = get_split_triangle_point(&temp_triangle);
-
-            draw_triangle(
-                &mut color_buffer,
-                temp_triangle.points[0].x as i32,
-                temp_triangle.points[0].y as i32,
-                temp_triangle.points[1].x as i32,
-                temp_triangle.points[1].y as i32,
-                temp_triangle.points[2].x as i32,
-                temp_triangle.points[2].y as i32,
-                0xFF00FF00,
-            );
-            draw_line(
-                &mut color_buffer,
-                middle.x as i32,
-                middle.y as i32,
-                ray_intersection.x as i32,
-                ray_intersection.y as i32,
-                0xFFFFFF00,
-            );
+            draw_filled_triangle(&mut color_buffer, &temp_triangle, 0xFF00FF00);
 
             let render_result = render(&mut color_buffer, &mut canvas, &mut texture);
 
