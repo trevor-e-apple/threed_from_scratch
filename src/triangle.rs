@@ -15,9 +15,9 @@ pub struct Triangle {
 }
 
 /// considers the triangle to have a "top", "middle", and "bottom" vertex
-/// returns the middle vertex and the intersection point for a horizontal ray
+/// returns the sorted vertices and the intersection point for a horizontal ray
 /// cast from the "middle" vertex
-pub fn get_split_triangle_point(triangle: &Triangle) -> (Vec2, Vec2) {
+pub fn get_split_triangle_point(triangle: &Triangle) -> ([Vec2; 3], Vec2) {
     // sort the points according to their y values
     // -- (ascending sort, but top-to-bottom)
     let mut points: [Vec2; 3] = triangle.points.clone();
@@ -41,11 +41,11 @@ pub fn get_split_triangle_point(triangle: &Triangle) -> (Vec2, Vec2) {
     let middle = points[1];
     let bottom = points[2];
 
+    let x = ((bottom.x - top.x) * (middle.y - top.y)) / (bottom.y - top.y) + top.x;
     let split_point = Vec2 {
-        x: ((bottom.x - top.x) * (middle.y - top.y)) / (bottom.y - top.y)
-            + top.x,
+        x,
         y: middle.y,
     };
 
-    (middle, split_point)
+    (points, split_point)
 }

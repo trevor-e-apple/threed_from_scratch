@@ -183,7 +183,11 @@ pub fn draw_filled_triangle(
     triangle: &Triangle,
     color: u32,
 ) {
-    let (middle, ray_intersection) = get_split_triangle_point(triangle);
+    let (sorted_points, ray_intersection) = get_split_triangle_point(triangle);
+
+    let top = sorted_points[0];
+    let middle = sorted_points[1];
+    let bottom = sorted_points[2];
 
     draw_triangle(
         color_buffer,
@@ -195,14 +199,31 @@ pub fn draw_filled_triangle(
         triangle.points[2].y as i32,
         color,
     );
-    draw_line(
-        color_buffer,
-        middle.x as i32,
-        middle.y as i32,
-        ray_intersection.x as i32,
-        ray_intersection.y as i32,
-        color,
-    );
+
+    // draws the top filled triangle (flat bottom)
+    {
+        // find the change in x for each y pixel (top to bottom)
+        let x_per_y_1 = (middle.x - top.x) / (middle.y - top.y);
+        let x_per_y_2 =
+            (ray_intersection.x - top.x) / (ray_intersection.y - top.y);
+
+        let mut x_start = top.x;
+        let mut x_end = top.x;
+        let top_y = top.y.round() as i32;
+        let bottom_y = ray_intersection.y.round() as i32;
+        for y in top_y..bottom_y {
+            draw_line(
+                color_buffer,
+                x_start.round() as i32,
+                y,
+                x_end.round() as i32,
+                y,
+                color,
+            );
+            x_start += x_per_y_1;
+            x_end += x_per_y_2;
+        }
+    }
 }
 
 /// Renders a color buffer to the screen
