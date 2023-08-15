@@ -5,7 +5,7 @@ use sdl2::{
     video::Window,
 };
 
-use crate::triangle::{Triangle, get_split_triangle_point};
+use crate::triangle::{get_split_triangle_point, Triangle};
 
 pub struct ColorBuffer {
     buffer: Vec<u32>,
@@ -131,7 +131,14 @@ pub fn draw_pixel(color_buffer: &mut ColorBuffer, x: i32, y: i32, color: u32) {
     *pixel = color;
 }
 
-pub fn draw_line(color_buffer: &mut ColorBuffer, x0: i32, y0: i32, x1: i32, y1: i32, color: u32) {
+pub fn draw_line(
+    color_buffer: &mut ColorBuffer,
+    x0: i32,
+    y0: i32,
+    x1: i32,
+    y1: i32,
+    color: u32,
+) {
     let delta_x = x1 - x0;
     let delta_y = y1 - y0;
     let longest_side_length = if delta_x.abs() > delta_y.abs() {

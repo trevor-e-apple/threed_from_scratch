@@ -8,7 +8,7 @@ mod vector2;
 mod vector3;
 
 use mesh::load_mesh;
-use render::{draw_line, draw_filled_triangle};
+use render::{draw_filled_triangle, draw_line};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -71,7 +71,8 @@ pub fn main() {
     // TODO: handle errors
     let mut canvas = window.into_canvas().build().unwrap();
 
-    let mut color_buffer = ColorBuffer::new(window_width as usize, window_height as usize);
+    let mut color_buffer =
+        ColorBuffer::new(window_width as usize, window_height as usize);
 
     let texture_creator = canvas.texture_creator();
     let mut texture = match texture_creator.create_texture(
@@ -151,7 +152,8 @@ pub fn main() {
                 ];
 
                 for vertex in &mut mesh_vertices {
-                    *vertex = rotate_vec3(vertex, rotation.x, rotation.y, rotation.z);
+                    *vertex =
+                        rotate_vec3(vertex, rotation.x, rotation.y, rotation.z);
                     // move all vertices farther from the monitor
                     vertex.z += 5.0;
                 }
@@ -175,7 +177,8 @@ pub fn main() {
 
                     // find the dot product between the vector to the camera and
                     // -- the surface normal
-                    let dot_product = vector3::dot(&camera_ray, &surface_normal);
+                    let dot_product =
+                        vector3::dot(&camera_ray, &surface_normal);
 
                     dot_product <= 0.0
                 };
@@ -186,7 +189,9 @@ pub fn main() {
                 let mut triangle = Triangle {
                     ..Default::default()
                 };
-                for (vertex_index, vertex) in (&mesh_vertices).into_iter().enumerate() {
+                for (vertex_index, vertex) in
+                    (&mesh_vertices).into_iter().enumerate()
+                {
                     let mut projected_point = perspective_projection(vertex);
 
                     // center our points
@@ -236,7 +241,8 @@ pub fn main() {
 
             draw_filled_triangle(&mut color_buffer, &temp_triangle, 0xFF00FF00);
 
-            let render_result = render(&mut color_buffer, &mut canvas, &mut texture);
+            let render_result =
+                render(&mut color_buffer, &mut canvas, &mut texture);
 
             if !render_result {
                 break 'running;
@@ -245,7 +251,8 @@ pub fn main() {
 
         // SLEEP
         let end = Instant::now();
-        let mut sleep_duration = FRAME_TIME_MS - end.duration_since(start).as_millis() as f64;
+        let mut sleep_duration =
+            FRAME_TIME_MS - end.duration_since(start).as_millis() as f64;
         if sleep_duration < 0.0 {
             sleep_duration = 0.0;
         }

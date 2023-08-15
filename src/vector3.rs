@@ -114,7 +114,12 @@ fn z_axis_rotate(vector: &Vec3, degrees: f32) -> Vec3 {
     }
 }
 
-pub fn rotate_vec3(vector: &Vec3, x_degrees: f32, y_degrees: f32, z_degrees: f32) -> Vec3 {
+pub fn rotate_vec3(
+    vector: &Vec3,
+    x_degrees: f32,
+    y_degrees: f32,
+    z_degrees: f32,
+) -> Vec3 {
     let result = vector.clone();
     let result = x_axis_rotate(&result, x_degrees);
     let result = y_axis_rotate(&result, y_degrees);
