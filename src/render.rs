@@ -163,7 +163,7 @@ pub fn draw_line(
     }
 }
 
-pub fn draw_triangle(
+pub fn draw_triangle_with_coordinates(
     color_buffer: &mut ColorBuffer,
     x0: i32,
     y0: i32,
@@ -178,6 +178,23 @@ pub fn draw_triangle(
     draw_line(color_buffer, x1, y1, x2, y2, color);
 }
 
+pub fn draw_triangle(
+    color_buffer: &mut ColorBuffer,
+    triangle: &Triangle,
+    color: u32,
+) {
+    draw_triangle_with_coordinates(
+        color_buffer,
+        triangle.points[0].x as i32,
+        triangle.points[0].y as i32,
+        triangle.points[1].x as i32,
+        triangle.points[1].y as i32,
+        triangle.points[2].x as i32,
+        triangle.points[2].y as i32,
+        color,
+    );
+}
+
 pub fn draw_filled_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
@@ -188,17 +205,6 @@ pub fn draw_filled_triangle(
     let top = sorted_points[0];
     let middle = sorted_points[1];
     let bottom = sorted_points[2];
-
-    draw_triangle(
-        color_buffer,
-        triangle.points[0].x as i32,
-        triangle.points[0].y as i32,
-        triangle.points[1].x as i32,
-        triangle.points[1].y as i32,
-        triangle.points[2].x as i32,
-        triangle.points[2].y as i32,
-        color,
-    );
 
     // draw the top filled triangle (flat bottom)
     {
@@ -211,7 +217,7 @@ pub fn draw_filled_triangle(
         let mut x_end = top.x;
         let top_y = top.y.round() as i32;
         let bottom_y = ray_intersection.y.round() as i32;
-        for y in top_y..bottom_y {
+        for y in top_y..=bottom_y {
             draw_line(
                 color_buffer,
                 x_start.round() as i32,
@@ -235,7 +241,7 @@ pub fn draw_filled_triangle(
         let mut x_end = ray_intersection.x;
         let top_y = ray_intersection.y.round() as i32;
         let bottom_y = bottom.y.round() as i32;
-        for y in top_y..bottom_y {
+        for y in top_y..=bottom_y {
             draw_line(
                 color_buffer,
                 x_start.round() as i32,

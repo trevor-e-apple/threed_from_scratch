@@ -41,11 +41,9 @@ pub fn get_split_triangle_point(triangle: &Triangle) -> ([Vec2; 3], Vec2) {
     let middle = points[1];
     let bottom = points[2];
 
-    let x = ((bottom.x - top.x) * (middle.y - top.y)) / (bottom.y - top.y) + top.x;
-    let split_point = Vec2 {
-        x,
-        y: middle.y,
-    };
+    let x =
+        ((bottom.x - top.x) * (middle.y - top.y)) / (bottom.y - top.y) + top.x;
+    let split_point = Vec2 { x, y: middle.y };
 
     (points, split_point)
 }

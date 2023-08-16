@@ -239,7 +239,8 @@ pub fn main() {
                 ],
             };
 
-            draw_filled_triangle(&mut color_buffer, &temp_triangle, 0xFF00FF00);
+            draw_filled_triangle(&mut color_buffer, &temp_triangle, 0xFF005500);
+            draw_triangle(&mut color_buffer, &temp_triangle, 0xFFFFFFFF);
 
             let render_result =
                 render(&mut color_buffer, &mut canvas, &mut texture);
