@@ -200,7 +200,7 @@ pub fn draw_filled_triangle(
         color,
     );
 
-    // draws the top filled triangle (flat bottom)
+    // draw the top filled triangle (flat bottom)
     {
         // find the change in x for each y pixel (top to bottom)
         let x_per_y_1 = (middle.x - top.x) / (middle.y - top.y);
@@ -211,6 +211,30 @@ pub fn draw_filled_triangle(
         let mut x_end = top.x;
         let top_y = top.y.round() as i32;
         let bottom_y = ray_intersection.y.round() as i32;
+        for y in top_y..bottom_y {
+            draw_line(
+                color_buffer,
+                x_start.round() as i32,
+                y,
+                x_end.round() as i32,
+                y,
+                color,
+            );
+            x_start += x_per_y_1;
+            x_end += x_per_y_2;
+        }
+    }
+
+    // draw the bottom filled triangle (flat bottom)
+    {
+        let x_per_y_1 = (bottom.x - middle.x) / (bottom.y - middle.y);
+        let x_per_y_2 =
+            (bottom.x - ray_intersection.x) / (bottom.y - ray_intersection.y);
+
+        let mut x_start = middle.x;
+        let mut x_end = ray_intersection.x;
+        let top_y = ray_intersection.y.round() as i32;
+        let bottom_y = bottom.y.round() as i32;
         for y in top_y..bottom_y {
             draw_line(
                 color_buffer,
