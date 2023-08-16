@@ -137,8 +137,8 @@ pub fn main() {
             let window_width_over_two = window_width as f32 / 2.0;
             let window_height_over_two = window_height as f32 / 2.0;
 
-            test_mesh.rotation.x += 0.005;
-            test_mesh.rotation.y += 0.005;
+            test_mesh.rotation.x += 0.01;
+            test_mesh.rotation.y += 0.01;
             test_mesh.rotation.z += 0.01;
             let rotation = test_mesh.rotation;
 
@@ -211,36 +211,25 @@ pub fn main() {
 
             draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
 
-            // TODO: bring this back
-            // for triangle in &triangles_to_render {
-            //     for point in triangle.points {
-            //         draw_rect(
-            //             &mut color_buffer,
-            //             point.x as i32,
-            //             point.y as i32,
-            //             4,
-            //             4,
-            //             0xFFFFFF00,
-            //         );
-            //     }
+            for triangle in &triangles_to_render {
+                for point in triangle.points {
+                    draw_rect(
+                        &mut color_buffer,
+                        point.x as i32,
+                        point.y as i32,
+                        4,
+                        4,
+                        0xFFFFFF00,
+                    );
+                }
 
-            //     draw_filled_triangle(
-            //         &mut color_buffer,
-            //         triangle,
-            //         0xFF00FF00
-            //     );
-            // }
-
-            let temp_triangle = Triangle {
-                points: [
-                    Vec2 { x: 300.0, y: 100.0 },
-                    Vec2 { x: 50.0, y: 400.0 },
-                    Vec2 { x: 100.0, y: 150.0 },
-                ],
-            };
-
-            draw_filled_triangle(&mut color_buffer, &temp_triangle, 0xFF005500);
-            draw_triangle(&mut color_buffer, &temp_triangle, 0xFFFFFFFF);
+                draw_triangle(&mut color_buffer, triangle, 0xFF00FF00);
+                draw_filled_triangle(
+                    &mut color_buffer,
+                    triangle,
+                    0xFF005500
+                );
+            }
 
             let render_result =
                 render(&mut color_buffer, &mut canvas, &mut texture);
