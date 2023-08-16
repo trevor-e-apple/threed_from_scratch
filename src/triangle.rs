@@ -1,6 +1,4 @@
-use std::todo;
-
-use crate::vector2::{dot, normalize, Vec2};
+use crate::vector2::Vec2;
 
 #[derive(Clone)]
 pub struct Face {

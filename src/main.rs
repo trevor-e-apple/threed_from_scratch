@@ -8,7 +8,7 @@ mod vector2;
 mod vector3;
 
 use mesh::load_mesh;
-use render::{draw_filled_triangle, draw_line};
+use render::draw_filled_triangle;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -19,7 +19,7 @@ use std::{
     time::{Duration, Instant},
     todo,
 };
-use triangle::{get_split_triangle_point, Triangle};
+use triangle::Triangle;
 
 use crate::{
     mesh::load_cube_mesh,
@@ -31,6 +31,15 @@ use crate::{
 const FOV_FACTOR: f32 = 640.0;
 const FRAMES_PER_SECOND: f64 = 60.0;
 const FRAME_TIME_MS: f64 = 1000.0 / FRAMES_PER_SECOND;
+
+#[derive(Debug)]
+struct RenderState {
+    show_wireframe: bool,
+    show_vertices: bool,
+    show_filled_triangles: bool,
+    show_grid: bool,
+    backface_culling_enabled: bool,
+}
 
 pub fn orthographic_projection(point: &Vec3) -> Vec2 {
     Vec2 {
@@ -89,6 +98,14 @@ pub fn main() {
     canvas.clear();
     canvas.present();
 
+    let mut render_state = RenderState {
+        show_wireframe: true,
+        show_vertices: true,
+        show_filled_triangles: true,
+        show_grid: false,
+        backface_culling_enabled: true,
+    };
+
     let camera_position = Vec3 {
         x: 0.0,
         y: 0.0,
@@ -128,6 +145,40 @@ pub fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
+                Event::KeyDown {
+                    keycode: Some(Keycode::Num1),
+                    ..
+                } => {
+                    render_state.show_vertices = !render_state.show_vertices;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Num2),
+                    ..
+                } => {
+                    render_state.show_wireframe = !render_state.show_wireframe;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Num3),
+                    ..
+                } => {
+                    render_state.show_filled_triangles =
+                        !render_state.show_filled_triangles;
+                }
+                Event::KeyDown { keycode: Some(Keycode::Num4), .. } => {
+                    render_state.show_grid = !render_state.show_grid;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::C),
+                    ..
+                } => {
+                    render_state.backface_culling_enabled = true;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::D),
+                    ..
+                } => {
+                    render_state.backface_culling_enabled = false;
+                }
                 _ => {}
             }
         }
@@ -159,7 +210,8 @@ pub fn main() {
                 }
 
                 // backface cull check
-                let should_cull: bool = {
+                let should_cull: bool = if render_state.backface_culling_enabled
+                {
                     // find the vectors which define the surface
                     let a = mesh_vertices[0];
                     let b = mesh_vertices[1];
@@ -181,6 +233,8 @@ pub fn main() {
                         vector3::dot(&camera_ray, &surface_normal);
 
                     dot_product <= 0.0
+                } else {
+                    false
                 };
                 if should_cull {
                     continue;
@@ -209,26 +263,35 @@ pub fn main() {
         {
             color_buffer.clear(0xFF000000);
 
-            draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
+            if render_state.show_grid {
+                draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
+            }
 
             for triangle in &triangles_to_render {
-                for point in triangle.points {
-                    draw_rect(
-                        &mut color_buffer,
-                        point.x as i32,
-                        point.y as i32,
-                        4,
-                        4,
-                        0xFFFFFF00,
-                    );
+                if render_state.show_vertices {
+                    for point in triangle.points {
+                        draw_rect(
+                            &mut color_buffer,
+                            point.x as i32,
+                            point.y as i32,
+                            4,
+                            4,
+                            0xFFFFFF00,
+                        );
+                    }
                 }
 
-                draw_triangle(&mut color_buffer, triangle, 0xFF00FF00);
-                draw_filled_triangle(
-                    &mut color_buffer,
-                    triangle,
-                    0xFF005500
-                );
+                if render_state.show_wireframe {
+                    draw_triangle(&mut color_buffer, triangle, 0xFF00FF00);
+                }
+
+                if render_state.show_filled_triangles {
+                    draw_filled_triangle(
+                        &mut color_buffer,
+                        triangle,
+                        0xFF005500,
+                    );
+                }
             }
 
             let render_result =

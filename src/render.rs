@@ -207,7 +207,7 @@ pub fn draw_filled_triangle(
     let bottom = sorted_points[2];
 
     // draw the top filled triangle (flat bottom)
-    if (middle.y - top.y) >= 1.0 {
+    if (middle.y - top.y).abs() >= 1.0 {
         // find the change in x for each y pixel (top to bottom)
         let x_per_y_1 = (middle.x - top.x) / (middle.y - top.y);
         let x_per_y_2 =
@@ -232,7 +232,7 @@ pub fn draw_filled_triangle(
     }
 
     // draw the bottom filled triangle (flat top)
-    if (bottom.y - middle.y) >= 1.0 {
+    if (bottom.y - middle.y).abs() >= 1.0 {
         let x_per_y_1 = (bottom.x - middle.x) / (bottom.y - middle.y);
         let x_per_y_2 =
             (bottom.x - ray_intersection.x) / (bottom.y - ray_intersection.y);
