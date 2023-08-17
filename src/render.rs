@@ -5,7 +5,7 @@ use sdl2::{
     video::Window,
 };
 
-use crate::triangle::{get_split_triangle_point, Triangle};
+use crate::{triangle::{get_split_triangle_point, Triangle}, vector2::Vec2i};
 
 type Color = u32;
 
@@ -131,11 +131,9 @@ pub fn draw_pixel(
     y: i32,
     color: Color,
 ) {
-    let pixel = match color_buffer.get_mut(x as usize, y as usize) {
-        Some(value) => value,
-        None => todo!(),
-    };
-    *pixel = color;
+    if let Some(pixel) = color_buffer.get_mut(x as usize, y as usize) {
+        *pixel = color;
+    }
 }
 
 pub fn draw_line(
@@ -158,7 +156,7 @@ pub fn draw_line(
 
     let mut current_x = x0 as f32;
     let mut current_y = y0 as f32;
-    for _ in 0..longest_side_length {
+    for _ in 0..=longest_side_length {
         draw_pixel(
             color_buffer,
             current_x.round() as i32,
@@ -209,30 +207,29 @@ pub fn draw_filled_triangle(
 ) {
     let (sorted_points, ray_intersection) = get_split_triangle_point(triangle);
 
-    let top = sorted_points[0];
-    let middle = sorted_points[1];
-    let bottom = sorted_points[2];
-
-    draw_triangle(color_buffer, triangle, color);
+    let top = Vec2i::from_vec2_floor(&sorted_points[0]);
+    let middle = Vec2i::from_vec2_floor(&sorted_points[1]);
+    let bottom = Vec2i::from_vec2_floor(&sorted_points[2]);
+    let ray_intersection = Vec2i::from_vec2_floor(&ray_intersection);
 
     // draw the top filled triangle (flat bottom)
     {
-        let top_y = top.y.round() as i32;
-        let bottom_y = ray_intersection.y.round() as i32;
+        let top_y = top.y;
+        let bottom_y = ray_intersection.y;
         if top_y != bottom_y {
             // find the change in x for each y pixel (top to bottom)
-            let x_per_y_1 = (middle.x - top.x) / (middle.y - top.y);
+            let x_per_y_1 = (middle.x - top.x) as f32 / (middle.y - top.y) as f32;
             let x_per_y_2 =
-                (ray_intersection.x - top.x) / (ray_intersection.y - top.y);
+                (ray_intersection.x - top.x) as f32 / (ray_intersection.y - top.y) as f32;
 
-            let mut x_start = top.x;
-            let mut x_end = top.x;
-            for y in top_y..bottom_y {
+            let mut x_start = top.x as f32;
+            let mut x_end = top.x as f32;
+            for y in top_y..=bottom_y {
                 draw_line(
                     color_buffer,
-                    x_start.round() as i32,
+                    x_start as i32,
                     y,
-                    x_end.round() as i32,
+                    x_end as i32,
                     y,
                     color,
                 );
@@ -244,21 +241,21 @@ pub fn draw_filled_triangle(
 
     // draw the bottom filled triangle (flat top)
     {
-        let top_y = ray_intersection.y.round() as i32;
-        let bottom_y = bottom.y.round() as i32;
+        let top_y = ray_intersection.y as i32;
+        let bottom_y = bottom.y as i32;
         if top_y != bottom_y {
-            let x_per_y_1 = (bottom.x - middle.x) / (bottom.y - middle.y);
-            let x_per_y_2 = (bottom.x - ray_intersection.x)
-                / (bottom.y - ray_intersection.y);
+            let x_per_y_1 = (bottom.x - middle.x) as f32 / (bottom.y - middle.y) as f32;
+            let x_per_y_2 = (bottom.x - ray_intersection.x) as f32
+                / (bottom.y - ray_intersection.y) as f32;
 
-            let mut x_start = middle.x;
-            let mut x_end = ray_intersection.x;
-            for y in top_y..bottom_y {
+            let mut x_start = middle.x as f32;
+            let mut x_end = ray_intersection.x as f32;
+            for y in top_y..=bottom_y {
                 draw_line(
                     color_buffer,
-                    x_start.round() as i32,
+                    x_start as i32,
                     y,
-                    x_end.round() as i32,
+                    x_end as i32,
                     y,
                     color,
                 );

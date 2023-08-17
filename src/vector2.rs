@@ -72,3 +72,15 @@ pub fn rotate_vec2(vector: &Vec2, degrees: f32) -> Vec2 {
         y: vector.x * sin_degrees + vector.y * cos_degrees,
     }
 }
+
+#[derive(Default, Copy, Clone)]
+pub struct Vec2i {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl Vec2i {
+    pub fn from_vec2_floor(vec: &Vec2) -> Vec2i {
+        Vec2i { x: vec.x as i32, y: vec.y as i32 }
+    }
+}
