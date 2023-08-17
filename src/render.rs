@@ -125,7 +125,12 @@ pub fn draw_rect(
     }
 }
 
-pub fn draw_pixel(color_buffer: &mut ColorBuffer, x: i32, y: i32, color: Color) {
+pub fn draw_pixel(
+    color_buffer: &mut ColorBuffer,
+    x: i32,
+    y: i32,
+    color: Color,
+) {
     let pixel = match color_buffer.get_mut(x as usize, y as usize) {
         Some(value) => value,
         None => todo!(),
@@ -243,8 +248,8 @@ pub fn draw_filled_triangle(
         let bottom_y = bottom.y.round() as i32;
         if top_y != bottom_y {
             let x_per_y_1 = (bottom.x - middle.x) / (bottom.y - middle.y);
-            let x_per_y_2 =
-                (bottom.x - ray_intersection.x) / (bottom.y - ray_intersection.y);
+            let x_per_y_2 = (bottom.x - ray_intersection.x)
+                / (bottom.y - ray_intersection.y);
 
             let mut x_start = middle.x;
             let mut x_end = ray_intersection.x;

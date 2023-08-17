@@ -307,12 +307,18 @@ pub fn main() {
 
         // SLEEP
         let end = Instant::now();
-        let mut sleep_duration =
-            FRAME_TIME_MS - end.duration_since(start).as_millis() as f64;
+        let frame_time = end.duration_since(start).as_millis() as f64;
+        let mut sleep_duration = FRAME_TIME_MS - frame_time;
         if sleep_duration < 0.0 {
             sleep_duration = 0.0;
         }
         // assumes that our sleep time is never more than 1 second
-        sleep(Duration::new(0, (1000.0 * sleep_duration) as u32));
+        sleep(Duration::new(0, (1000000.0 * sleep_duration) as u32));
+        if sleep_duration == 0.0 {
+            print!("Missed frame time. ");
+            print!("Expected: {FRAME_TIME_MS} ms. ");
+            print!("Actual: {frame_time} ms. ");
+            println!();
+        }
     }
 }
