@@ -7,7 +7,7 @@ use sdl2::{
 
 use crate::{triangle::{get_split_triangle_point, Triangle}, vector2::Vec2i};
 
-type Color = u32;
+pub type Color = u32;
 
 pub struct ColorBuffer {
     buffer: Vec<u32>,

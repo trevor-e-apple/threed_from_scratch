@@ -1,15 +1,17 @@
-use crate::vector2::Vec2;
+use crate::{vector2::Vec2, render::Color};
 
 #[derive(Clone)]
 pub struct Face {
     pub a: usize,
     pub b: usize,
     pub c: usize,
+    pub color: Color,
 }
 
 #[derive(Default, Clone)]
 pub struct Triangle {
     pub points: [Vec2; 3],
+    pub color: Color,
 }
 
 /// considers the triangle to have a "top", "middle", and "bottom" vertex

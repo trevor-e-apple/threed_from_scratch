@@ -244,6 +244,7 @@ pub fn main() {
                 }
 
                 let mut triangle = Triangle {
+                    color: face.color,
                     ..Default::default()
                 };
                 for (vertex_index, vertex) in
@@ -288,7 +289,7 @@ pub fn main() {
                     draw_filled_triangle(
                         &mut color_buffer,
                         triangle,
-                        0xFF005500,
+                        triangle.color,
                     );
                 }
 
