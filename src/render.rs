@@ -7,6 +7,8 @@ use sdl2::{
 
 use crate::triangle::{get_split_triangle_point, Triangle};
 
+type Color = u32;
+
 pub struct ColorBuffer {
     buffer: Vec<u32>,
     width: usize,
@@ -29,7 +31,7 @@ impl ColorBuffer {
         return self.buffer.get_mut(index);
     }
 
-    pub fn clear(&mut self, color: u32) {
+    pub fn clear(&mut self, color: Color) {
         for pixel in &mut self.buffer {
             *pixel = color;
         }
@@ -47,7 +49,7 @@ pub fn draw_grid(
     color_buffer: &mut ColorBuffer,
     width_interval: usize,
     height_interval: usize,
-    color: u32,
+    color: Color,
 ) {
     for y in 0..color_buffer.height {
         for x in 0..color_buffer.width {
@@ -68,7 +70,7 @@ pub fn draw_rect(
     top_left_y: i32,
     width: i32,
     height: i32,
-    color: u32,
+    color: Color,
 ) {
     // calculate start / stop x coordinates
     let (start_x, end_x) = {
@@ -123,7 +125,7 @@ pub fn draw_rect(
     }
 }
 
-pub fn draw_pixel(color_buffer: &mut ColorBuffer, x: i32, y: i32, color: u32) {
+pub fn draw_pixel(color_buffer: &mut ColorBuffer, x: i32, y: i32, color: Color) {
     let pixel = match color_buffer.get_mut(x as usize, y as usize) {
         Some(value) => value,
         None => todo!(),
@@ -137,7 +139,7 @@ pub fn draw_line(
     y0: i32,
     x1: i32,
     y1: i32,
-    color: u32,
+    color: Color,
 ) {
     let delta_x = x1 - x0;
     let delta_y = y1 - y0;
@@ -171,7 +173,7 @@ pub fn draw_triangle_with_coordinates(
     y1: i32,
     x2: i32,
     y2: i32,
-    color: u32,
+    color: Color,
 ) {
     draw_line(color_buffer, x0, y0, x1, y1, color);
     draw_line(color_buffer, x0, y0, x2, y2, color);
@@ -181,7 +183,7 @@ pub fn draw_triangle_with_coordinates(
 pub fn draw_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
-    color: u32,
+    color: Color,
 ) {
     draw_triangle_with_coordinates(
         color_buffer,
@@ -198,7 +200,7 @@ pub fn draw_triangle(
 pub fn draw_filled_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
-    color: u32,
+    color: Color,
 ) {
     let (sorted_points, ray_intersection) = get_split_triangle_point(triangle);
 
