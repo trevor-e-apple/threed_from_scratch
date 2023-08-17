@@ -206,52 +206,58 @@ pub fn draw_filled_triangle(
     let middle = sorted_points[1];
     let bottom = sorted_points[2];
 
-    // draw the top filled triangle (flat bottom)
-    if (middle.y - top.y).abs() >= 1.0 {
-        // find the change in x for each y pixel (top to bottom)
-        let x_per_y_1 = (middle.x - top.x) / (middle.y - top.y);
-        let x_per_y_2 =
-            (ray_intersection.x - top.x) / (ray_intersection.y - top.y);
+    draw_triangle(color_buffer, triangle, color);
 
-        let mut x_start = top.x;
-        let mut x_end = top.x;
+    // draw the top filled triangle (flat bottom)
+    {
         let top_y = top.y.round() as i32;
         let bottom_y = ray_intersection.y.round() as i32;
-        for y in top_y..=bottom_y {
-            draw_line(
-                color_buffer,
-                x_start.round() as i32,
-                y,
-                x_end.round() as i32,
-                y,
-                color,
-            );
-            x_start += x_per_y_1;
-            x_end += x_per_y_2;
+        if top_y != bottom_y {
+            // find the change in x for each y pixel (top to bottom)
+            let x_per_y_1 = (middle.x - top.x) / (middle.y - top.y);
+            let x_per_y_2 =
+                (ray_intersection.x - top.x) / (ray_intersection.y - top.y);
+
+            let mut x_start = top.x;
+            let mut x_end = top.x;
+            for y in top_y..bottom_y {
+                draw_line(
+                    color_buffer,
+                    x_start.round() as i32,
+                    y,
+                    x_end.round() as i32,
+                    y,
+                    color,
+                );
+                x_start += x_per_y_1;
+                x_end += x_per_y_2;
+            }
         }
     }
 
     // draw the bottom filled triangle (flat top)
-    if (bottom.y - middle.y).abs() >= 1.0 {
-        let x_per_y_1 = (bottom.x - middle.x) / (bottom.y - middle.y);
-        let x_per_y_2 =
-            (bottom.x - ray_intersection.x) / (bottom.y - ray_intersection.y);
-
-        let mut x_start = middle.x;
-        let mut x_end = ray_intersection.x;
+    {
         let top_y = ray_intersection.y.round() as i32;
         let bottom_y = bottom.y.round() as i32;
-        for y in top_y..=bottom_y {
-            draw_line(
-                color_buffer,
-                x_start.round() as i32,
-                y,
-                x_end.round() as i32,
-                y,
-                color,
-            );
-            x_start += x_per_y_1;
-            x_end += x_per_y_2;
+        if top_y != bottom_y {
+            let x_per_y_1 = (bottom.x - middle.x) / (bottom.y - middle.y);
+            let x_per_y_2 =
+                (bottom.x - ray_intersection.x) / (bottom.y - ray_intersection.y);
+
+            let mut x_start = middle.x;
+            let mut x_end = ray_intersection.x;
+            for y in top_y..bottom_y {
+                draw_line(
+                    color_buffer,
+                    x_start.round() as i32,
+                    y,
+                    x_end.round() as i32,
+                    y,
+                    color,
+                );
+                x_start += x_per_y_1;
+                x_end += x_per_y_2;
+            }
         }
     }
 }

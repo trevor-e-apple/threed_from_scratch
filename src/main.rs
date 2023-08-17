@@ -164,7 +164,10 @@ pub fn main() {
                     render_state.show_filled_triangles =
                         !render_state.show_filled_triangles;
                 }
-                Event::KeyDown { keycode: Some(Keycode::Num4), .. } => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::Num4),
+                    ..
+                } => {
                     render_state.show_grid = !render_state.show_grid;
                 }
                 Event::KeyDown {
@@ -281,16 +284,16 @@ pub fn main() {
                     }
                 }
 
-                if render_state.show_wireframe {
-                    draw_triangle(&mut color_buffer, triangle, 0xFF00FF00);
-                }
-
                 if render_state.show_filled_triangles {
                     draw_filled_triangle(
                         &mut color_buffer,
                         triangle,
                         0xFF005500,
                     );
+                }
+
+                if render_state.show_wireframe {
+                    draw_triangle(&mut color_buffer, triangle, 0xFF00FF00);
                 }
             }
 
