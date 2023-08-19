@@ -5,7 +5,10 @@ use sdl2::{
     video::Window,
 };
 
-use crate::{triangle::{get_split_triangle_point, Triangle}, vector2::Vec2i};
+use crate::{
+    triangle::{get_split_triangle_point, Triangle},
+    vector2::Vec2i,
+};
 
 pub type Color = u32;
 
@@ -218,9 +221,10 @@ pub fn draw_filled_triangle(
         let bottom_y = ray_intersection.y;
         if top_y != bottom_y {
             // find the change in x for each y pixel (top to bottom)
-            let x_per_y_1 = (middle.x - top.x) as f32 / (middle.y - top.y) as f32;
-            let x_per_y_2 =
-                (ray_intersection.x - top.x) as f32 / (ray_intersection.y - top.y) as f32;
+            let x_per_y_1 =
+                (middle.x - top.x) as f32 / (middle.y - top.y) as f32;
+            let x_per_y_2 = (ray_intersection.x - top.x) as f32
+                / (ray_intersection.y - top.y) as f32;
 
             let mut x_start = top.x as f32;
             let mut x_end = top.x as f32;
@@ -244,7 +248,8 @@ pub fn draw_filled_triangle(
         let top_y = ray_intersection.y as i32;
         let bottom_y = bottom.y as i32;
         if top_y != bottom_y {
-            let x_per_y_1 = (bottom.x - middle.x) as f32 / (bottom.y - middle.y) as f32;
+            let x_per_y_1 =
+                (bottom.x - middle.x) as f32 / (bottom.y - middle.y) as f32;
             let x_per_y_2 = (bottom.x - ray_intersection.x) as f32
                 / (bottom.y - ray_intersection.y) as f32;
 

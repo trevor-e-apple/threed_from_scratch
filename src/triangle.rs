@@ -1,4 +1,4 @@
-use crate::{vector2::Vec2, render::Color};
+use crate::{render::Color, vector2::Vec2};
 
 #[derive(Clone)]
 pub struct Face {
@@ -12,6 +12,7 @@ pub struct Face {
 pub struct Triangle {
     pub points: [Vec2; 3],
     pub color: Color,
+    pub avg_depth: f32,
 }
 
 /// considers the triangle to have a "top", "middle", and "bottom" vertex

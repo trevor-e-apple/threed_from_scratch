@@ -81,6 +81,9 @@ pub struct Vec2i {
 
 impl Vec2i {
     pub fn from_vec2_floor(vec: &Vec2) -> Vec2i {
-        Vec2i { x: vec.x as i32, y: vec.y as i32 }
+        Vec2i {
+            x: vec.x as i32,
+            y: vec.y as i32,
+        }
     }
 }

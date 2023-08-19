@@ -257,7 +257,12 @@ pub fn main() {
                     projected_point.y += window_height_over_two as f32;
 
                     triangle.points[vertex_index] = projected_point;
+
+                    // accumulate sum for avg depth
+                    triangle.avg_depth += vertex.z;
                 }
+                // compute average depth
+                triangle.avg_depth /= 3.0;
 
                 triangles_to_render.push(triangle);
             }
@@ -265,6 +270,10 @@ pub fn main() {
 
         // RENDER
         {
+            // sort the triangles by their average depth
+            triangles_to_render
+                .sort_by(|a, b| b.avg_depth.partial_cmp(&a.avg_depth).unwrap());
+
             color_buffer.clear(0xFF000000);
 
             if render_state.show_grid {
