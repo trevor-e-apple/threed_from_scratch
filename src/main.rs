@@ -1,6 +1,7 @@
 extern crate sdl2;
 
 mod display;
+mod matrix;
 mod mesh;
 mod render;
 mod triangle;
