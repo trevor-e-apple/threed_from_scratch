@@ -9,6 +9,7 @@ pub struct Mesh {
     pub vertices: Vec<Vec3>,
     pub faces: Vec<Face>,
     pub rotation: Vec3,
+    pub scale: Vec3,
 }
 
 const CUBE_VERTICES: [Vec3; 8] = [
@@ -211,6 +212,11 @@ pub fn load_mesh(file_path: &String) -> Result<Mesh, LoadMeshError> {
         rotation: Vec3 {
             ..Default::default()
         },
+        scale: Vec3 {
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        },
     })
 }
 
@@ -220,6 +226,11 @@ pub fn load_cube_mesh() -> Mesh {
         faces: CUBE_FACES.to_vec(),
         rotation: Vec3 {
             ..Default::default()
+        },
+        scale: Vec3 {
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
         },
     }
 }

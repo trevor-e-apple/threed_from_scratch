@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 
 #[derive(Default, Copy, Clone)]
 pub struct Vec3 {
@@ -16,35 +16,51 @@ impl Vec3 {
 impl Add<Self> for Vec3 {
     type Output = Self;
 
-    fn add(self, _rhs: Self) -> Self {
+    fn add(self, rhs: Self) -> Self {
         Self {
-            x: self.x + _rhs.x,
-            y: self.y + _rhs.y,
-            z: self.z + _rhs.z,
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
         }
+    }
+}
+
+impl AddAssign<Self> for Vec3 {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+        self.z += rhs.z;
     }
 }
 
 impl Sub<Self> for Vec3 {
     type Output = Self;
 
-    fn sub(self, _rhs: Self) -> Self {
+    fn sub(self, rhs: Self) -> Self {
         Self {
-            x: self.x - _rhs.x,
-            y: self.y - _rhs.y,
-            z: self.z - _rhs.z,
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
         }
+    }
+}
+
+impl SubAssign<Self> for Vec3 {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+        self.z -= rhs.z;
     }
 }
 
 impl Mul<Vec3> for f32 {
     type Output = Vec3;
 
-    fn mul(self, _rhs: Vec3) -> Vec3 {
+    fn mul(self, rhs: Vec3) -> Vec3 {
         Vec3 {
-            x: self * _rhs.x,
-            y: self * _rhs.y,
-            z: self * _rhs.z,
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
         }
     }
 }
@@ -52,11 +68,11 @@ impl Mul<Vec3> for f32 {
 impl Mul<f32> for Vec3 {
     type Output = Self;
 
-    fn mul(self, _rhs: f32) -> Self {
+    fn mul(self, rhs: f32) -> Self {
         Self {
-            x: self.x * _rhs,
-            y: self.y * _rhs,
-            z: self.z * _rhs,
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
         }
     }
 }

@@ -5,8 +5,10 @@ mod matrix;
 mod mesh;
 mod render;
 mod triangle;
+mod vector;
 mod vector2;
 mod vector3;
+mod vector4;
 
 use mesh::load_mesh;
 use render::draw_filled_triangle;
@@ -21,8 +23,10 @@ use std::{
     todo,
 };
 use triangle::Triangle;
+use vector4::Vec4;
 
 use crate::{
+    matrix::Matrix4,
     mesh::load_cube_mesh,
     render::{draw_grid, draw_rect, draw_triangle, render, ColorBuffer},
     vector2::Vec2,
@@ -133,6 +137,7 @@ pub fn main() {
         test_mesh.faces.len()
     ];
 
+    let mut grow = true;
     // TODO: handle errors
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
@@ -195,6 +200,28 @@ pub fn main() {
             test_mesh.rotation.x += 0.01;
             test_mesh.rotation.y += 0.01;
             test_mesh.rotation.z += 0.01;
+            if grow {
+                test_mesh.scale += Vec3 {
+                    x: 0.002,
+                    y: 0.002,
+                    z: 0.002,
+                };
+            } else {
+                test_mesh.scale -= Vec3 {
+                    x: 0.002,
+                    y: 0.002,
+                    z: 0.002,
+                };
+            }
+
+            if test_mesh.scale.x > 1.1 {
+                grow = false;
+            } else if test_mesh.scale.x < 0.5 {
+                grow = true;
+            }
+
+            let scale_matrix = Matrix4::scale(test_mesh.scale);
+
             let rotation = test_mesh.rotation;
 
             triangles_to_render.clear();
@@ -209,6 +236,9 @@ pub fn main() {
                 for vertex in &mut mesh_vertices {
                     *vertex =
                         rotate_vec3(vertex, rotation.x, rotation.y, rotation.z);
+                    let scaled =
+                        scale_matrix.transform(Vec4::from_vec3(vertex));
+                    *vertex = Vec3::from_vec4(&scaled);
                     // move all vertices farther from the monitor
                     vertex.z += 5.0;
                 }
