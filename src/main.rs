@@ -197,6 +197,8 @@ pub fn main() {
             let window_width_over_two = window_width as f32 / 2.0;
             let window_height_over_two = window_height as f32 / 2.0;
 
+            test_mesh.translation.x += 0.01;
+
             test_mesh.rotation.x += 0.01;
             test_mesh.rotation.y += 0.01;
             test_mesh.rotation.z += 0.01;
@@ -221,6 +223,8 @@ pub fn main() {
             }
 
             let scale_matrix = Matrix4::scale(test_mesh.scale);
+            let translation_matrix = Matrix4::translate(test_mesh.translation);
+            let transformation_matrix = Matrix4::multiply(scale_matrix, translation_matrix);
 
             let rotation = test_mesh.rotation;
 
@@ -236,9 +240,9 @@ pub fn main() {
                 for vertex in &mut mesh_vertices {
                     *vertex =
                         rotate_vec3(vertex, rotation.x, rotation.y, rotation.z);
-                    let scaled =
-                        scale_matrix.transform(Vec4::from_vec3(vertex));
-                    *vertex = Vec3::from_vec4(&scaled);
+                    let transformed_vertex =
+                        transformation_matrix.transform(Vec4::from_vec3(vertex));
+                    *vertex = Vec3::from_vec4(&transformed_vertex);
                     // move all vertices farther from the monitor
                     vertex.z += 5.0;
                 }
