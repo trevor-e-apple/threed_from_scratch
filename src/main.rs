@@ -235,6 +235,7 @@ pub fn main() {
             let translation_matrix = Matrix4::translate(test_mesh.translation);
 
             let transformation_matrix = {
+                // translation must be last (which means its first in the multiplication)
                 let m1 = Matrix4::multiply(translation_matrix, rotation_matrix);
                 Matrix4::multiply(m1, scale_matrix)
             };
