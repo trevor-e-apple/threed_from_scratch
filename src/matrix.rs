@@ -102,6 +102,48 @@ impl Matrix4 {
         }
     }
 
+    pub fn x_rotation(degrees: f32) -> Self {
+        let cos = degrees.cos();
+        let sin = degrees.sin();
+
+        Self {
+            data: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, cos, -sin, 0.0],
+                [0.0, sin, cos, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ],
+        }
+    }
+
+    pub fn y_rotation(degrees: f32) -> Self {
+        let cos = degrees.cos();
+        let sin = degrees.sin();
+
+        Self {
+            data: [
+                [cos, 0.0, sin, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [-sin, 0.0, cos, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ],
+        }
+    }
+
+    pub fn z_rotation(degrees: f32) -> Self {
+        let cos = degrees.cos();
+        let sin = degrees.sin();
+
+        Self {
+            data: [
+                [cos, -sin, 0.0, 0.0],
+                [sin, cos, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ],
+        }
+    }
+
     pub fn transform(&self, to_transform: Vec4) -> Vec4 {
         let row_zero = Vec4::from_array(&self.data[0]);
         let row_one = Vec4::from_array(&self.data[1]);

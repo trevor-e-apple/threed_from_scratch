@@ -30,7 +30,7 @@ use crate::{
     mesh::load_cube_mesh,
     render::{draw_grid, draw_rect, draw_triangle, render, ColorBuffer},
     vector2::Vec2,
-    vector3::{rotate_vec3, unit_normal, Vec3},
+    vector3::{unit_normal, Vec3},
 };
 
 const FOV_FACTOR: f32 = 640.0;
@@ -224,9 +224,19 @@ pub fn main() {
 
             let scale_matrix = Matrix4::scale(test_mesh.scale);
             let translation_matrix = Matrix4::translate(test_mesh.translation);
-            let transformation_matrix = Matrix4::multiply(scale_matrix, translation_matrix);
+            let rotation_matrix = {
+                let x_rotation = Matrix4::x_rotation(test_mesh.rotation.x);
+                let y_rotation = Matrix4::y_rotation(test_mesh.rotation.y);
+                let z_rotation = Matrix4::z_rotation(test_mesh.rotation.z);
 
-            let rotation = test_mesh.rotation;
+                let xy = Matrix4::multiply(x_rotation, y_rotation);
+                
+                Matrix4::multiply(xy, z_rotation)
+            };
+            let transformation_matrix = {
+                let m1 = Matrix4::multiply(scale_matrix, translation_matrix);
+                Matrix4::multiply(m1, rotation_matrix)
+            };
 
             triangles_to_render.clear();
 
@@ -238,10 +248,8 @@ pub fn main() {
                 ];
 
                 for vertex in &mut mesh_vertices {
-                    *vertex =
-                        rotate_vec3(vertex, rotation.x, rotation.y, rotation.z);
-                    let transformed_vertex =
-                        transformation_matrix.transform(Vec4::from_vec3(vertex));
+                    let transformed_vertex = transformation_matrix
+                        .transform(Vec4::from_vec3(vertex));
                     *vertex = Vec3::from_vec4(&transformed_vertex);
                     // move all vertices farther from the monitor
                     vertex.z += 5.0;
