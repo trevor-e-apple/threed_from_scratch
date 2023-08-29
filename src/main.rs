@@ -17,23 +17,24 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::render::TextureAccess;
 use std::{
-    env, println,
+    env,
+    f32::consts::PI,
+    println,
     thread::sleep,
     time::{Duration, Instant},
     todo,
 };
 use triangle::Triangle;
+use vector2::Vec2;
 use vector4::Vec4;
 
 use crate::{
     matrix::Matrix4,
     mesh::load_cube_mesh,
     render::{draw_grid, draw_rect, draw_triangle, render, ColorBuffer},
-    vector2::Vec2,
     vector3::{unit_normal, Vec3},
 };
 
-const FOV_FACTOR: f32 = 640.0;
 const FRAMES_PER_SECOND: f64 = 60.0;
 const FRAME_TIME_MS: f64 = 1000.0 / FRAMES_PER_SECOND;
 
@@ -44,20 +45,6 @@ struct RenderState {
     show_filled_triangles: bool,
     show_grid: bool,
     backface_culling_enabled: bool,
-}
-
-pub fn orthographic_projection(point: &Vec3) -> Vec2 {
-    Vec2 {
-        x: (FOV_FACTOR * point.x),
-        y: (FOV_FACTOR * point.y),
-    }
-}
-
-pub fn perspective_projection(point: &Vec3) -> Vec2 {
-    Vec2 {
-        x: (FOV_FACTOR * point.x) / point.z,
-        y: (FOV_FACTOR * point.y) / point.z,
-    }
 }
 
 pub fn main() {
@@ -137,6 +124,15 @@ pub fn main() {
         test_mesh.faces.len()
     ];
 
+    let projection_matrix = {
+        let fov = PI / 3.0;
+        let aspect = window_height as f32 / window_width as f32;
+        let znear = 0.1;
+        let zfar = 100.0;
+
+        Matrix4::projection_matrix(fov, aspect, znear, zfar)
+    };
+
     let mut grow = true;
     // TODO: handle errors
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -197,11 +193,12 @@ pub fn main() {
             let window_width_over_two = window_width as f32 / 2.0;
             let window_height_over_two = window_height as f32 / 2.0;
 
-            test_mesh.translation.x += 0.01;
+            // test_mesh.translation.x += 0.01;
 
             test_mesh.rotation.x += 0.01;
             test_mesh.rotation.y += 0.01;
             test_mesh.rotation.z += 0.01;
+
             if grow {
                 test_mesh.scale += Vec3 {
                     x: 0.002,
@@ -215,7 +212,6 @@ pub fn main() {
                     z: 0.002,
                 };
             }
-
             if test_mesh.scale.x > 1.1 {
                 grow = false;
             } else if test_mesh.scale.x < 0.5 {
@@ -239,7 +235,6 @@ pub fn main() {
                 let m1 = Matrix4::multiply(translation_matrix, rotation_matrix);
                 Matrix4::multiply(m1, scale_matrix)
             };
-
 
             triangles_to_render.clear();
 
@@ -296,11 +291,31 @@ pub fn main() {
                 for (vertex_index, vertex) in
                     (&mesh_vertices).into_iter().enumerate()
                 {
-                    let mut projected_point = perspective_projection(vertex);
+                    // let mut projected_point = perspective_projection(vertex);
+                    let mut projected_point = {
+                        let mut projected_point = projection_matrix
+                            .transform(Vec4::from_vec3(vertex));
+
+                        // perform perspective projection
+                        if projected_point.w != 0.0 {
+                            projected_point.x /= projected_point.w;
+                            projected_point.y /= projected_point.w;
+                            projected_point.z /= projected_point.w;
+                        }
+
+                        Vec2 {
+                            x: projected_point.x,
+                            y: projected_point.y,
+                        }
+                    };
+
+                    // scale into view
+                    projected_point.x *= window_width_over_two;
+                    projected_point.y *= window_height_over_two;
 
                     // center our points
-                    projected_point.x += window_width_over_two as f32;
-                    projected_point.y += window_height_over_two as f32;
+                    projected_point.x += window_width_over_two;
+                    projected_point.y += window_height_over_two;
 
                     triangle.points[vertex_index] = projected_point;
 

@@ -144,6 +144,27 @@ impl Matrix4 {
         }
     }
 
+    pub fn projection_matrix(
+        fov: f32,
+        aspect: f32,
+        znear: f32,
+        zfar: f32,
+    ) -> Self {
+        let fov_factor = 1.0 / (fov / 2.0).tan();
+        let x_scale = aspect * fov_factor;
+        let y_scale = fov_factor;
+        let z_normalization = zfar / (zfar - znear);
+        let z_offset = (-zfar * znear) / (zfar - znear);
+        Self {
+            data: [
+                [x_scale, 0.0, 0.0, 0.0],
+                [0.0, y_scale, 0.0, 0.0],
+                [0.0, 0.0, z_normalization, z_offset],
+                [0.0, 0.0, 1.0, 0.0],
+            ],
+        }
+    }
+
     pub fn transform(&self, to_transform: Vec4) -> Vec4 {
         let row_zero = Vec4::from_array(&self.data[0]);
         let row_one = Vec4::from_array(&self.data[1]);
