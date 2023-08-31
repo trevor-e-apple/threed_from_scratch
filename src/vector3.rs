@@ -81,6 +81,12 @@ pub fn dot(a: &Vec3, b: &Vec3) -> f32 {
     a.x * b.x + a.y * b.y + a.z * b.z
 }
 
+/// gives the angle between the two vectors in radians
+pub fn angle_between(a: &Vec3, b: &Vec3) -> f32 {
+    let dot_product = dot(a, b);
+    (dot_product / (a.magnitude() * b.magnitude())).acos()
+}
+
 /// right-hand rule cross product, where a is the first vector
 pub fn cross_product(a: &Vec3, b: &Vec3) -> Vec3 {
     Vec3 {
@@ -142,4 +148,29 @@ pub fn rotate_vec3(
     let result = z_axis_rotate(&result, z_degrees);
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use std::f32::consts::PI;
+
+    use super::*;
+
+    #[test]
+    fn correct_angle() {
+        let test = angle_between(
+            &Vec3 {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            },
+            &Vec3 {
+                x: 0.0,
+                y: -1.0,
+                z: 0.0,
+            },
+        );
+
+        assert!(test > (PI / 2.0));
+    }
 }

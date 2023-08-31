@@ -1,4 +1,4 @@
-use crate::{render::Color, vector2::Vec2};
+use crate::{color::Color, vector2::Vec2};
 
 #[derive(Clone)]
 pub struct Face {

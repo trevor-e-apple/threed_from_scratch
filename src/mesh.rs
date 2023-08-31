@@ -1,6 +1,6 @@
 use std::fs::File;
+use std::io;
 use std::io::Read;
-use std::{io, todo};
 
 use crate::triangle::Face;
 use crate::vector3::Vec3;
@@ -202,7 +202,7 @@ pub fn load_mesh(file_path: &String) -> Result<Mesh, LoadMeshError> {
                 a: elements[0],
                 b: elements[1],
                 c: elements[2],
-                color: 0xFF005500,
+                color: 0xFFFFFFFF,
             })
         }
     }

@@ -1,9 +1,11 @@
 extern crate sdl2;
 
+mod color;
 mod display;
 mod matrix;
 mod mesh;
 mod render;
+mod shading;
 mod triangle;
 mod vector;
 mod vector2;
@@ -16,6 +18,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::render::TextureAccess;
+use shading::{compute_shaded_color, Light};
 use std::{
     env,
     f32::consts::PI,
@@ -124,6 +127,14 @@ pub fn main() {
         test_mesh.faces.len()
     ];
 
+    let light = Light {
+        direction: Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0,
+        },
+    };
+
     let projection_matrix = {
         let fov = PI / 3.0;
         let aspect = window_height as f32 / window_width as f32;
@@ -196,27 +207,27 @@ pub fn main() {
             // test_mesh.translation.x += 0.01;
 
             test_mesh.rotation.x += 0.01;
-            test_mesh.rotation.y += 0.01;
-            test_mesh.rotation.z += 0.01;
+            // test_mesh.rotation.y += 0.01;
+            // test_mesh.rotation.z += 0.01;
 
-            if grow {
-                test_mesh.scale += Vec3 {
-                    x: 0.002,
-                    y: 0.002,
-                    z: 0.002,
-                };
-            } else {
-                test_mesh.scale -= Vec3 {
-                    x: 0.002,
-                    y: 0.002,
-                    z: 0.002,
-                };
-            }
-            if test_mesh.scale.x > 1.1 {
-                grow = false;
-            } else if test_mesh.scale.x < 0.5 {
-                grow = true;
-            }
+            // if grow {
+            //     test_mesh.scale += Vec3 {
+            //         x: 0.002,
+            //         y: 0.002,
+            //         z: 0.002,
+            //     };
+            // } else {
+            //     test_mesh.scale -= Vec3 {
+            //         x: 0.002,
+            //         y: 0.002,
+            //         z: 0.002,
+            //     };
+            // }
+            // if test_mesh.scale.x > 1.1 {
+            //     grow = false;
+            // } else if test_mesh.scale.x < 0.5 {
+            //     grow = true;
+            // }
 
             let scale_matrix = Matrix4::scale(test_mesh.scale);
             let rotation_matrix = {
@@ -253,9 +264,7 @@ pub fn main() {
                     vertex.z += 5.0;
                 }
 
-                // backface cull check
-                let should_cull: bool = if render_state.backface_culling_enabled
-                {
+                let surface_normal = {
                     // find the vectors which define the surface
                     let a = mesh_vertices[0];
                     let b = mesh_vertices[1];
@@ -264,12 +273,15 @@ pub fn main() {
                     let ab = b - a;
                     let ac = c - a;
 
-                    // calculate the cross product of those vectors to find
-                    // -- the surface normal (left-handed system)
-                    let surface_normal = unit_normal(&ab, &ac);
+                    // calculate the cross product of those vectors
+                    unit_normal(&ab, &ac)
+                };
 
+                // backface cull check
+                let should_cull: bool = if render_state.backface_culling_enabled
+                {
                     // find the vector to the camera from the surface
-                    let camera_ray = camera_position - a;
+                    let camera_ray = camera_position - mesh_vertices[0];
 
                     // find the dot product between the vector to the camera and
                     // -- the surface normal
@@ -284,8 +296,11 @@ pub fn main() {
                     continue;
                 }
 
+                let triangle_color =
+                    compute_shaded_color(&light, surface_normal, face.color);
+
                 let mut triangle = Triangle {
-                    color: face.color,
+                    color: triangle_color,
                     ..Default::default()
                 };
                 for (vertex_index, vertex) in
