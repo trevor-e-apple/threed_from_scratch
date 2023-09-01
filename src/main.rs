@@ -128,11 +128,11 @@ pub fn main() {
     ];
 
     let light = Light {
-        direction: Vec3 {
+        direction: vector3::normalize(&Vec3 {
             x: 0.0,
-            y: 0.0,
+            y: 0.0, // remember that y grows down
             z: 1.0,
-        },
+        }),
     };
 
     let projection_matrix = {
@@ -327,6 +327,9 @@ pub fn main() {
                     // scale into view
                     projected_point.x *= window_width_over_two;
                     projected_point.y *= window_height_over_two;
+
+                    // invert y coordinates for screen space
+                    projected_point.y *= -1.0;
 
                     // center our points
                     projected_point.x += window_width_over_two;
