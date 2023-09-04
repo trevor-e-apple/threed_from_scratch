@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io;
 use std::io::Read;
 
+use crate::texture::Tex2;
 use crate::triangle::Face;
 use crate::vector3::Vec3;
 
@@ -62,12 +63,18 @@ const CUBE_FACES: [Face; 12] = [
         a: 1,
         b: 2,
         c: 3,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 0.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 1.0},
         color: 0xFFFF0000,
     },
     Face {
         a: 1,
         b: 3,
         c: 4,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 1.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 0.0},
         color: 0xFFFF0000,
     },
     // right
@@ -75,12 +82,18 @@ const CUBE_FACES: [Face; 12] = [
         a: 4,
         b: 3,
         c: 5,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 0.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 1.0},
         color: 0xFF00FF00,
     },
     Face {
         a: 4,
         b: 5,
         c: 6,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 1.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 0.0},
         color: 0xFF00FF00,
     },
     // back
@@ -88,12 +101,18 @@ const CUBE_FACES: [Face; 12] = [
         a: 6,
         b: 5,
         c: 7,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 0.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 1.0},
         color: 0xFF0000FF,
     },
     Face {
         a: 6,
         b: 7,
         c: 8,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 1.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 0.0},
         color: 0xFF0000FF,
     },
     // left
@@ -101,12 +120,18 @@ const CUBE_FACES: [Face; 12] = [
         a: 8,
         b: 7,
         c: 2,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 0.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 1.0},
         color: 0xFFFF00FF,
     },
     Face {
         a: 8,
         b: 2,
         c: 1,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 1.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 0.0},
         color: 0xFFFF00FF,
     },
     // top
@@ -114,12 +139,18 @@ const CUBE_FACES: [Face; 12] = [
         a: 2,
         b: 7,
         c: 5,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 0.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 1.0},
         color: 0xFF00FFFF,
     },
     Face {
         a: 2,
         b: 5,
         c: 3,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 1.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 0.0},
         color: 0xFF00FFFF,
     },
     // bottom
@@ -127,12 +158,18 @@ const CUBE_FACES: [Face; 12] = [
         a: 6,
         b: 8,
         c: 1,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 0.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 1.0},
         color: 0xFFFFFF00,
     },
     Face {
         a: 6,
         b: 1,
         c: 4,
+        a_uv: Tex2 {u: 0.0, v: 0.0},
+        b_uv: Tex2 {u: 1.0, v: 1.0},
+        c_uv: Tex2 {u: 1.0, v: 0.0},
         color: 0xFFFFFF00,
     },
 ];
@@ -203,6 +240,7 @@ pub fn load_mesh(file_path: &String) -> Result<Mesh, LoadMeshError> {
                 b: elements[1],
                 c: elements[2],
                 color: 0xFFFFFFFF,
+                ..Default::default()
             })
         }
     }

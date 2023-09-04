@@ -14,7 +14,7 @@ pub fn compute_shaded_color(
     face_normal: Vec3,
     face_color: Color,
 ) -> Color {
-    // negate b/c 
+    // negate b/c
     let intensity = -1.0
         * vector3::dot(
             &vector3::normalize(&light.direction),

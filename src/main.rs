@@ -6,6 +6,7 @@ mod matrix;
 mod mesh;
 mod render;
 mod shading;
+mod texture;
 mod triangle;
 mod vector;
 mod vector2;
@@ -27,6 +28,7 @@ use std::{
     time::{Duration, Instant},
     todo,
 };
+use texture::REDBRICK_TEXTURE_DATA;
 use triangle::Triangle;
 use vector2::Vec2;
 use vector4::Vec4;
@@ -42,10 +44,17 @@ const FRAMES_PER_SECOND: f64 = 60.0;
 const FRAME_TIME_MS: f64 = 1000.0 / FRAMES_PER_SECOND;
 
 #[derive(Debug)]
+enum FillType {
+    None,
+    Color,
+    Texture,
+}
+
+#[derive(Debug)]
 struct RenderState {
     show_wireframe: bool,
     show_vertices: bool,
-    show_filled_triangles: bool,
+    fill_type: FillType,
     show_grid: bool,
     backface_culling_enabled: bool,
 }
@@ -79,7 +88,7 @@ pub fn main() {
         ColorBuffer::new(window_width as usize, window_height as usize);
 
     let texture_creator = canvas.texture_creator();
-    let mut texture = match texture_creator.create_texture(
+    let mut backbuffer_texture = match texture_creator.create_texture(
         None,
         TextureAccess::Streaming,
         window_width,
@@ -94,9 +103,9 @@ pub fn main() {
     canvas.present();
 
     let mut render_state = RenderState {
-        show_wireframe: true,
-        show_vertices: true,
-        show_filled_triangles: true,
+        show_wireframe: false,
+        show_vertices: false,
+        fill_type: FillType::Color,
         show_grid: false,
         backface_culling_enabled: true,
     };
@@ -144,6 +153,26 @@ pub fn main() {
         Matrix4::projection_matrix(fov, aspect, znear, zfar)
     };
 
+    // convert the u8 data to u32 data. could do it before runtime, but not 
+    // -- perf critical
+    let redbrick_texture_data: Vec<u32> = {
+        let mut redbrick_texture_data = Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
+
+        for byte_slice in REDBRICK_TEXTURE_DATA.chunks(4) {
+            let mut bytes: [u8; 4] = [0; 4];
+            bytes.clone_from_slice(byte_slice);
+            redbrick_texture_data.push(u32::from_le_bytes(bytes));
+        }
+
+        redbrick_texture_data
+    };
+
+    let texture = texture::Texture {
+        width: 64,
+        height: 64,
+        data: redbrick_texture_data,
+    };
+
     let mut grow = true;
     // TODO: handle errors
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -174,8 +203,11 @@ pub fn main() {
                     keycode: Some(Keycode::Num3),
                     ..
                 } => {
-                    render_state.show_filled_triangles =
-                        !render_state.show_filled_triangles;
+                    render_state.fill_type = match render_state.fill_type {
+                        FillType::None => FillType::Color,
+                        FillType::Color => FillType::Texture,
+                        FillType::Texture => FillType::None,
+                    };
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Num4),
@@ -301,6 +333,7 @@ pub fn main() {
 
                 let mut triangle = Triangle {
                     color: triangle_color,
+                    tex_coordinates: [face.a_uv, face.b_uv, face.c_uv],
                     ..Default::default()
                 };
                 for (vertex_index, vertex) in
@@ -373,13 +406,17 @@ pub fn main() {
                     }
                 }
 
-                if render_state.show_filled_triangles {
-                    draw_filled_triangle(
-                        &mut color_buffer,
-                        triangle,
-                        triangle.color,
-                    );
-                }
+                match render_state.fill_type {
+                    FillType::None => {}
+                    FillType::Color => {
+                        draw_filled_triangle(
+                            &mut color_buffer,
+                            triangle,
+                            triangle.color,
+                        );
+                    }
+                    FillType::Texture => todo!(),
+                };
 
                 if render_state.show_wireframe {
                     draw_triangle(&mut color_buffer, triangle, 0xFF00FF00);
@@ -387,7 +424,7 @@ pub fn main() {
             }
 
             let render_result =
-                render(&mut color_buffer, &mut canvas, &mut texture);
+                render(&mut color_buffer, &mut canvas, &mut backbuffer_texture);
 
             if !render_result {
                 break 'running;

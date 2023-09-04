@@ -1,16 +1,20 @@
-use crate::{color::Color, vector2::Vec2};
+use crate::{color::Color, texture::Tex2, vector2::Vec2};
 
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct Face {
     pub a: usize,
     pub b: usize,
     pub c: usize,
+    pub a_uv: Tex2,
+    pub b_uv: Tex2,
+    pub c_uv: Tex2,
     pub color: Color,
 }
 
 #[derive(Default, Clone)]
 pub struct Triangle {
     pub points: [Vec2; 3],
+    pub tex_coordinates: [Tex2; 3],
     pub color: Color,
     pub avg_depth: f32,
 }
