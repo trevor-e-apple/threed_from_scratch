@@ -1,12 +1,15 @@
-mod split_triangle;
-
 use std::mem::size_of;
 
-use sdl2::{self, render::Canvas, video::Window};
+use sdl2::{
+    render::{Canvas, Texture},
+    video::Window,
+};
 
-use crate::{color::Color, texture, triangle::Triangle};
-
-use self::split_triangle::{FillTriangleIter, SplitTriangle};
+use crate::{
+    color::Color,
+    triangle::{get_split_triangle_point, Triangle},
+    vector2::Vec2i,
+};
 
 pub struct ColorBuffer {
     buffer: Vec<u32>,
@@ -204,30 +207,67 @@ pub fn draw_filled_triangle(
     triangle: &Triangle,
     color: Color,
 ) {
-    let split_triangle = SplitTriangle::from_triangle(triangle);
+    let (sorted_points, ray_intersection) = get_split_triangle_point(triangle);
+
+    let top = Vec2i::from_vec2_floor(&sorted_points[0]);
+    let middle = Vec2i::from_vec2_floor(&sorted_points[1]);
+    let bottom = Vec2i::from_vec2_floor(&sorted_points[2]);
+    let ray_intersection = Vec2i::from_vec2_floor(&ray_intersection);
 
     // draw the top filled triangle (flat bottom)
-    if split_triangle.should_fill_top() {
-        for (x_start, x_end, y) in FillTriangleIter::top_iter(&split_triangle) {
-            draw_line(color_buffer, x_start, y, x_end, y, color);
+    {
+        let top_y = top.y;
+        let bottom_y = ray_intersection.y;
+        if top_y != bottom_y {
+            // find the change in x for each y pixel (top to bottom)
+            let x_per_y_1 =
+                (middle.x - top.x) as f32 / (middle.y - top.y) as f32;
+            let x_per_y_2 = (ray_intersection.x - top.x) as f32
+                / (ray_intersection.y - top.y) as f32;
+
+            let mut x_start = top.x as f32;
+            let mut x_end = top.x as f32;
+            for y in top_y..=bottom_y {
+                draw_line(
+                    color_buffer,
+                    x_start as i32,
+                    y,
+                    x_end as i32,
+                    y,
+                    color,
+                );
+                x_start += x_per_y_1;
+                x_end += x_per_y_2;
+            }
         }
     }
 
     // draw the bottom filled triangle (flat top)
-    if split_triangle.should_fill_bottom() {
-        for (x_start, x_end, y) in
-            FillTriangleIter::bottom_iter(&split_triangle)
-        {
-            draw_line(color_buffer, x_start, y, x_end, y, color);
+    {
+        let top_y = ray_intersection.y as i32;
+        let bottom_y = bottom.y as i32;
+        if top_y != bottom_y {
+            let x_per_y_1 =
+                (bottom.x - middle.x) as f32 / (bottom.y - middle.y) as f32;
+            let x_per_y_2 = (bottom.x - ray_intersection.x) as f32
+                / (bottom.y - ray_intersection.y) as f32;
+
+            let mut x_start = middle.x as f32;
+            let mut x_end = ray_intersection.x as f32;
+            for y in top_y..=bottom_y {
+                draw_line(
+                    color_buffer,
+                    x_start as i32,
+                    y,
+                    x_end as i32,
+                    y,
+                    color,
+                );
+                x_start += x_per_y_1;
+                x_end += x_per_y_2;
+            }
         }
     }
-}
-
-pub fn draw_textured_triangle(
-    color_buffer: &mut ColorBuffer,
-    triangle: &Triangle,
-    texture_data: texture::Texture,
-) {
 }
 
 /// Renders a color buffer to the screen
@@ -237,12 +277,12 @@ pub fn draw_textured_triangle(
 pub fn render(
     color_buffer: &mut ColorBuffer,
     canvas: &mut Canvas<Window>,
-    sdl2_texture: &mut sdl2::render::Texture,
+    texture: &mut Texture,
 ) -> bool {
     let window_width = color_buffer.width;
 
     // TODO: Error handling
-    match sdl2_texture.update(
+    match texture.update(
         None,
         unsafe { color_buffer.get_raw_data() },
         (window_width as usize) * size_of::<u32>(),
@@ -255,7 +295,7 @@ pub fn render(
     };
 
     // TODO: error handling
-    match canvas.copy(&sdl2_texture, None, None) {
+    match canvas.copy(&texture, None, None) {
         Err(err) => {
             println!("Canvas copy failed: {:?}", err);
             return false;

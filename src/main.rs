@@ -153,11 +153,10 @@ pub fn main() {
         Matrix4::projection_matrix(fov, aspect, znear, zfar)
     };
 
-    // convert the u8 data to u32 data. could do it before runtime, but not
+    // convert the u8 data to u32 data. could do it before runtime, but not 
     // -- perf critical
     let redbrick_texture_data: Vec<u32> = {
-        let mut redbrick_texture_data =
-            Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
+        let mut redbrick_texture_data = Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
 
         for byte_slice in REDBRICK_TEXTURE_DATA.chunks(4) {
             let mut bytes: [u8; 4] = [0; 4];
