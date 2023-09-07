@@ -1,12 +1,10 @@
-use std::mem::size_of;
+use std::{mem::size_of, todo};
 
-use sdl2::{
-    render::{Canvas, Texture},
-    video::Window,
-};
+use sdl2::{render::Canvas, video::Window};
 
 use crate::{
     color::Color,
+    texture,
     triangle::{get_split_triangle_point, Triangle},
     vector2::Vec2i,
 };
@@ -202,12 +200,81 @@ pub fn draw_triangle(
     );
 }
 
+pub fn draw_textured_triangle(
+    color_buffer: &mut ColorBuffer,
+    triangle: &Triangle,
+    texture: &texture::Texture,
+) {
+    let (sorted_points, uv_points, ray_intersection) =
+        get_split_triangle_point(triangle);
+
+    let top = Vec2i::from_vec2_floor(&sorted_points[0]);
+    let middle = Vec2i::from_vec2_floor(&sorted_points[1]);
+    let bottom = Vec2i::from_vec2_floor(&sorted_points[2]);
+    let ray_intersection = Vec2i::from_vec2_floor(&ray_intersection);
+
+    // draw the top filled triangle (flat bottom)
+    {
+        let top_y = top.y;
+        let bottom_y = ray_intersection.y;
+        if top_y != bottom_y {
+            // find the change in x for each y pixel (top to bottom)
+            let x_per_y_1 =
+                (middle.x - top.x) as f32 / (middle.y - top.y) as f32;
+            let x_per_y_2 = (ray_intersection.x - top.x) as f32
+                / (ray_intersection.y - top.y) as f32;
+
+            let mut x_bound_one = top.x as f32;
+            let mut x_bound_two = top.x as f32;
+
+            if x_per_y_1 < x_per_y_2 {
+                for y in top_y..=bottom_y {
+                    for x in (x_bound_one as i32)..=(x_bound_two as i32) {
+                        draw_pixel(color_buffer, x, y, 0xFFFF00FF);
+                    }
+                    x_bound_one += x_per_y_1;
+                    x_bound_two += x_per_y_2;
+                }
+            } else {
+                for y in top_y..=bottom_y {
+                    for x in (x_bound_two as i32)..=(x_bound_one as i32) {
+                        draw_pixel(color_buffer, x, y, 0xFFFF00FF);
+                    }
+                    x_bound_one += x_per_y_1;
+                    x_bound_two += x_per_y_2;
+                }
+            }
+        }
+    }
+
+    // draw the bottom filled triangle (flat top)
+    // {
+    //     let top_y = ray_intersection.y as i32;
+    //     let bottom_y = bottom.y as i32;
+    //     if top_y != bottom_y {
+    //         let x_per_y_1 =
+    //             (bottom.x - middle.x) as f32 / (bottom.y - middle.y) as f32;
+    //         let x_per_y_2 = (bottom.x - ray_intersection.x) as f32
+    //             / (bottom.y - ray_intersection.y) as f32;
+
+    //         let mut x_start = middle.x as f32;
+    //         let mut x_end = ray_intersection.x as f32;
+    //         for y in top_y..=bottom_y {
+    //             todo!();
+    //             x_start += x_per_y_1;
+    //             x_end += x_per_y_2;
+    //         }
+    //     }
+    // }
+}
+
 pub fn draw_filled_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
     color: Color,
 ) {
-    let (sorted_points, ray_intersection) = get_split_triangle_point(triangle);
+    let (sorted_points, _, ray_intersection) =
+        get_split_triangle_point(triangle);
 
     let top = Vec2i::from_vec2_floor(&sorted_points[0]);
     let middle = Vec2i::from_vec2_floor(&sorted_points[1]);
@@ -277,7 +344,7 @@ pub fn draw_filled_triangle(
 pub fn render(
     color_buffer: &mut ColorBuffer,
     canvas: &mut Canvas<Window>,
-    texture: &mut Texture,
+    texture: &mut sdl2::render::Texture,
 ) -> bool {
     let window_width = color_buffer.width;
 

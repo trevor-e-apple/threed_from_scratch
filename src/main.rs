@@ -14,7 +14,7 @@ mod vector3;
 mod vector4;
 
 use mesh::load_mesh;
-use render::draw_filled_triangle;
+use render::{draw_filled_triangle, draw_textured_triangle};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -153,10 +153,11 @@ pub fn main() {
         Matrix4::projection_matrix(fov, aspect, znear, zfar)
     };
 
-    // convert the u8 data to u32 data. could do it before runtime, but not 
+    // convert the u8 data to u32 data. could do it before runtime, but not
     // -- perf critical
     let redbrick_texture_data: Vec<u32> = {
-        let mut redbrick_texture_data = Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
+        let mut redbrick_texture_data =
+            Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
 
         for byte_slice in REDBRICK_TEXTURE_DATA.chunks(4) {
             let mut bytes: [u8; 4] = [0; 4];
@@ -415,7 +416,13 @@ pub fn main() {
                             triangle.color,
                         );
                     }
-                    FillType::Texture => todo!(),
+                    FillType::Texture => {
+                        draw_textured_triangle(
+                            &mut color_buffer,
+                            triangle,
+                            &texture,
+                        );
+                    }
                 };
 
                 if render_state.show_wireframe {
