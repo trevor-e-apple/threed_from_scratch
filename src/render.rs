@@ -248,24 +248,40 @@ pub fn draw_textured_triangle(
     }
 
     // draw the bottom filled triangle (flat top)
-    // {
-    //     let top_y = ray_intersection.y as i32;
-    //     let bottom_y = bottom.y as i32;
-    //     if top_y != bottom_y {
-    //         let x_per_y_1 =
-    //             (bottom.x - middle.x) as f32 / (bottom.y - middle.y) as f32;
-    //         let x_per_y_2 = (bottom.x - ray_intersection.x) as f32
-    //             / (bottom.y - ray_intersection.y) as f32;
+    {
+        let top_y = ray_intersection.y as i32;
+        let bottom_y = bottom.y as i32;
+        if top_y != bottom_y {
+            let x_per_y_1 =
+                (bottom.x - middle.x) as f32 / (bottom.y - middle.y) as f32;
+            let x_per_y_2 = (bottom.x - ray_intersection.x) as f32
+                / (bottom.y - ray_intersection.y) as f32;
 
-    //         let mut x_start = middle.x as f32;
-    //         let mut x_end = ray_intersection.x as f32;
-    //         for y in top_y..=bottom_y {
-    //             todo!();
-    //             x_start += x_per_y_1;
-    //             x_end += x_per_y_2;
-    //         }
-    //     }
-    // }
+            if middle.x < ray_intersection.x {
+                let mut x_start = middle.x as f32;
+                let mut x_end = ray_intersection.x as f32;
+
+                for y in top_y..=bottom_y {
+                    for x in (x_start as i32)..=(x_end as i32) {
+                        draw_pixel(color_buffer, x, y, 0xFF00FF00);   
+                    }
+                    x_start += x_per_y_1;
+                    x_end += x_per_y_2;
+                }
+            } else {
+                let mut x_start = ray_intersection.x as f32;
+                let mut x_end = middle.x as f32;
+
+                for y in top_y..=bottom_y {
+                    for x in (x_start as i32)..=(x_end as i32) {
+                        draw_pixel(color_buffer, x, y, 0xFF00FF00);   
+                    }
+                    x_start += x_per_y_2;
+                    x_end += x_per_y_1;
+                }
+            }
+        }
+    }
 }
 
 pub fn draw_filled_triangle(
