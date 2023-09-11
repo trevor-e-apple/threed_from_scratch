@@ -4,9 +4,9 @@ use sdl2::{render::Canvas, video::Window};
 
 use crate::{
     color::Color,
-    texture,
-    triangle::{get_split_triangle_point, Triangle},
-    vector2::Vec2i,
+    texture::{self, Tex2},
+    triangle::{get_split_triangle_point, Triangle, barycentric_weights},
+    vector2::{Vec2, Vec2i},
 };
 
 pub struct ColorBuffer {
@@ -200,6 +200,38 @@ pub fn draw_triangle(
     );
 }
 
+fn draw_texel(
+    color_buffer: &mut ColorBuffer,
+    texture: &texture::Texture,
+    x: i32,
+    y: i32,
+    a: Vec2,
+    a_uv: Tex2,
+    b: Vec2,
+    b_uv: Tex2,
+    c: Vec2,
+    c_uv: Tex2,
+) {
+    let weights = barycentric_weights(a, b, c, Vec2 { x: x as f32, y: y as f32 });
+
+    let alpha = weights.x;
+    let beta = weights.y;
+    let gamma = weights.z;
+
+    let interpolated_u = a_uv.u * alpha + b_uv.u * beta + c_uv.u * gamma;
+    let interpolated_v = a_uv.v * alpha + b_uv.v * beta + c_uv.v * gamma;
+
+    let tex_x = (interpolated_u * texture.width as f32).abs() as usize;
+    let tex_y = (interpolated_v * texture.height as f32).abs() as usize;
+
+    let color = match texture.get_pixel(tex_x, tex_y) {
+        Some(color) => color,
+        None => return,
+    };
+
+    draw_pixel(color_buffer, x, y, color);
+}
+
 pub fn draw_textured_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
@@ -208,9 +240,18 @@ pub fn draw_textured_triangle(
     let (sorted_points, uv_points, ray_intersection) =
         get_split_triangle_point(triangle);
 
-    let top = Vec2i::from_vec2_floor(&sorted_points[0]);
-    let middle = Vec2i::from_vec2_floor(&sorted_points[1]);
-    let bottom = Vec2i::from_vec2_floor(&sorted_points[2]);
+    // Vec2 points needed for texel draw
+    let a = sorted_points[0];
+    let a_uv = uv_points[0];
+    let b = sorted_points[1];
+    let b_uv = uv_points[1];
+    let c = sorted_points[2];
+    let c_uv = uv_points[2];
+
+    // Vec2i needed for scanline fill
+    let top = Vec2i::from_vec2_floor(&a);
+    let middle = Vec2i::from_vec2_floor(&b);
+    let bottom = Vec2i::from_vec2_floor(&c);
     let ray_intersection = Vec2i::from_vec2_floor(&ray_intersection);
 
     // draw the top filled triangle (flat bottom)
@@ -230,7 +271,18 @@ pub fn draw_textured_triangle(
             if x_per_y_1 < x_per_y_2 {
                 for y in top_y..=bottom_y {
                     for x in (x_bound_one as i32)..=(x_bound_two as i32) {
-                        draw_pixel(color_buffer, x, y, 0xFFFF00FF);
+                        draw_texel(
+                            color_buffer,
+                            texture,
+                            x,
+                            y,
+                            a,
+                            a_uv,
+                            b,
+                            b_uv,
+                            c,
+                            c_uv,
+                        );
                     }
                     x_bound_one += x_per_y_1;
                     x_bound_two += x_per_y_2;
@@ -238,7 +290,18 @@ pub fn draw_textured_triangle(
             } else {
                 for y in top_y..=bottom_y {
                     for x in (x_bound_two as i32)..=(x_bound_one as i32) {
-                        draw_pixel(color_buffer, x, y, 0xFFFF00FF);
+                        draw_texel(
+                            color_buffer,
+                            texture,
+                            x,
+                            y,
+                            a,
+                            a_uv,
+                            b,
+                            b_uv,
+                            c,
+                            c_uv,
+                        );
                     }
                     x_bound_one += x_per_y_1;
                     x_bound_two += x_per_y_2;
@@ -263,7 +326,18 @@ pub fn draw_textured_triangle(
 
                 for y in top_y..=bottom_y {
                     for x in (x_start as i32)..=(x_end as i32) {
-                        draw_pixel(color_buffer, x, y, 0xFF00FF00);   
+                        draw_texel(
+                            color_buffer,
+                            texture,
+                            x,
+                            y,
+                            a,
+                            a_uv,
+                            b,
+                            b_uv,
+                            c,
+                            c_uv,
+                        );
                     }
                     x_start += x_per_y_1;
                     x_end += x_per_y_2;
@@ -274,7 +348,18 @@ pub fn draw_textured_triangle(
 
                 for y in top_y..=bottom_y {
                     for x in (x_start as i32)..=(x_end as i32) {
-                        draw_pixel(color_buffer, x, y, 0xFF00FF00);   
+                        draw_texel(
+                            color_buffer,
+                            texture,
+                            x,
+                            y,
+                            a,
+                            a_uv,
+                            b,
+                            b_uv,
+                            c,
+                            c_uv,
+                        );
                     }
                     x_start += x_per_y_2;
                     x_end += x_per_y_1;

@@ -10,6 +10,15 @@ pub struct Texture {
     pub data: Vec<u32>,
 }
 
+impl Texture {
+    pub fn get_pixel(&self, x: usize, y: usize) -> Option<u32> {
+        match self.data.get((self.width as usize) * y + x) {
+            Some(pixel) => Some(*pixel),
+            None => None,
+        }
+    }
+}
+
 pub const REDBRICK_TEXTURE_DATA: [u8; 16384] = [
     0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff,
     0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff,

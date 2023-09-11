@@ -1,4 +1,4 @@
-use crate::{color::Color, texture::Tex2, vector2::Vec2};
+use crate::{color::Color, texture::Tex2, vector2::Vec2, vector3::Vec3};
 
 #[derive(Default, Clone)]
 pub struct Face {
@@ -56,4 +56,28 @@ pub fn get_split_triangle_point(
     let split_point = Vec2 { x, y: middle.y };
 
     (points, uv_points, split_point)
+}
+
+pub fn barycentric_weights(a: Vec2, b: Vec2, c: Vec2, p: Vec2) -> Vec3 {
+    let ac = c - a;
+    let ab = b - a;
+    let pc = c - p;
+    let pb = b - p;
+    let ap = p - a;
+
+    let abc_parallelogram_area = ac.x * ab.y - ac.y * ab.x; // || AC x AB ||
+
+    let pbc_parallelogram_area = pc.x * pb.y - pc.y * pb.x; // || PC x PB ||
+    let alpha = pbc_parallelogram_area / abc_parallelogram_area;
+
+    let apc_parallelogram_area = ac.x * ap.y - ac.y * ap.x;
+    let beta = apc_parallelogram_area / abc_parallelogram_area;
+
+    let gamma = 1.0 - alpha - beta;
+
+    Vec3 {
+        x: alpha,
+        y: beta,
+        z: gamma,
+    }
 }
