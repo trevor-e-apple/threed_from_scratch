@@ -5,8 +5,9 @@ use sdl2::{render::Canvas, video::Window};
 use crate::{
     color::Color,
     texture::{self, Tex2},
-    triangle::{get_split_triangle_point, Triangle, barycentric_weights},
+    triangle::{barycentric_weights, get_split_triangle_point, Triangle},
     vector2::{Vec2, Vec2i},
+    vector4::Vec4,
 };
 
 pub struct ColorBuffer {
@@ -205,21 +206,37 @@ fn draw_texel(
     texture: &texture::Texture,
     x: i32,
     y: i32,
-    a: Vec2,
+    a: Vec4,
     a_uv: Tex2,
-    b: Vec2,
+    b: Vec4,
     b_uv: Tex2,
-    c: Vec2,
+    c: Vec4,
     c_uv: Tex2,
 ) {
-    let weights = barycentric_weights(a, b, c, Vec2 { x: x as f32, y: y as f32 });
+    let weights = barycentric_weights(
+        Vec2::from_vec4(&a),
+        Vec2::from_vec4(&b),
+        Vec2::from_vec4(&c),
+        Vec2 {
+            x: x as f32,
+            y: y as f32,
+        },
+    );
 
     let alpha = weights.x;
     let beta = weights.y;
     let gamma = weights.z;
 
-    let interpolated_u = a_uv.u * alpha + b_uv.u * beta + c_uv.u * gamma;
-    let interpolated_v = a_uv.v * alpha + b_uv.v * beta + c_uv.v * gamma;
+    let interpolated_reciprocal_w =
+        (1.0 / a.w) * alpha + (1.0 / b.w) * beta + (1.0 / c.w) * gamma;
+    let interpolated_u = ((a_uv.u / a.w) * alpha
+        + (b_uv.u / b.w) * beta
+        + (c_uv.u / c.w) * gamma)
+        / interpolated_reciprocal_w;
+    let interpolated_v = ((a_uv.v / a.w) * alpha
+        + (b_uv.v / b.w) * beta
+        + (c_uv.v / c.w) * gamma)
+        / interpolated_reciprocal_w;
 
     let tex_x = (interpolated_u * texture.width as f32).abs() as usize;
     let tex_y = (interpolated_v * texture.height as f32).abs() as usize;
@@ -249,9 +266,9 @@ pub fn draw_textured_triangle(
     let c_uv = uv_points[2];
 
     // Vec2i needed for scanline fill
-    let top = Vec2i::from_vec2_floor(&a);
-    let middle = Vec2i::from_vec2_floor(&b);
-    let bottom = Vec2i::from_vec2_floor(&c);
+    let top = Vec2i::from_vec4_floor(&a);
+    let middle = Vec2i::from_vec4_floor(&b);
+    let bottom = Vec2i::from_vec4_floor(&c);
     let ray_intersection = Vec2i::from_vec2_floor(&ray_intersection);
 
     // draw the top filled triangle (flat bottom)
@@ -377,9 +394,9 @@ pub fn draw_filled_triangle(
     let (sorted_points, _, ray_intersection) =
         get_split_triangle_point(triangle);
 
-    let top = Vec2i::from_vec2_floor(&sorted_points[0]);
-    let middle = Vec2i::from_vec2_floor(&sorted_points[1]);
-    let bottom = Vec2i::from_vec2_floor(&sorted_points[2]);
+    let top = Vec2i::from_vec4_floor(&sorted_points[0]);
+    let middle = Vec2i::from_vec4_floor(&sorted_points[1]);
+    let bottom = Vec2i::from_vec4_floor(&sorted_points[2]);
     let ray_intersection = Vec2i::from_vec2_floor(&ray_intersection);
 
     // draw the top filled triangle (flat bottom)

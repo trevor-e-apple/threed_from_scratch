@@ -240,7 +240,7 @@ pub fn main() {
             // test_mesh.translation.x += 0.01;
 
             test_mesh.rotation.x += 0.01;
-            // test_mesh.rotation.y += 0.01;
+            test_mesh.rotation.y += 0.01;
             // test_mesh.rotation.z += 0.01;
 
             // if grow {
@@ -340,23 +340,15 @@ pub fn main() {
                 for (vertex_index, vertex) in
                     (&mesh_vertices).into_iter().enumerate()
                 {
-                    // let mut projected_point = perspective_projection(vertex);
-                    let mut projected_point = {
-                        let mut projected_point = projection_matrix
-                            .transform(Vec4::from_vec3(vertex));
+                    let mut projected_point =
+                        projection_matrix.transform(Vec4::from_vec3(vertex));
 
-                        // perform perspective projection
-                        if projected_point.w != 0.0 {
-                            projected_point.x /= projected_point.w;
-                            projected_point.y /= projected_point.w;
-                            projected_point.z /= projected_point.w;
-                        }
-
-                        Vec2 {
-                            x: projected_point.x,
-                            y: projected_point.y,
-                        }
-                    };
+                    // perform perspective projection
+                    if projected_point.w != 0.0 {
+                        projected_point.x /= projected_point.w;
+                        projected_point.y /= projected_point.w;
+                        projected_point.z /= projected_point.w;
+                    }
 
                     // scale into view
                     projected_point.x *= window_width_over_two;

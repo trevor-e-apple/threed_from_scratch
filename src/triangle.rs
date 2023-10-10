@@ -1,4 +1,6 @@
-use crate::{color::Color, texture::Tex2, vector2::Vec2, vector3::Vec3};
+use crate::{
+    color::Color, texture::Tex2, vector2::Vec2, vector3::Vec3, vector4::Vec4,
+};
 
 #[derive(Default, Clone)]
 pub struct Face {
@@ -13,7 +15,7 @@ pub struct Face {
 
 #[derive(Default, Clone)]
 pub struct Triangle {
-    pub points: [Vec2; 3],
+    pub points: [Vec4; 3],
     pub tex_coordinates: [Tex2; 3],
     pub color: Color,
     pub avg_depth: f32,
@@ -24,10 +26,10 @@ pub struct Triangle {
 /// cast from the "middle" vertex
 pub fn get_split_triangle_point(
     triangle: &Triangle,
-) -> ([Vec2; 3], [Tex2; 3], Vec2) {
+) -> ([Vec4; 3], [Tex2; 3], Vec2) {
     // sort the points according to their y values
     // -- (ascending sort, but top-to-bottom)
-    let mut points: [Vec2; 3] = triangle.points.clone();
+    let mut points: [Vec4; 3] = triangle.points.clone();
     let mut uv_points: [Tex2; 3] = triangle.tex_coordinates.clone();
 
     loop {
