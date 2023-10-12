@@ -1,3 +1,6 @@
+use png;
+use std::{fs::File, todo};
+
 #[derive(Default, Clone, Copy)]
 pub struct Tex2 {
     pub u: f32,
@@ -17,6 +20,41 @@ impl Texture {
             None => None,
         }
     }
+}
+
+pub fn load_png(file_path: &String) -> Option<Vec<u32>> {
+    let file = match File::open(file_path) {
+        Ok(file) => file,
+        Err(_) => return None,
+    };
+
+    let decoder = png::Decoder::new(file);
+    let mut reader = match decoder.read_info() {
+        Ok(reader) => reader,
+        Err(_) => return None,
+    };
+
+    // allocate the output buffer
+    let mut buffer: Vec<u8> = vec![0; reader.output_buffer_size()];
+
+    // read the next frame
+    let info = match reader.next_frame(&mut buffer) {
+        Ok(info) => info,
+        Err(_) => return None,
+    };
+
+    // image bytes
+    let bytes = &buffer[..info.buffer_size()];
+
+    // convert u8 to u32
+    let mut result_data: Vec<u32> = Vec::with_capacity(info.buffer_size() / 4);
+    for byte_slice in bytes.chunks(4) {
+        let mut byte_buffer: [u8; 4] = [0; 4];
+        byte_buffer.clone_from_slice(byte_slice);
+        result_data.push(u32::from_le_bytes(byte_buffer));
+    }
+
+    Some(result_data)
 }
 
 pub const REDBRICK_TEXTURE_DATA: [u8; 16384] = [

@@ -28,9 +28,8 @@ use std::{
     time::{Duration, Instant},
     todo,
 };
-use texture::REDBRICK_TEXTURE_DATA;
+use texture::{load_png, REDBRICK_TEXTURE_DATA};
 use triangle::Triangle;
-use vector2::Vec2;
 use vector4::Vec4;
 
 use crate::{
@@ -63,6 +62,7 @@ pub fn main() {
     // TODO: Handle errors
     let args: Vec<String> = env::args().collect();
     let mesh_data_path: Option<&String> = args.get(1);
+    let texture_path: Option<&String> = args.get(2);
 
     let sdl_context = sdl2::init().unwrap();
 
@@ -89,7 +89,7 @@ pub fn main() {
 
     let texture_creator = canvas.texture_creator();
     let mut backbuffer_texture = match texture_creator.create_texture(
-        None,
+        sdl2::pixels::PixelFormatEnum::RGBA32,
         TextureAccess::Streaming,
         window_width,
         window_height,
@@ -122,8 +122,8 @@ pub fn main() {
             Err(err) => {
                 println!("Unable to load mesh at {:?}", path);
                 println!("Error: {:?}", err);
-                assert!(false);
-                return;
+                println!("Loading cube mesh...");
+                load_cube_mesh()
             }
         },
         None => load_cube_mesh(),
@@ -155,7 +155,16 @@ pub fn main() {
 
     // convert the u8 data to u32 data. could do it before runtime, but not
     // -- perf critical
-    let redbrick_texture_data: Vec<u32> = {
+    let cube_texture_data: Vec<u32> = if let Some(texture_path) = texture_path {
+        match load_png(texture_path) {
+            Some(texture_data) => texture_data,
+            None => {
+                println!("Unable to load png at {texture_path}");
+                assert!(false);
+                return;
+            }
+        }
+    } else {
         let mut redbrick_texture_data =
             Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
 
@@ -168,10 +177,10 @@ pub fn main() {
         redbrick_texture_data
     };
 
-    let texture = texture::Texture {
+    let raster_texture = texture::Texture {
         width: 64,
         height: 64,
-        data: redbrick_texture_data,
+        data: cube_texture_data,
     };
 
     let mut grow = true;
@@ -412,7 +421,7 @@ pub fn main() {
                         draw_textured_triangle(
                             &mut color_buffer,
                             triangle,
-                            &texture,
+                            &raster_texture,
                         );
                     }
                 };
