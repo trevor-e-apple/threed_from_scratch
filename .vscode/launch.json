@@ -37,7 +37,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["./test_assets/cube.obj"],
+            "args": ["./test_assets/cube.obj", "./test_assets/cube.png"],
             "cwd": "${workspaceFolder}"
         },
         {

@@ -60,18 +60,18 @@ const CUBE_VERTICES: [Vec3; 8] = [
 const CUBE_FACES: [Face; 12] = [
     // front
     Face {
-        a: 1,
-        b: 2,
-        c: 3,
+        a: 0,
+        b: 1,
+        c: 2,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 0.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 0.0 },
         color: 0xFFFF0000,
     },
     Face {
-        a: 1,
-        b: 3,
-        c: 4,
+        a: 0,
+        b: 2,
+        c: 3,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 1.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 1.0 },
@@ -79,18 +79,18 @@ const CUBE_FACES: [Face; 12] = [
     },
     // right
     Face {
-        a: 4,
-        b: 3,
-        c: 5,
+        a: 3,
+        b: 2,
+        c: 4,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 0.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 0.0 },
         color: 0xFF00FF00,
     },
     Face {
-        a: 4,
-        b: 5,
-        c: 6,
+        a: 3,
+        b: 4,
+        c: 5,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 1.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 1.0 },
@@ -98,18 +98,18 @@ const CUBE_FACES: [Face; 12] = [
     },
     // back
     Face {
-        a: 6,
-        b: 5,
-        c: 7,
+        a: 5,
+        b: 4,
+        c: 6,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 0.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 0.0 },
         color: 0xFF0000FF,
     },
     Face {
-        a: 6,
-        b: 7,
-        c: 8,
+        a: 5,
+        b: 6,
+        c: 7,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 1.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 1.0 },
@@ -117,18 +117,18 @@ const CUBE_FACES: [Face; 12] = [
     },
     // left
     Face {
-        a: 8,
-        b: 7,
-        c: 2,
+        a: 7,
+        b: 6,
+        c: 1,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 0.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 0.0 },
         color: 0xFFFF00FF,
     },
     Face {
-        a: 8,
-        b: 2,
-        c: 1,
+        a: 7,
+        b: 1,
+        c: 0,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 1.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 1.0 },
@@ -136,18 +136,18 @@ const CUBE_FACES: [Face; 12] = [
     },
     // top
     Face {
-        a: 2,
-        b: 7,
-        c: 5,
+        a: 1,
+        b: 6,
+        c: 4,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 0.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 0.0 },
         color: 0xFF00FFFF,
     },
     Face {
-        a: 2,
-        b: 5,
-        c: 3,
+        a: 1,
+        b: 4,
+        c: 2,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 1.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 1.0 },
@@ -155,18 +155,18 @@ const CUBE_FACES: [Face; 12] = [
     },
     // bottom
     Face {
-        a: 6,
-        b: 8,
-        c: 1,
+        a: 5,
+        b: 7,
+        c: 0,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 0.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 0.0 },
         color: 0xFFFFFF00,
     },
     Face {
-        a: 6,
-        b: 1,
-        c: 4,
+        a: 5,
+        b: 0,
+        c: 3,
         a_uv: Tex2 { u: 0.0, v: 1.0 },
         b_uv: Tex2 { u: 1.0, v: 0.0 },
         c_uv: Tex2 { u: 1.0, v: 1.0 },
@@ -192,6 +192,7 @@ pub fn load_mesh(file_path: &String) -> Result<Mesh, LoadMeshError> {
     };
 
     let mut vertices: Vec<Vec3> = vec![];
+    let mut texels: Vec<Tex2> = vec![];
     let mut faces: Vec<Face> = vec![];
     for line in contents.lines() {
         if line.starts_with("v ") {
@@ -218,27 +219,55 @@ pub fn load_mesh(file_path: &String) -> Result<Mesh, LoadMeshError> {
                 y: elements[1],
                 z: elements[2],
             });
+        } else if line.starts_with("vt ") {
+            let mut line_iter = line.split(" ");
+
+            // skip 'vt'
+            line_iter.next();
+
+            let mut elements: [f32; 2] = [0.0; 2];
+            for element in &mut elements {
+                let element_text = match line_iter.next() {
+                    Some(text) => text,
+                    None => return Err(LoadMeshError::FormatError),
+                };
+                *element = match element_text.parse() {
+                    Ok(value) => value,
+                    Err(_) => return Err(LoadMeshError::FormatError),
+                };
+            }
+
+            // we use uv coordinates from the bottom left
+            texels.push(Tex2 { u: elements[0], v: 1.0 - elements[1] });
         } else if line.starts_with("f ") {
             // face
             let mut line_iter = line.split(" ");
             line_iter.next();
             // only grabbing the first elements right now, which correspond to
             // -- the vertex index
-            let mut elements: [usize; 3] = [0; 3];
-            for element in &mut elements {
+            let mut vertex_indices: [usize; 3] = [0; 3];
+            let mut texel_indices: [usize; 3] = [0; 3];
+            for (vertex_index, texel_index) in vertex_indices.iter_mut().zip(texel_indices.iter_mut()) {
                 let face_text_data: Vec<&str> = match line_iter.next() {
                     Some(text) => text.split("/").collect(),
                     None => return Err(LoadMeshError::FormatError),
                 };
-                *element = match face_text_data[0].parse() {
+                *vertex_index = match face_text_data[0].parse() {
+                    Ok(value) => value,
+                    Err(_) => return Err(LoadMeshError::FormatError),
+                };
+                *texel_index = match face_text_data[1].parse() {
                     Ok(value) => value,
                     Err(_) => return Err(LoadMeshError::FormatError),
                 };
             }
             faces.push(Face {
-                a: elements[0],
-                b: elements[1],
-                c: elements[2],
+                a: vertex_indices[0] - 1,
+                b: vertex_indices[1] - 1,
+                c: vertex_indices[2] - 1,
+                a_uv: texels[texel_indices[0] - 1],
+                b_uv: texels[texel_indices[1] - 1],
+                c_uv: texels[texel_indices[2] - 1],
                 color: 0xFFFFFFFF,
                 ..Default::default()
             })

@@ -293,9 +293,9 @@ pub fn main() {
 
             for face in &test_mesh.faces {
                 let mut mesh_vertices: [Vec3; 3] = [
-                    test_mesh.vertices[face.a - 1],
-                    test_mesh.vertices[face.b - 1],
-                    test_mesh.vertices[face.c - 1],
+                    test_mesh.vertices[face.a],
+                    test_mesh.vertices[face.b],
+                    test_mesh.vertices[face.c],
                 ];
 
                 for vertex in &mut mesh_vertices {
