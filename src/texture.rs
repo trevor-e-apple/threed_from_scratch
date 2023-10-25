@@ -1,5 +1,5 @@
 use png;
-use std::{fs::File, todo};
+use std::{fs::File};
 
 #[derive(Default, Clone, Copy)]
 pub struct Tex2 {
@@ -22,7 +22,7 @@ impl Texture {
     }
 }
 
-pub fn load_png(file_path: &String) -> Option<Vec<u32>> {
+pub fn load_png(file_path: &String) -> Option<(Vec<u32>, i32, i32)> {
     let file = match File::open(file_path) {
         Ok(file) => file,
         Err(_) => return None,
@@ -54,7 +54,7 @@ pub fn load_png(file_path: &String) -> Option<Vec<u32>> {
         result_data.push(u32::from_le_bytes(byte_buffer));
     }
 
-    Some(result_data)
+    Some((result_data, info.width as i32, info.height as i32))
 }
 
 pub const REDBRICK_TEXTURE_DATA: [u8; 16384] = [

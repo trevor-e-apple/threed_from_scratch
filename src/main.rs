@@ -155,33 +155,36 @@ pub fn main() {
 
     // convert the u8 data to u32 data. could do it before runtime, but not
     // -- perf critical
-    let cube_texture_data: Vec<u32> = if let Some(texture_path) = texture_path {
-        match load_png(texture_path) {
-            Some(texture_data) => texture_data,
-            None => {
-                println!("Unable to load png at {texture_path}");
-                assert!(false);
-                return;
+    let raster_texture = {
+        let (cube_texture_data, texture_width, texture_height) = if let Some(texture_path) = texture_path {
+            match load_png(texture_path) {
+                Some(texture_data) => texture_data,
+                None => {
+                    println!("Unable to load png at {texture_path}");
+                    assert!(false);
+                    return;
+                }
             }
+        } else {
+            let mut redbrick_texture_data =
+                Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
+
+            for byte_slice in REDBRICK_TEXTURE_DATA.chunks(4) {
+                let mut bytes: [u8; 4] = [0; 4];
+                bytes.clone_from_slice(byte_slice);
+                redbrick_texture_data.push(u32::from_le_bytes(bytes));
+            }
+
+            (redbrick_texture_data, 64, 64)
+        };
+
+        texture::Texture {
+            width: texture_width,
+            height: texture_height,
+            data: cube_texture_data,
         }
-    } else {
-        let mut redbrick_texture_data =
-            Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
-
-        for byte_slice in REDBRICK_TEXTURE_DATA.chunks(4) {
-            let mut bytes: [u8; 4] = [0; 4];
-            bytes.clone_from_slice(byte_slice);
-            redbrick_texture_data.push(u32::from_le_bytes(bytes));
-        }
-
-        redbrick_texture_data
     };
-
-    let raster_texture = texture::Texture {
-        width: 64,
-        height: 64,
-        data: cube_texture_data,
-    };
+    
 
     let mut grow = true;
     // TODO: handle errors
