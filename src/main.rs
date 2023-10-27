@@ -1,6 +1,8 @@
 extern crate sdl2;
 
+mod buffer_utils;
 mod color;
+mod color_buffer;
 mod display;
 mod matrix;
 mod mesh;
@@ -12,6 +14,7 @@ mod vector;
 mod vector2;
 mod vector3;
 mod vector4;
+mod z_buffer;
 
 use mesh::load_mesh;
 use render::{draw_filled_triangle, draw_textured_triangle};
@@ -33,10 +36,12 @@ use triangle::Triangle;
 use vector4::Vec4;
 
 use crate::{
+    color_buffer::ColorBuffer,
     matrix::Matrix4,
     mesh::load_cube_mesh,
-    render::{draw_grid, draw_rect, draw_triangle, render, ColorBuffer},
+    render::{draw_grid, draw_rect, draw_triangle, render},
     vector3::{unit_normal, Vec3},
+    z_buffer::ZBuffer,
 };
 
 const FRAMES_PER_SECOND: f64 = 60.0;
@@ -86,6 +91,7 @@ pub fn main() {
 
     let mut color_buffer =
         ColorBuffer::new(window_width as usize, window_height as usize);
+    let mut z_buffer = ZBuffer::new(window_width as usize, window_height as usize);
 
     let texture_creator = canvas.texture_creator();
     let mut backbuffer_texture = match texture_creator.create_texture(
@@ -251,9 +257,9 @@ pub fn main() {
 
             // test_mesh.translation.x += 0.01;
 
-            // test_mesh.rotation.x += 0.01;
+            test_mesh.rotation.x += 0.01;
             test_mesh.rotation.y += 0.01;
-            // test_mesh.rotation.z += 0.01;
+            test_mesh.rotation.z += 0.01;
 
             // if grow {
             //     test_mesh.scale += Vec3 {
@@ -391,7 +397,6 @@ pub fn main() {
             triangles_to_render
                 .sort_by(|a, b| b.avg_depth.partial_cmp(&a.avg_depth).unwrap());
 
-            color_buffer.clear(0xFF000000);
 
             if render_state.show_grid {
                 draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
@@ -423,6 +428,7 @@ pub fn main() {
                     FillType::Texture => {
                         draw_textured_triangle(
                             &mut color_buffer,
+                            &mut z_buffer,
                             triangle,
                             &raster_texture,
                         );
@@ -436,6 +442,9 @@ pub fn main() {
 
             let render_result =
                 render(&mut color_buffer, &mut canvas, &mut backbuffer_texture);
+
+            color_buffer.clear(0xFF000000);
+            z_buffer.clear();
 
             if !render_result {
                 break 'running;

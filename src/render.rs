@@ -4,47 +4,12 @@ use sdl2::{render::Canvas, video::Window};
 
 use crate::{
     color::Color,
+    color_buffer::ColorBuffer,
     texture::{self, Tex2},
     triangle::{barycentric_weights, get_split_triangle_point, Triangle},
     vector2::{Vec2, Vec2i},
-    vector4::Vec4,
+    vector4::Vec4, z_buffer::ZBuffer,
 };
-
-pub struct ColorBuffer {
-    buffer: Vec<u32>,
-    width: usize,
-    height: usize,
-}
-
-impl ColorBuffer {
-    // TODO: documentation
-    pub fn new(width: usize, height: usize) -> Self {
-        Self {
-            buffer: vec![0; width * height],
-            width,
-            height,
-        }
-    }
-
-    // TODO: documentation
-    pub fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut u32> {
-        let index = y * self.width + x;
-        return self.buffer.get_mut(index);
-    }
-
-    pub fn clear(&mut self, color: Color) {
-        for pixel in &mut self.buffer {
-            *pixel = color;
-        }
-    }
-
-    pub unsafe fn get_raw_data(&mut self) -> &[u8] {
-        std::slice::from_raw_parts(
-            self.buffer.as_ptr() as *const u8,
-            self.buffer.len() * size_of::<u32>(),
-        )
-    }
-}
 
 pub fn draw_grid(
     color_buffer: &mut ColorBuffer,
@@ -203,6 +168,7 @@ pub fn draw_triangle(
 
 fn draw_texel(
     color_buffer: &mut ColorBuffer,
+    z_buffer: &mut ZBuffer,
     texture: &texture::Texture,
     x: i32,
     y: i32,
@@ -246,11 +212,20 @@ fn draw_texel(
         None => return,
     };
 
-    draw_pixel(color_buffer, x, y, color);
+
+    // adjust 1/w values so that pixels closer to the camera have smaller values
+    let z_buffer_test = 1.0 - interpolated_reciprocal_w;
+    // only draw if the depth is less than the depth stored in the z_buffer
+    if z_buffer_test < z_buffer.get_pixel_value(x as usize, y as usize) {
+        draw_pixel(color_buffer, x, y, color);
+        // update the z-buffer with the 1/w of this pixel
+        z_buffer.set_pixel_value(x as usize, y as usize, z_buffer_test);
+    }
 }
 
 pub fn draw_textured_triangle(
     color_buffer: &mut ColorBuffer,
+    z_buffer: &mut ZBuffer,
     triangle: &Triangle,
     texture: &texture::Texture,
 ) {
@@ -290,6 +265,7 @@ pub fn draw_textured_triangle(
                     for x in (x_bound_one as i32)..=(x_bound_two as i32) {
                         draw_texel(
                             color_buffer,
+                            z_buffer,
                             texture,
                             x,
                             y,
@@ -309,6 +285,7 @@ pub fn draw_textured_triangle(
                     for x in (x_bound_two as i32)..=(x_bound_one as i32) {
                         draw_texel(
                             color_buffer,
+                            z_buffer,
                             texture,
                             x,
                             y,
@@ -345,6 +322,7 @@ pub fn draw_textured_triangle(
                     for x in (x_start as i32)..=(x_end as i32) {
                         draw_texel(
                             color_buffer,
+                            z_buffer,
                             texture,
                             x,
                             y,
@@ -367,6 +345,7 @@ pub fn draw_textured_triangle(
                     for x in (x_start as i32)..=(x_end as i32) {
                         draw_texel(
                             color_buffer,
+                            z_buffer,
                             texture,
                             x,
                             y,
