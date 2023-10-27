@@ -393,11 +393,6 @@ pub fn main() {
 
         // RENDER
         {
-            // sort the triangles by their average depth
-            triangles_to_render
-                .sort_by(|a, b| b.avg_depth.partial_cmp(&a.avg_depth).unwrap());
-
-
             if render_state.show_grid {
                 draw_grid(&mut color_buffer, 10, 10, 0xFFFFFFFF);
             }
@@ -421,6 +416,7 @@ pub fn main() {
                     FillType::Color => {
                         draw_filled_triangle(
                             &mut color_buffer,
+                            &mut z_buffer,
                             triangle,
                             triangle.color,
                         );

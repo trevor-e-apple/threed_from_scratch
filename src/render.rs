@@ -134,6 +134,43 @@ pub fn draw_line(
     }
 }
 
+pub fn draw_pixel_z_buffer_check(
+    color_buffer: &mut ColorBuffer,
+    z_buffer: &mut ZBuffer,
+    x: i32,
+    y: i32,
+    a: Vec4,
+    b: Vec4,
+    c: Vec4,
+    color: Color,
+) {
+    let weights = barycentric_weights(
+        Vec2::from_vec4(&a),
+        Vec2::from_vec4(&b),
+        Vec2::from_vec4(&c),
+        Vec2 {
+            x: x as f32,
+            y: y as f32,
+        },
+    );
+
+    let alpha = weights.x;
+    let beta = weights.y;
+    let gamma = weights.z;
+
+    let interpolated_reciprocal_w =
+        (1.0 / a.w) * alpha + (1.0 / b.w) * beta + (1.0 / c.w) * gamma;
+
+    // adjust 1/w values so that pixels closer to the camera have smaller values
+    let z_buffer_test = 1.0 - interpolated_reciprocal_w;
+    // only draw if the depth is less than the depth stored in the z_buffer
+    if z_buffer_test < z_buffer.get_pixel_value(x as usize, y as usize) {
+        draw_pixel(color_buffer, x, y, color);
+        // update the z-buffer with the 1/w of this pixel
+        z_buffer.set_pixel_value(x as usize, y as usize, z_buffer_test);
+    }
+}
+
 pub fn draw_triangle_with_coordinates(
     color_buffer: &mut ColorBuffer,
     x0: i32,
@@ -367,15 +404,22 @@ pub fn draw_textured_triangle(
 
 pub fn draw_filled_triangle(
     color_buffer: &mut ColorBuffer,
+    z_buffer: &mut ZBuffer,
     triangle: &Triangle,
     color: Color,
 ) {
     let (sorted_points, _, ray_intersection) =
         get_split_triangle_point(triangle);
 
-    let top = Vec2i::from_vec4_floor(&sorted_points[0]);
-    let middle = Vec2i::from_vec4_floor(&sorted_points[1]);
-    let bottom = Vec2i::from_vec4_floor(&sorted_points[2]);
+    // Vec2 points needed for texel draw
+    let a = sorted_points[0];
+    let b = sorted_points[1];
+    let c = sorted_points[2];
+
+    // Vec2i needed for scanline fill
+    let top = Vec2i::from_vec4_floor(&a);
+    let middle = Vec2i::from_vec4_floor(&b);
+    let bottom = Vec2i::from_vec4_floor(&c);
     let ray_intersection = Vec2i::from_vec2_floor(&ray_intersection);
 
     // draw the top filled triangle (flat bottom)
@@ -389,19 +433,43 @@ pub fn draw_filled_triangle(
             let x_per_y_2 = (ray_intersection.x - top.x) as f32
                 / (ray_intersection.y - top.y) as f32;
 
-            let mut x_start = top.x as f32;
-            let mut x_end = top.x as f32;
-            for y in top_y..=bottom_y {
-                draw_line(
-                    color_buffer,
-                    x_start as i32,
-                    y,
-                    x_end as i32,
-                    y,
-                    color,
-                );
-                x_start += x_per_y_1;
-                x_end += x_per_y_2;
+            let mut x_bound_one = top.x as f32;
+            let mut x_bound_two = top.x as f32;
+
+            if x_per_y_1 < x_per_y_2 {
+                for y in top_y..=bottom_y {
+                    for x in (x_bound_one as i32)..=(x_bound_two as i32) {
+                        draw_pixel_z_buffer_check(
+                            color_buffer,
+                            z_buffer,
+                            x,
+                            y,
+                            a,
+                            b,
+                            c,
+                            color,
+                        );
+                    }
+                    x_bound_one += x_per_y_1;
+                    x_bound_two += x_per_y_2;
+                }
+            } else {
+                for y in top_y..=bottom_y {
+                    for x in (x_bound_two as i32)..=(x_bound_one as i32) {
+                        draw_pixel_z_buffer_check(
+                            color_buffer,
+                            z_buffer,
+                            x,
+                            y,
+                            a,
+                            b,
+                            c,
+                            color,
+                        );
+                    }
+                    x_bound_one += x_per_y_1;
+                    x_bound_two += x_per_y_2;
+                }
             }
         }
     }
@@ -416,19 +484,46 @@ pub fn draw_filled_triangle(
             let x_per_y_2 = (bottom.x - ray_intersection.x) as f32
                 / (bottom.y - ray_intersection.y) as f32;
 
-            let mut x_start = middle.x as f32;
-            let mut x_end = ray_intersection.x as f32;
-            for y in top_y..=bottom_y {
-                draw_line(
-                    color_buffer,
-                    x_start as i32,
-                    y,
-                    x_end as i32,
-                    y,
-                    color,
-                );
-                x_start += x_per_y_1;
-                x_end += x_per_y_2;
+            if middle.x < ray_intersection.x {
+                let mut x_start = middle.x as f32;
+                let mut x_end = ray_intersection.x as f32;
+
+                for y in top_y..=bottom_y {
+                    for x in (x_start as i32)..=(x_end as i32) {
+                        draw_pixel_z_buffer_check(
+                            color_buffer,
+                            z_buffer,
+                            x,
+                            y,
+                            a,
+                            b,
+                            c,
+                            color,
+                        );
+                    }
+                    x_start += x_per_y_1;
+                    x_end += x_per_y_2;
+                }
+            } else {
+                let mut x_start = ray_intersection.x as f32;
+                let mut x_end = middle.x as f32;
+
+                for y in top_y..=bottom_y {
+                    for x in (x_start as i32)..=(x_end as i32) {
+                        draw_pixel_z_buffer_check(
+                            color_buffer,
+                            z_buffer,
+                            x,
+                            y,
+                            a,
+                            b,
+                            c,
+                            color,
+                        );
+                    }
+                    x_start += x_per_y_2;
+                    x_end += x_per_y_1;
+                }
             }
         }
     }
