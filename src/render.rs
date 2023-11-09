@@ -8,7 +8,8 @@ use crate::{
     texture::{self, Tex2},
     triangle::{barycentric_weights, get_split_triangle_point, Triangle},
     vector2::{Vec2, Vec2i},
-    vector4::Vec4, z_buffer::ZBuffer,
+    vector4::Vec4,
+    z_buffer::ZBuffer,
 };
 
 pub fn draw_grid(
@@ -248,7 +249,6 @@ fn draw_texel(
         Some(color) => color,
         None => return,
     };
-
 
     // adjust 1/w values so that pixels closer to the camera have smaller values
     let z_buffer_test = 1.0 - interpolated_reciprocal_w;

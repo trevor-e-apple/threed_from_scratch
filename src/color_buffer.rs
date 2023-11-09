@@ -1,6 +1,6 @@
 use std::mem::size_of;
 
-use crate::{color::Color, buffer_utils::get_index_by_coord};
+use crate::{buffer_utils::get_index_by_coord, color::Color};
 
 pub struct ColorBuffer {
     buffer: Vec<u32>,

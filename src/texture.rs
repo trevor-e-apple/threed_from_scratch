@@ -1,5 +1,5 @@
 use png;
-use std::{fs::File};
+use std::fs::File;
 
 #[derive(Default, Clone, Copy)]
 pub struct Tex2 {

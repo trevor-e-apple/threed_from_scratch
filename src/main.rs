@@ -1,6 +1,7 @@
 extern crate sdl2;
 
 mod buffer_utils;
+mod camera;
 mod color;
 mod color_buffer;
 mod display;
@@ -36,6 +37,7 @@ use triangle::Triangle;
 use vector4::Vec4;
 
 use crate::{
+    camera::Camera,
     color_buffer::ColorBuffer,
     matrix::Matrix4,
     mesh::load_cube_mesh,
@@ -91,7 +93,8 @@ pub fn main() {
 
     let mut color_buffer =
         ColorBuffer::new(window_width as usize, window_height as usize);
-    let mut z_buffer = ZBuffer::new(window_width as usize, window_height as usize);
+    let mut z_buffer =
+        ZBuffer::new(window_width as usize, window_height as usize);
 
     let texture_creator = canvas.texture_creator();
     let mut backbuffer_texture = match texture_creator.create_texture(
@@ -116,10 +119,17 @@ pub fn main() {
         backface_culling_enabled: true,
     };
 
-    let camera_position = Vec3 {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
+    let mut camera = Camera {
+        position: Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        direction: Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0,
+        },
     };
 
     let mut test_mesh = match mesh_data_path {
@@ -162,27 +172,28 @@ pub fn main() {
     // convert the u8 data to u32 data. could do it before runtime, but not
     // -- perf critical
     let raster_texture = {
-        let (cube_texture_data, texture_width, texture_height) = if let Some(texture_path) = texture_path {
-            match load_png(texture_path) {
-                Some(texture_data) => texture_data,
-                None => {
-                    println!("Unable to load png at {texture_path}");
-                    assert!(false);
-                    return;
+        let (cube_texture_data, texture_width, texture_height) =
+            if let Some(texture_path) = texture_path {
+                match load_png(texture_path) {
+                    Some(texture_data) => texture_data,
+                    None => {
+                        println!("Unable to load png at {texture_path}");
+                        assert!(false);
+                        return;
+                    }
                 }
-            }
-        } else {
-            let mut redbrick_texture_data =
-                Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
+            } else {
+                let mut redbrick_texture_data =
+                    Vec::with_capacity(REDBRICK_TEXTURE_DATA.len() / 4);
 
-            for byte_slice in REDBRICK_TEXTURE_DATA.chunks(4) {
-                let mut bytes: [u8; 4] = [0; 4];
-                bytes.clone_from_slice(byte_slice);
-                redbrick_texture_data.push(u32::from_le_bytes(bytes));
-            }
+                for byte_slice in REDBRICK_TEXTURE_DATA.chunks(4) {
+                    let mut bytes: [u8; 4] = [0; 4];
+                    bytes.clone_from_slice(byte_slice);
+                    redbrick_texture_data.push(u32::from_le_bytes(bytes));
+                }
 
-            (redbrick_texture_data, 64, 64)
-        };
+                (redbrick_texture_data, 64, 64)
+            };
 
         texture::Texture {
             width: texture_width,
@@ -190,7 +201,6 @@ pub fn main() {
             data: cube_texture_data,
         }
     };
-    
 
     let mut grow = true;
     // TODO: handle errors
@@ -257,9 +267,9 @@ pub fn main() {
 
             // test_mesh.translation.x += 0.01;
 
-            test_mesh.rotation.x += 0.01;
-            test_mesh.rotation.y += 0.01;
-            test_mesh.rotation.z += 0.01;
+            // test_mesh.rotation.x += 0.01;
+            // test_mesh.rotation.y += 0.01;
+            // test_mesh.rotation.z += 0.01;
 
             // if grow {
             //     test_mesh.scale += Vec3 {
@@ -279,6 +289,23 @@ pub fn main() {
             // } else if test_mesh.scale.x < 0.5 {
             //     grow = true;
             // }
+
+            camera.position.x += 0.008;
+            camera.position.y += 0.008;
+
+            let view_matrix = Matrix4::look_at(
+                camera.position,
+                Vec3 {
+                    x: 0.0,
+                    y: 1.0,
+                    z: 0.0,
+                },
+                Vec3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 1.0,
+                },
+            );
 
             let scale_matrix = Matrix4::scale(test_mesh.scale);
             let rotation_matrix = {
@@ -310,6 +337,8 @@ pub fn main() {
                 for vertex in &mut mesh_vertices {
                     let transformed_vertex = transformation_matrix
                         .transform(Vec4::from_vec3(vertex));
+                    let transformed_vertex =
+                        view_matrix.transform(transformed_vertex);
                     *vertex = Vec3::from_vec4(&transformed_vertex);
                     // move all vertices farther from the monitor
                     vertex.z += 5.0;
@@ -332,7 +361,13 @@ pub fn main() {
                 let should_cull: bool = if render_state.backface_culling_enabled
                 {
                     // find the vector to the camera from the surface
-                    let camera_ray = camera_position - mesh_vertices[0];
+                    // after camera transform, camera is now at the origin
+                    let origin = Vec3 {
+                        x: 0.0,
+                        y: 0.0,
+                        z: 0.0,
+                    };
+                    let camera_ray = origin - mesh_vertices[0];
 
                     // find the dot product between the vector to the camera and
                     // -- the surface normal

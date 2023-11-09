@@ -238,7 +238,10 @@ pub fn load_mesh(file_path: &String) -> Result<Mesh, LoadMeshError> {
             }
 
             // we use uv coordinates from the bottom left
-            texels.push(Tex2 { u: elements[0], v: 1.0 - elements[1] });
+            texels.push(Tex2 {
+                u: elements[0],
+                v: 1.0 - elements[1],
+            });
         } else if line.starts_with("f ") {
             // face
             let mut line_iter = line.split(" ");
@@ -247,7 +250,9 @@ pub fn load_mesh(file_path: &String) -> Result<Mesh, LoadMeshError> {
             // -- the vertex index
             let mut vertex_indices: [usize; 3] = [0; 3];
             let mut texel_indices: [usize; 3] = [0; 3];
-            for (vertex_index, texel_index) in vertex_indices.iter_mut().zip(texel_indices.iter_mut()) {
+            for (vertex_index, texel_index) in
+                vertex_indices.iter_mut().zip(texel_indices.iter_mut())
+            {
                 let face_text_data: Vec<&str> = match line_iter.next() {
                     Some(text) => text.split("/").collect(),
                     None => return Err(LoadMeshError::FormatError),

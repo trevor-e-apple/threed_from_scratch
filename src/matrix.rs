@@ -1,5 +1,5 @@
 use crate::{
-    vector3::Vec3,
+    vector3::{cross_product, dot, normalize, Vec3},
     vector4::{self, Vec4},
 };
 
@@ -161,6 +161,21 @@ impl Matrix4 {
                 [0.0, y_scale, 0.0, 0.0],
                 [0.0, 0.0, z_normalization, z_offset],
                 [0.0, 0.0, 1.0, 0.0],
+            ],
+        }
+    }
+
+    pub fn look_at(eye: Vec3, up: Vec3, target: Vec3) -> Self {
+        let z = normalize(&(target - eye));
+        let x = normalize(&cross_product(&up, &z));
+        // no need to normalize cross product b/c x and z are already normalized
+        let y = cross_product(&z, &x);
+        Self {
+            data: [
+                [x.x, x.y, x.z, -1.0 * dot(&x, &eye)],
+                [y.x, y.y, y.z, -1.0 * dot(&y, &eye)],
+                [z.x, z.y, z.z, -1.0 * dot(&z, &eye)],
+                [0.0, 0.0, 0.0, 1.0],
             ],
         }
     }
