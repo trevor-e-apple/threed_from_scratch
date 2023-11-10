@@ -46,7 +46,8 @@ use crate::{
     z_buffer::ZBuffer,
 };
 
-const FRAMES_PER_SECOND: f64 = 60.0;
+const FRAMES_PER_SECOND: f64 = 30.0;
+const FRAME_TIME_S: f64 = 1.0 / FRAMES_PER_SECOND;
 const FRAME_TIME_MS: f64 = 1000.0 / FRAMES_PER_SECOND;
 
 #[derive(Debug)]
@@ -290,8 +291,8 @@ pub fn main() {
             //     grow = true;
             // }
 
-            camera.position.x += 0.008;
-            camera.position.y += 0.008;
+            camera.position.x += 0.5 * (FRAME_TIME_S as f32);
+            camera.position.y += 0.5 * (FRAME_TIME_S as f32);
 
             let view_matrix = Matrix4::look_at(
                 camera.position,
