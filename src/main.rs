@@ -17,6 +17,7 @@ mod vector3;
 mod vector4;
 mod z_buffer;
 
+use camera::CAMERA_UP;
 use mesh::load_mesh;
 use render::{draw_filled_triangle, draw_textured_triangle};
 use sdl2::event::Event;
@@ -257,6 +258,18 @@ pub fn main() {
                 } => {
                     render_state.backface_culling_enabled = false;
                 }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => {
+                    camera.position.y -= 3.0 * (FRAME_TIME_S as f32);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => {
+                    camera.position.y += 3.0 * (FRAME_TIME_S as f32);
+                }
                 _ => {}
             }
         }
@@ -291,16 +304,12 @@ pub fn main() {
             //     grow = true;
             // }
 
-            camera.position.x += 0.5 * (FRAME_TIME_S as f32);
-            camera.position.y += 0.5 * (FRAME_TIME_S as f32);
+            // camera.position.x += 0.5 * (FRAME_TIME_S as f32);
+            // camera.position.y += 0.5 * (FRAME_TIME_S as f32);
 
             let view_matrix = Matrix4::look_at(
                 camera.position,
-                Vec3 {
-                    x: 0.0,
-                    y: 1.0,
-                    z: 0.0,
-                },
+                CAMERA_UP,
                 Vec3 {
                     x: 0.0,
                     y: 0.0,
