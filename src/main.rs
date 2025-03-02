@@ -1,6 +1,6 @@
 extern crate sdl3;
 
-use std::time::Duration;
+use std::{process::ExitCode, time::Duration};
 
 use sdl3::{
     event::Event,
@@ -27,11 +27,28 @@ fn clear_color_buffer(
     }
 }
 
-pub fn main() {
+pub fn main() -> ExitCode {
     let sdl_context = sdl3::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
-    let window_width = 800;
-    let window_height = 600;
+
+    let (fullscreen_width, fullscreen_height) = {
+        let displays = video_subsystem.displays().unwrap();
+        let display = displays.get(0).unwrap();
+        let display_mode = display.get_mode().unwrap();
+
+        (display_mode.w, display_mode.h)
+    };
+
+    let window_width = (0.5 * fullscreen_width as f32) as u32;
+    let window_height = {
+        let window_height = (0.75 * window_width as f32) as u32;
+
+        if window_height > fullscreen_height as u32 {
+            fullscreen_height as u32
+        } else {
+            window_height
+        }
+    };
     let window = video_subsystem
         .window("threed_from_scratch", window_width, window_height)
         .position_centered()
@@ -100,4 +117,6 @@ pub fn main() {
 
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
+
+    ExitCode::from(0)
 }
