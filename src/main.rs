@@ -11,18 +11,54 @@ use sdl3::{
     },
 };
 
-fn clear_color_buffer(
-    color_buffer: &mut Vec<u32>,
-    window_width: usize,
-    window_height: usize,
-    color: u32,
-) {
-    for y in 0..window_height {
-        for x in 0..window_width {
-            let pixel = color_buffer
-                .get_mut(y * window_width + x)
-                .expect("Failure to get pixel for writing");
+struct ColorBuffer {
+    pub buffer: Vec<u32>,
+    pub width: usize,
+    pub height: usize,
+}
+
+impl ColorBuffer {
+    /// Initializes a new instance of Self
+    pub fn new(width: usize, height: usize) -> Self {
+        Self {
+            buffer: vec![0; 4 * width * height],
+            width,
+            height,
+        }
+    }
+
+    /// Gets the value of a single pixel
+    pub fn get_pixel(&self, x: usize, y: usize) -> u32 {
+        *self.buffer.get(y * self.width + x).unwrap()
+    }
+
+    /// Sets a single pixel's value
+    pub fn set_pixel(&mut self, x: usize, y: usize, color: u32) {
+        let pixel = self.buffer.get_mut(y * self.width + x).unwrap();
+        *pixel = color;
+    }
+
+    /// Clears the color buffer to a specified color
+    pub fn clear(&mut self, color: u32) {
+        for pixel in &mut self.buffer {
             *pixel = color;
+        }
+    }
+}
+
+/// Draws a grid on the color buffer at every step pixels
+fn draw_grid(color_buffer: &mut ColorBuffer, step: usize, color: u32) {
+    // draw horizontal lines
+    for y in (0..color_buffer.height).step_by(step) {
+        for x in 0..color_buffer.width {
+            color_buffer.set_pixel(x, y, color);
+        }
+    }
+
+    // draw vertical lines
+    for y in 0..color_buffer.height {
+        for x in (0..color_buffer.width).step_by(step) {
+            color_buffer.set_pixel(x, y, color);
         }
     }
 }
@@ -58,8 +94,8 @@ pub fn main() -> ExitCode {
     let mut canvas = window.into_canvas();
 
     // Initialize color buffer
-    let mut color_buffer: Vec<u32> =
-        vec![0; window_width as usize * window_height as usize];
+    let mut color_buffer =
+        ColorBuffer::new(window_width as usize, window_height as usize);
 
     let texture_creator = canvas.texture_creator();
     let mut color_buffer_texture = unsafe {
@@ -96,17 +132,13 @@ pub fn main() -> ExitCode {
         canvas.set_draw_color(Color::RGB(0xFE, 0x03, 0x6A));
         canvas.clear();
 
-        clear_color_buffer(
-            &mut color_buffer,
-            window_width as usize,
-            window_height as usize,
-            0xFFFFFF00,
-        );
+        color_buffer.clear(0xFF000000);
+        draw_grid(&mut color_buffer, 10, 0xFFFFFFFF);
 
         // write color buffer to texture
         unsafe {
             color_buffer_texture
-                .update(None, color_buffer.align_to::<u8>().1, pitch)
+                .update(None, color_buffer.buffer.align_to::<u8>().1, pitch)
                 .expect("Failure to update texture");
         }
         canvas
