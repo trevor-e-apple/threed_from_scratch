@@ -46,17 +46,10 @@ impl ColorBuffer {
     }
 }
 
-/// Draws a grid on the color buffer at every step pixels
-fn draw_grid(color_buffer: &mut ColorBuffer, step: usize, color: u32) {
+/// Draws a grid on the color buffer at every 'step' pixels
+fn draw_dot_grid(color_buffer: &mut ColorBuffer, step: usize, color: u32) {
     // draw horizontal lines
     for y in (0..color_buffer.height).step_by(step) {
-        for x in 0..color_buffer.width {
-            color_buffer.set_pixel(x, y, color);
-        }
-    }
-
-    // draw vertical lines
-    for y in 0..color_buffer.height {
         for x in (0..color_buffer.width).step_by(step) {
             color_buffer.set_pixel(x, y, color);
         }
@@ -133,7 +126,7 @@ pub fn main() -> ExitCode {
         canvas.clear();
 
         color_buffer.clear(0xFF000000);
-        draw_grid(&mut color_buffer, 10, 0xFFFFFFFF);
+        draw_dot_grid(&mut color_buffer, 10, 0xFFFFFFFF);
 
         // write color buffer to texture
         unsafe {
