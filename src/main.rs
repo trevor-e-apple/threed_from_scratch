@@ -56,6 +56,21 @@ fn draw_dot_grid(color_buffer: &mut ColorBuffer, step: usize, color: u32) {
     }
 }
 
+fn draw_rect(
+    color_buffer: &mut ColorBuffer,
+    x: i32,
+    y: i32,
+    width: i32,
+    height: i32,
+    color: u32,
+) {
+    for y in y..(y + height) {
+        for x in x..(x + width) {
+            color_buffer.set_pixel(x as usize, y as usize, color);
+        }
+    }
+}
+
 pub fn main() -> ExitCode {
     let sdl_context = sdl3::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -127,6 +142,7 @@ pub fn main() -> ExitCode {
 
         color_buffer.clear(0xFF000000);
         draw_dot_grid(&mut color_buffer, 10, 0xFFFFFFFF);
+        draw_rect(&mut color_buffer, 20, 20, 80, 40, 0xFFFFFFFF);
 
         // write color buffer to texture
         unsafe {
