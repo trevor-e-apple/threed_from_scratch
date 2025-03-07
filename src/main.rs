@@ -1,5 +1,7 @@
 extern crate sdl3;
 
+mod vector;
+
 use std::{process::ExitCode, time::Duration};
 
 use sdl3::{
