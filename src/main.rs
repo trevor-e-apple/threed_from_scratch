@@ -12,6 +12,9 @@ use sdl3::{
         pixels::SDL_PIXELFORMAT_ARGB8888, render::SDL_TEXTUREACCESS_STREAMING,
     },
 };
+use vector::{Vector2, Vector3};
+
+const FOV_FACTOR: f32 = 128.0;
 
 struct ColorBuffer {
     pub buffer: Vec<u32>,
@@ -73,7 +76,38 @@ fn draw_rect(
     }
 }
 
+fn orthographic_projection(vector: &Vector3) -> Vector2 {
+    Vector2 {
+        x: FOV_FACTOR * vector.x,
+        y: FOV_FACTOR * vector.y,
+    }
+}
+
 pub fn main() -> ExitCode {
+    // TEMP: Create an point cloud
+    let point_cloud = {
+        const POINT_COUNT: usize = 9 * 9 * 9;
+        let mut points = Vec::<Vector3>::with_capacity(POINT_COUNT);
+        let mut x: f32 = -1.0;
+        while x <= 1.0 {
+            let mut y: f32 = -1.0;
+            while y <= 1.0 {
+                let mut z: f32 = -1.0;
+                while z <= 1.0 {
+                    points.push(Vector3 { x, y, z });
+                    z += 0.25;
+                }
+                y += 0.25;
+            }
+            x += 0.25;
+        }
+        points
+    };
+
+    // Init projected points
+    let mut projected_points = Vec::<Vector2>::with_capacity(point_cloud.len());
+
+    // Init SDL
     let sdl_context = sdl3::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
@@ -138,13 +172,25 @@ pub fn main() -> ExitCode {
             }
         }
 
-        // render
-        canvas.set_draw_color(Color::RGB(0xFE, 0x03, 0x6A));
-        canvas.clear();
+        projected_points.clear();
+        for point in &point_cloud {
+            projected_points.push(orthographic_projection(&point));
+        }
 
+        // render
         color_buffer.clear(0xFF000000);
         draw_dot_grid(&mut color_buffer, 10, 0xFFFFFFFF);
-        draw_rect(&mut color_buffer, 20, 20, 80, 40, 0xFFFFFFFF);
+
+        for point in &projected_points {
+            draw_rect(
+                &mut color_buffer,
+                (point.x + (window_width as f32 / 2.0)) as i32,
+                (point.y + (window_height as f32 / 2.0)) as i32,
+                4,
+                4,
+                0xFFFFFF00,
+            );
+        }
 
         // write color buffer to texture
         unsafe {
