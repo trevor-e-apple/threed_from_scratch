@@ -14,7 +14,7 @@ use sdl3::{
 };
 use vector::{Vector2, Vector3};
 
-const FOV_FACTOR: f32 = 128.0;
+const FOV_FACTOR: f32 = 640.0;
 
 struct ColorBuffer {
     pub buffer: Vec<u32>,
@@ -39,6 +39,10 @@ impl ColorBuffer {
 
     /// Sets a single pixel's value
     pub fn set_pixel(&mut self, x: usize, y: usize, color: u32) {
+        if y >= self.height || x >= self.width {
+            return;
+        }
+
         let pixel = self.buffer.get_mut(y * self.width + x).unwrap();
         *pixel = color;
     }
@@ -80,6 +84,17 @@ fn orthographic_projection(vector: &Vector3) -> Vector2 {
     Vector2 {
         x: FOV_FACTOR * vector.x,
         y: FOV_FACTOR * vector.y,
+    }
+}
+
+fn perspective_projection(vector: &Vector3) -> Option<Vector2> {
+    if vector.z != 0.0 {
+        Some(Vector2 {
+            x: (FOV_FACTOR * vector.x) / vector.z,
+            y: (FOV_FACTOR * vector.y) / vector.z,
+        })
+    } else {
+        None
     }
 }
 
@@ -154,6 +169,12 @@ pub fn main() -> ExitCode {
     };
     let pitch = (4 * window_width) as usize;
 
+    let camera_position = Vector3 {
+        x: 0.0,
+        y: 0.0,
+        z: -5.0,
+    };
+
     canvas.set_draw_color(Color::RGB(0xFE, 0x03, 0x6A));
     canvas.clear();
     canvas.present();
@@ -174,7 +195,16 @@ pub fn main() -> ExitCode {
 
         projected_points.clear();
         for point in &point_cloud {
-            projected_points.push(orthographic_projection(&point));
+            let point = {
+                let mut point = point.clone();
+                // move the camera back
+                point.z -= camera_position.z;
+                point
+            };
+            match perspective_projection(&point) {
+                Some(projected_point) => projected_points.push(projected_point),
+                None => {}
+            }
         }
 
         // render
