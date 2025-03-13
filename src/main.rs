@@ -12,7 +12,9 @@ use sdl3::{
         pixels::SDL_PIXELFORMAT_ARGB8888, render::SDL_TEXTUREACCESS_STREAMING,
     },
 };
-use vector::{Vector2, Vector3};
+use vector::{
+    rotate_around_x, rotate_around_y, rotate_around_z, Vector2, Vector3,
+};
 
 const FOV_FACTOR: f32 = 640.0;
 
@@ -174,14 +176,19 @@ pub fn main() -> ExitCode {
         y: 0.0,
         z: -5.0,
     };
+    let mut orientation = Vector3 {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
 
     canvas.set_draw_color(Color::RGB(0xFE, 0x03, 0x6A));
     canvas.clear();
     canvas.present();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
-
     'running: loop {
+        // process input
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -193,46 +200,75 @@ pub fn main() -> ExitCode {
             }
         }
 
-        projected_points.clear();
-        for point in &point_cloud {
-            let point = {
-                let mut point = point.clone();
-                // move the camera back
-                point.z -= camera_position.z;
-                point
-            };
-            match perspective_projection(&point) {
-                Some(projected_point) => projected_points.push(projected_point),
-                None => {}
+        // update
+        {
+            orientation.x += 0.01;
+            orientation.y += 0.01;
+            orientation.z += 0.01;
+        }
+
+        // project
+        {
+            projected_points.clear();
+            for point in &point_cloud {
+                let transformed_point = {
+                    // perform tranformation
+                    let transformed_point = {
+                        let transformed_point =
+                            rotate_around_x(point, orientation.x);
+                        let transformed_point =
+                            rotate_around_y(&transformed_point, orientation.y);
+                        let transformed_point =
+                            rotate_around_z(&transformed_point, orientation.z);
+                        transformed_point
+                    };
+
+                    // move away based on camera position
+                    let transformed_point = Vector3 {
+                        x: transformed_point.x,
+                        y: transformed_point.y,
+                        z: transformed_point.z - camera_position.z,
+                    };
+
+                    transformed_point
+                };
+                match perspective_projection(&transformed_point) {
+                    Some(projected_point) => {
+                        projected_points.push(projected_point)
+                    }
+                    None => {}
+                }
             }
         }
 
         // render
-        color_buffer.clear(0xFF000000);
-        draw_dot_grid(&mut color_buffer, 10, 0xFFFFFFFF);
+        {
+            color_buffer.clear(0xFF000000);
+            draw_dot_grid(&mut color_buffer, 10, 0xFFFFFFFF);
 
-        for point in &projected_points {
-            draw_rect(
-                &mut color_buffer,
-                (point.x + (window_width as f32 / 2.0)) as i32,
-                (point.y + (window_height as f32 / 2.0)) as i32,
-                4,
-                4,
-                0xFFFFFF00,
-            );
+            for point in &projected_points {
+                draw_rect(
+                    &mut color_buffer,
+                    (point.x + (window_width as f32 / 2.0)) as i32,
+                    (point.y + (window_height as f32 / 2.0)) as i32,
+                    4,
+                    4,
+                    0xFFFFFF00,
+                );
+            }
+
+            // write color buffer to texture
+            unsafe {
+                color_buffer_texture
+                    .update(None, color_buffer.buffer.align_to::<u8>().1, pitch)
+                    .expect("Failure to update texture");
+            }
+            canvas
+                .copy(&color_buffer_texture, None, None)
+                .expect("Failure to copy texture to canvas");
+
+            canvas.present();
         }
-
-        // write color buffer to texture
-        unsafe {
-            color_buffer_texture
-                .update(None, color_buffer.buffer.align_to::<u8>().1, pitch)
-                .expect("Failure to update texture");
-        }
-        canvas
-            .copy(&color_buffer_texture, None, None)
-            .expect("Failure to copy texture to canvas");
-
-        canvas.present();
 
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }

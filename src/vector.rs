@@ -10,3 +10,33 @@ pub struct Vector3 {
     pub y: f32,
     pub z: f32,
 }
+
+pub fn rotate_around_x(v: &Vector3, angle: f32) -> Vector3 {
+    let cos_angle = angle.cos();
+    let sin_angle = angle.sin();
+    Vector3 {
+        x: v.x,
+        y: v.y * cos_angle - v.z * sin_angle,
+        z: v.y * sin_angle + v.z * cos_angle,
+    }
+}
+
+pub fn rotate_around_y(v: &Vector3, angle: f32) -> Vector3 {
+    let cos_angle = angle.cos();
+    let sin_angle = angle.sin();
+    Vector3 {
+        x: v.x * cos_angle - v.z * sin_angle,
+        y: v.y,
+        z: v.x * sin_angle + v.z * cos_angle,
+    }
+}
+
+pub fn rotate_around_z(v: &Vector3, angle: f32) -> Vector3 {
+    let cos_angle = angle.cos();
+    let sin_angle = angle.sin();
+    Vector3 {
+        x: v.x * cos_angle - v.y * sin_angle,
+        y: v.x * sin_angle + v.y * cos_angle,
+        z: v.z,
+    }
+}
