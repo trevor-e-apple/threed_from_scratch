@@ -2,7 +2,10 @@ extern crate sdl3;
 
 mod vector;
 
-use std::{process::ExitCode, time::Duration};
+use std::{
+    process::ExitCode,
+    time::{Duration, Instant},
+};
 
 use sdl3::{
     event::Event,
@@ -17,6 +20,9 @@ use vector::{
 };
 
 const FOV_FACTOR: f32 = 640.0;
+const FRAMES_PER_SEC: f32 = 30.0;
+const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
+const FRAME_TARGET_TIME_NS: u32 = (1000.0 * FRAME_TARGET_TIME_MS) as u32;
 
 struct ColorBuffer {
     pub buffer: Vec<u32>,
@@ -188,6 +194,8 @@ pub fn main() -> ExitCode {
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
+        let frame_start_time = Instant::now();
+
         // process input
         for event in event_pump.poll_iter() {
             match event {
@@ -270,7 +278,12 @@ pub fn main() -> ExitCode {
             canvas.present();
         }
 
-        std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+        let frame_duration = Instant::now().duration_since(frame_start_time);
+        if frame_duration.as_millis() < (FRAME_TARGET_TIME_MS as u128) {
+            let sleep_time =
+                frame_duration - Duration::new(0, FRAME_TARGET_TIME_NS);
+            std::thread::sleep(sleep_time);
+        }
     }
 
     ExitCode::from(0)
