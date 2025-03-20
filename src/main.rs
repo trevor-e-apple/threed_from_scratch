@@ -1,5 +1,8 @@
 extern crate sdl3;
 
+mod mesh;
+mod point;
+mod triangle;
 mod vector;
 
 use std::{
@@ -7,6 +10,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use mesh::{MESH_FACES, MESH_VERTICES};
 use sdl3::{
     event::Event,
     keyboard::Keycode,
@@ -15,6 +19,7 @@ use sdl3::{
         pixels::SDL_PIXELFORMAT_ARGB8888, render::SDL_TEXTUREACCESS_STREAMING,
     },
 };
+use triangle::Triangle;
 use vector::{
     rotate_around_x, rotate_around_y, rotate_around_z, Vector2, Vector3,
 };
@@ -107,29 +112,6 @@ fn perspective_projection(vector: &Vector3) -> Option<Vector2> {
 }
 
 pub fn main() -> ExitCode {
-    // TEMP: Create an point cloud
-    let point_cloud = {
-        const POINT_COUNT: usize = 9 * 9 * 9;
-        let mut points = Vec::<Vector3>::with_capacity(POINT_COUNT);
-        let mut x: f32 = -1.0;
-        while x <= 1.0 {
-            let mut y: f32 = -1.0;
-            while y <= 1.0 {
-                let mut z: f32 = -1.0;
-                while z <= 1.0 {
-                    points.push(Vector3 { x, y, z });
-                    z += 0.25;
-                }
-                y += 0.25;
-            }
-            x += 0.25;
-        }
-        points
-    };
-
-    // Init projected points
-    let mut projected_points = Vec::<Vector2>::with_capacity(point_cloud.len());
-
     // Init SDL
     let sdl_context = sdl3::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -177,11 +159,17 @@ pub fn main() -> ExitCode {
     };
     let pitch = (4 * window_width) as usize;
 
+    // Initialize triangle buffer
+    let mut triangles_to_render: Vec<Triangle> = Vec::new();
+
+    // Initialize camera
     let camera_position = Vector3 {
         x: 0.0,
         y: 0.0,
         z: -5.0,
     };
+
+    // Initialize model orientation
     let mut orientation = Vector3 {
         x: 0.0,
         y: 0.0,
@@ -217,35 +205,55 @@ pub fn main() -> ExitCode {
 
         // project
         {
-            projected_points.clear();
-            for point in &point_cloud {
-                let transformed_point = {
-                    // perform tranformation
+            // loop over faces
+            triangles_to_render.clear();
+            for face in &MESH_FACES {
+                let vertices: [Vector3; 3] = [
+                    MESH_VERTICES[face.a - 1].clone(),
+                    MESH_VERTICES[face.b - 1].clone(),
+                    MESH_VERTICES[face.c - 1].clone(),
+                ];
+
+                // transform and project vertices to get triangle to render
+                let mut triangle = Triangle {
+                    ..Default::default()
+                };
+                for (index, vertex) in vertices.into_iter().enumerate() {
                     let transformed_point = {
-                        let transformed_point =
-                            rotate_around_x(point, orientation.x);
-                        let transformed_point =
-                            rotate_around_y(&transformed_point, orientation.y);
-                        let transformed_point =
-                            rotate_around_z(&transformed_point, orientation.z);
+                        // perform tranformation
+                        let transformed_point = {
+                            let transformed_point =
+                                rotate_around_x(&vertex, orientation.x);
+                            let transformed_point = rotate_around_y(
+                                &transformed_point,
+                                orientation.y,
+                            );
+                            let transformed_point = rotate_around_z(
+                                &transformed_point,
+                                orientation.z,
+                            );
+                            transformed_point
+                        };
+
+                        // move away based on camera position
+                        let transformed_point = Vector3 {
+                            x: transformed_point.x,
+                            y: transformed_point.y,
+                            z: transformed_point.z - camera_position.z,
+                        };
+
                         transformed_point
                     };
 
-                    // move away based on camera position
-                    let transformed_point = Vector3 {
-                        x: transformed_point.x,
-                        y: transformed_point.y,
-                        z: transformed_point.z - camera_position.z,
-                    };
-
-                    transformed_point
-                };
-                match perspective_projection(&transformed_point) {
-                    Some(projected_point) => {
-                        projected_points.push(projected_point)
+                    match perspective_projection(&transformed_point) {
+                        Some(projected_point) => {
+                            triangle.points[index] = projected_point;
+                        }
+                        None => {}
                     }
-                    None => {}
                 }
+
+                triangles_to_render.push(triangle);
             }
         }
 
@@ -254,7 +262,28 @@ pub fn main() -> ExitCode {
             color_buffer.clear(0xFF000000);
             draw_dot_grid(&mut color_buffer, 10, 0xFFFFFFFF);
 
-            for point in &projected_points {
+            for triangle in &triangles_to_render {
+                let point = &triangle.points[0];
+                draw_rect(
+                    &mut color_buffer,
+                    (point.x + (window_width as f32 / 2.0)) as i32,
+                    (point.y + (window_height as f32 / 2.0)) as i32,
+                    4,
+                    4,
+                    0xFFFFFF00,
+                );
+
+                let point = &triangle.points[1];
+                draw_rect(
+                    &mut color_buffer,
+                    (point.x + (window_width as f32 / 2.0)) as i32,
+                    (point.y + (window_height as f32 / 2.0)) as i32,
+                    4,
+                    4,
+                    0xFFFFFF00,
+                );
+
+                let point = &triangle.points[2];
                 draw_rect(
                     &mut color_buffer,
                     (point.x + (window_width as f32 / 2.0)) as i32,

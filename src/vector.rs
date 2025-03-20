@@ -1,10 +1,10 @@
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
