@@ -21,7 +21,8 @@ use sdl3::{
 };
 use triangle::Triangle;
 use vector::{
-    rotate_around_x, rotate_around_y, rotate_around_z, Vector2, Vector3,
+    rotate_around_x, rotate_around_y, rotate_around_z, Vector2, Vector2i,
+    Vector3,
 };
 
 const FOV_FACTOR: f32 = 640.0;
@@ -90,6 +91,38 @@ fn draw_rect(
         for x in x..(x + width) {
             color_buffer.set_pixel(x as usize, y as usize, color);
         }
+    }
+}
+
+fn draw_line(
+    color_buffer: &mut ColorBuffer,
+    x_1: i32,
+    y_1: i32,
+    x_2: i32,
+    y_2: i32,
+    color: u32,
+) {
+    let delta_x = x_2 - x_1;
+    let delta_y = y_2 - y_1;
+
+    let side_length = {
+        if delta_x.abs() > delta_y.abs() {
+            delta_x.abs()
+        } else {
+            delta_y.abs()
+        }
+    };
+
+    let x_increment = delta_x as f64 / side_length as f64;
+    let y_increment = delta_y as f64 / side_length as f64;
+
+    let mut x = x_1 as f64;
+    let mut y = y_1 as f64;
+    for _ in 0..side_length {
+        x += x_increment;
+        y += y_increment;
+
+        color_buffer.set_pixel(x.round() as usize, y.round() as usize, color);
     }
 }
 
@@ -198,9 +231,9 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.01;
-            orientation.y += 0.01;
-            orientation.z += 0.01;
+            orientation.x += 0.005;
+            orientation.y += 0.005;
+            orientation.z += 0.005;
         }
 
         // project
@@ -263,31 +296,68 @@ pub fn main() -> ExitCode {
             draw_dot_grid(&mut color_buffer, 10, 0xFFFFFFFF);
 
             for triangle in &triangles_to_render {
-                let point = &triangle.points[0];
+                let centering_vector = Vector2 {
+                    x: (window_width as f32 / 2.0),
+                    y: (window_height as f32 / 2.0),
+                };
+                let point_0 = Vector2i::from_vector2(
+                    &(&triangle.points[0] + &centering_vector),
+                );
+                let point_1 = Vector2i::from_vector2(
+                    &(&triangle.points[1] + &centering_vector),
+                );
+                let point_2 = Vector2i::from_vector2(
+                    &(&triangle.points[2] + &centering_vector),
+                );
+
+                // draw lines of triangle
+                const LINE_COLOR: u32 = 0xFFFFFFFF;
+                draw_line(
+                    &mut color_buffer,
+                    point_0.x,
+                    point_0.y,
+                    point_1.x,
+                    point_1.y,
+                    LINE_COLOR,
+                );
+                draw_line(
+                    &mut color_buffer,
+                    point_1.x,
+                    point_1.y,
+                    point_2.x,
+                    point_2.y,
+                    LINE_COLOR,
+                );
+                draw_line(
+                    &mut color_buffer,
+                    point_2.x,
+                    point_2.y,
+                    point_0.x,
+                    point_0.y,
+                    LINE_COLOR,
+                );
+
+                // draw vertices
                 draw_rect(
                     &mut color_buffer,
-                    (point.x + (window_width as f32 / 2.0)) as i32,
-                    (point.y + (window_height as f32 / 2.0)) as i32,
+                    point_0.x as i32,
+                    point_0.y as i32,
                     4,
                     4,
                     0xFFFFFF00,
                 );
-
-                let point = &triangle.points[1];
                 draw_rect(
                     &mut color_buffer,
-                    (point.x + (window_width as f32 / 2.0)) as i32,
-                    (point.y + (window_height as f32 / 2.0)) as i32,
+                    point_1.x,
+                    point_1.y,
                     4,
                     4,
                     0xFFFFFF00,
                 );
-
-                let point = &triangle.points[2];
                 draw_rect(
                     &mut color_buffer,
-                    (point.x + (window_width as f32 / 2.0)) as i32,
-                    (point.y + (window_height as f32 / 2.0)) as i32,
+                    point_2.x,
+                    point_2.y,
                     4,
                     4,
                     0xFFFFFF00,

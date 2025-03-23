@@ -1,7 +1,48 @@
+use std::ops;
+
+// TODO: operator overloading for other standard vecotr operations (add, scale, sub)
+
 #[derive(Clone, Default)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
+}
+
+#[derive(Clone, Default)]
+pub struct Vector2i {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl ops::Add<Vector2> for Vector2 {
+    type Output = Vector2;
+
+    fn add(self, rhs: Vector2) -> Vector2 {
+        Vector2 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl ops::Add<&Vector2> for &Vector2 {
+    type Output = Vector2;
+
+    fn add(self, rhs: &Vector2) -> Vector2 {
+        Vector2 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl Vector2i {
+    pub fn from_vector2(v: &Vector2) -> Vector2i {
+        Vector2i {
+            x: v.x.round() as i32,
+            y: v.y.round() as i32,
+        }
+    }
 }
 
 #[derive(Clone, Default)]
