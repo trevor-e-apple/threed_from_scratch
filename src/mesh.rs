@@ -106,10 +106,12 @@ pub fn load_obj_mesh(path: &String) -> (Vec<Vector3>, Vec<Face>) {
             // most faces are 3 vertices (a triangle), but there is a possibility for a polygon
             let mut elements: Vec<usize> = Vec::with_capacity(3);
             for element_str in rest_of_line.split(" ") {
-                let vertex_index: usize = match element_str.parse() {
+                let vertex_info: Vec<&str> = element_str.split("/").collect();
+                let vertex_index: usize = match vertex_info[0].parse() {
                     Ok(vertex_index) => vertex_index,
                     Err(_) => panic!("Unable to convert index to usize"),
                 };
+                // TODO: handle vertex texture and normal info
                 elements.push(vertex_index);
             }
 
