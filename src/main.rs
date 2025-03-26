@@ -153,7 +153,7 @@ pub fn main() -> ExitCode {
         println!("No model path passed in. Using in-memory cube data");
         (MESH_VERTICES.to_vec(), MESH_FACES.to_vec())
     } else {
-        let model_path = args[0].clone();
+        let model_path = args[1].clone();
         load_obj_mesh(&model_path)
     };
 
