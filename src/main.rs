@@ -6,11 +6,12 @@ mod triangle;
 mod vector;
 
 use std::{
+    env,
     process::ExitCode,
     time::{Duration, Instant},
 };
 
-use mesh::{MESH_FACES, MESH_VERTICES};
+use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
 use sdl3::{
     event::Event,
     keyboard::Keycode,
@@ -145,6 +146,17 @@ fn perspective_projection(vector: &Vector3) -> Option<Vector2> {
 }
 
 pub fn main() -> ExitCode {
+    // Grab arguments
+    let args: Vec<String> = env::args().collect();
+
+    let (vertices, faces) = if args.len() == 1 {
+        println!("No model path passed in. Using in-memory cube data");
+        (MESH_VERTICES.to_vec(), MESH_FACES.to_vec())
+    } else {
+        let model_path = args[0].clone();
+        load_obj_mesh(&model_path)
+    };
+
     // Init SDL
     let sdl_context = sdl3::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -240,11 +252,11 @@ pub fn main() -> ExitCode {
         {
             // loop over faces
             triangles_to_render.clear();
-            for face in &MESH_FACES {
+            for face in &faces {
                 let vertices: [Vector3; 3] = [
-                    MESH_VERTICES[face.a - 1].clone(),
-                    MESH_VERTICES[face.b - 1].clone(),
-                    MESH_VERTICES[face.c - 1].clone(),
+                    vertices[face.a - 1].clone(),
+                    vertices[face.b - 1].clone(),
+                    vertices[face.c - 1].clone(),
                 ];
 
                 // transform and project vertices to get triangle to render

@@ -68,7 +68,7 @@ pub const MESH_FACES: [Face; 12] = [
     Face { a: 6, b: 1, c: 4 },
 ];
 
-fn load_obj_mesh(path: &String) -> (Vec<Vector3>, Vec<Face>) {
+pub fn load_obj_mesh(path: &String) -> (Vec<Vector3>, Vec<Face>) {
     let mut vertices = vec![];
     let mut faces = vec![];
 
@@ -112,6 +112,14 @@ fn load_obj_mesh(path: &String) -> (Vec<Vector3>, Vec<Face>) {
                 };
                 elements.push(vertex_index);
             }
+
+            assert!(elements.len() == 3);
+
+            faces.push(Face {
+                a: elements[0],
+                b: elements[1],
+                c: elements[2],
+            });
         } else {
             // TODO: don't do anything here yet
         }
