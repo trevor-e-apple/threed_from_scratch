@@ -106,6 +106,54 @@ impl ops::Sub<&Vector3> for &Vector3 {
     }
 }
 
+impl ops::Mul<Vector3> for f32 {
+    type Output = Vector3;
+
+    fn mul(self, rhs: Vector3) -> Vector3 {
+        Vector3 {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
+    }
+}
+
+impl ops::Mul<&Vector3> for f32 {
+    type Output = Vector3;
+
+    fn mul(self, rhs: &Vector3) -> Vector3 {
+        Vector3 {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
+    }
+}
+
+impl ops::Mul<f32> for Vector3 {
+    type Output = Vector3;
+
+    fn mul(self, rhs: f32) -> Vector3 {
+        Vector3 {
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
+        }
+    }
+}
+
+impl ops::Mul<f32> for &Vector3 {
+    type Output = Vector3;
+
+    fn mul(self, rhs: f32) -> Vector3 {
+        Vector3 {
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
+        }
+    }
+}
+
 pub fn rotate_around_x(v: &Vector3, angle: f32) -> Vector3 {
     let cos_angle = angle.cos();
     let sin_angle = angle.sin();
