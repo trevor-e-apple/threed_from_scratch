@@ -36,6 +36,12 @@ impl ops::Add<&Vector2> for &Vector2 {
     }
 }
 
+impl Vector2 {
+    pub fn magnitude(v: &Vector2) -> f32 {
+        (v.x * v.x + v.y * v.y).sqrt()
+    }
+}
+
 impl Vector2i {
     pub fn from_vector2(v: &Vector2) -> Vector2i {
         Vector2i {
@@ -50,6 +56,54 @@ pub struct Vector3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+}
+
+impl ops::Add<Vector3> for Vector3 {
+    type Output = Vector3;
+
+    fn add(self, rhs: Vector3) -> Vector3 {
+        Vector3 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
+impl ops::Add<&Vector3> for &Vector3 {
+    type Output = Vector3;
+
+    fn add(self, rhs: &Vector3) -> Vector3 {
+        Vector3 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
+impl ops::Sub<Vector3> for Vector3 {
+    type Output = Vector3;
+
+    fn sub(self, rhs: Vector3) -> Vector3 {
+        Vector3 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
+impl ops::Sub<&Vector3> for &Vector3 {
+    type Output = Vector3;
+
+    fn sub(self, rhs: &Vector3) -> Vector3 {
+        Vector3 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
 }
 
 pub fn rotate_around_x(v: &Vector3, angle: f32) -> Vector3 {
@@ -79,5 +133,11 @@ pub fn rotate_around_z(v: &Vector3, angle: f32) -> Vector3 {
         x: v.x * cos_angle - v.y * sin_angle,
         y: v.x * sin_angle + v.y * cos_angle,
         z: v.z,
+    }
+}
+
+impl Vector3 {
+    pub fn magnitude(v: &Vector3) -> f32 {
+        (v.x * v.x + v.y * v.y + v.z * v.z).sqrt()
     }
 }
