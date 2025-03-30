@@ -1,7 +1,5 @@
 use std::ops;
 
-// TODO: operator overloading for other standard vecotr operations (add, scale, sub)
-
 #[derive(Clone, Default)]
 pub struct Vector2 {
     pub x: f32,
@@ -103,8 +101,12 @@ impl ops::Mul<f32> for &Vector2 {
 }
 
 impl Vector2 {
-    pub fn magnitude(v: &Vector2) -> f32 {
-        (v.x * v.x + v.y * v.y).sqrt()
+    pub fn magnitude(&self) -> f32 {
+        (self.x * self.x + self.y * self.y).sqrt()
+    }
+
+    pub fn dot_product(a: &Self, b: &Self) -> f32 {
+        a.x * b.x + a.y * b.y
     }
 }
 
@@ -221,8 +223,12 @@ impl ops::Mul<f32> for &Vector3 {
 }
 
 impl Vector3 {
-    pub fn magnitude(v: &Vector3) -> f32 {
-        (v.x * v.x + v.y * v.y + v.z * v.z).sqrt()
+    pub fn magnitude(&self) -> f32 {
+        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+    }
+
+    pub fn dot_product(a: &Self, b: &Self) -> f32 {
+        a.x * b.x + a.y * b.y + a.z * b.z
     }
 }
 
@@ -262,8 +268,4 @@ pub fn cross_product(a: &Vector3, b: &Vector3) -> Vector3 {
         y: a.z * b.x - a.x * b.z,
         z: a.x * b.y - a.y * b.x,
     }
-}
-
-pub fn dot_product(a: &Vector3, b: &Vector3) -> f32 {
-    a.x * b.x + a.y * b.y + a.z * b.z
 }
