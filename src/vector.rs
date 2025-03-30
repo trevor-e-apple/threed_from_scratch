@@ -220,6 +220,12 @@ impl ops::Mul<f32> for &Vector3 {
     }
 }
 
+impl Vector3 {
+    pub fn magnitude(v: &Vector3) -> f32 {
+        (v.x * v.x + v.y * v.y + v.z * v.z).sqrt()
+    }
+}
+
 pub fn rotate_around_x(v: &Vector3, angle: f32) -> Vector3 {
     let cos_angle = angle.cos();
     let sin_angle = angle.sin();
@@ -250,8 +256,10 @@ pub fn rotate_around_z(v: &Vector3, angle: f32) -> Vector3 {
     }
 }
 
-impl Vector3 {
-    pub fn magnitude(v: &Vector3) -> f32 {
-        (v.x * v.x + v.y * v.y + v.z * v.z).sqrt()
+pub fn cross_product(a: &Vector3, b: &Vector3) -> Vector3 {
+    Vector3 {
+        x: a.x * b.z - a.z * b.y,
+        y: a.z * b.x - a.x * b.z,
+        z: a.x * b.y - a.y * b.x,
     }
 }
