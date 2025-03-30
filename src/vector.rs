@@ -263,3 +263,7 @@ pub fn cross_product(a: &Vector3, b: &Vector3) -> Vector3 {
         z: a.x * b.y - a.y * b.x,
     }
 }
+
+pub fn dot_product(a: &Vector3, b: &Vector3) -> f32 {
+    a.x * b.x + a.y * b.y + a.z * b.z
+}
