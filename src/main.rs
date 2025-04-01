@@ -314,8 +314,16 @@ pub fn main() -> ExitCode {
                     let vector_b = &transformed_vertices[1];
                     let vector_c = &transformed_vertices[2];
 
-                    let ab_vector = vector_b - vector_a;
-                    let ac_vector = vector_c - vector_a;
+                    let ab_vector = {
+                        let mut ab_vector = vector_b - vector_a;
+                        ab_vector.normalize();
+                        ab_vector
+                    };
+                    let ac_vector = {
+                        let mut ac_vector = vector_c - vector_a;
+                        ac_vector.normalize();
+                        ac_vector
+                    };
                     let face_normal = {
                         let mut face_normal =
                             calc_cross_product(&ab_vector, &ac_vector);
