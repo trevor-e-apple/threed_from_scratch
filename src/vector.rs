@@ -105,6 +105,12 @@ impl Vector2 {
         (self.x * self.x + self.y * self.y).sqrt()
     }
 
+    pub fn normalize(&mut self) {
+        let scalar = 1.0 / self.magnitude();
+        self.x = self.x * scalar;
+        self.y = self.y * scalar;
+    }
+
     pub fn dot_product(a: &Self, b: &Self) -> f32 {
         a.x * b.x + a.y * b.y
     }
@@ -225,6 +231,13 @@ impl ops::Mul<f32> for &Vector3 {
 impl Vector3 {
     pub fn magnitude(&self) -> f32 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+    }
+
+    pub fn normalize(&mut self) {
+        let scalar = 1.0 / self.magnitude();
+        self.x = scalar * self.x;
+        self.y = scalar * self.y;
+        self.z = scalar * self.z;
     }
 
     pub fn dot_product(a: &Self, b: &Self) -> f32 {

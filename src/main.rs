@@ -316,8 +316,12 @@ pub fn main() -> ExitCode {
 
                     let ab_vector = vector_b - vector_a;
                     let ac_vector = vector_c - vector_a;
-                    let face_normal =
-                        calc_cross_product(&ab_vector, &ac_vector);
+                    let face_normal = {
+                        let mut face_normal =
+                            calc_cross_product(&ab_vector, &ac_vector);
+                        face_normal.normalize();
+                        face_normal
+                    };
 
                     // calculate the to camera vector
                     let face_to_camera = &camera_position - &vector_a;
