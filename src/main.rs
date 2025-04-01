@@ -22,8 +22,8 @@ use sdl3::{
 };
 use triangle::Triangle;
 use vector::{
-    rotate_around_x, rotate_around_y, rotate_around_z, Vector2, Vector2i,
-    Vector3,
+    calc_cross_product, rotate_around_x, rotate_around_y, rotate_around_z,
+    Vector2, Vector2i, Vector3,
 };
 
 const FOV_FACTOR: f32 = 640.0;
@@ -211,7 +211,7 @@ pub fn main() -> ExitCode {
     let camera_position = Vector3 {
         x: 0.0,
         y: 0.0,
-        z: -5.0,
+        z: 0.0,
     };
 
     // Initialize model orientation
@@ -219,6 +219,11 @@ pub fn main() -> ExitCode {
         x: 0.0,
         y: 0.0,
         z: 0.0,
+    };
+    let model_displacement = Vector3 {
+        x: 0.0,
+        y: 0.0,
+        z: 5.0,
     };
 
     canvas.set_draw_color(Color::RGB(0xFE, 0x03, 0x6A));
@@ -243,12 +248,12 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.005;
-            orientation.y += 0.005;
-            orientation.z += 0.005;
+            orientation.x += 0.00125;
+            orientation.y += 0.00125;
+            orientation.z += 0.00125;
         }
 
-        // project
+        // Transform and project
         {
             // loop over faces
             triangles_to_render.clear();
@@ -259,46 +264,87 @@ pub fn main() -> ExitCode {
                     vertices[face.c - 1].clone(),
                 ];
 
-                // transform and project vertices to get triangle to render
-                let mut triangle = Triangle {
-                    ..Default::default()
-                };
+                let mut transformed_vertices: [Vector3; 3] = [
+                    Vector3 {
+                        ..Default::default()
+                    },
+                    Vector3 {
+                        ..Default::default()
+                    },
+                    Vector3 {
+                        ..Default::default()
+                    },
+                ];
+
+                // Transform
                 for (index, vertex) in vertices.into_iter().enumerate() {
-                    let transformed_point = {
-                        // perform tranformation
-                        let transformed_point = {
-                            let transformed_point =
+                    let transformed_vertex = {
+                        let transformed_vertex = {
+                            let transformed_vertex =
                                 rotate_around_x(&vertex, orientation.x);
-                            let transformed_point = rotate_around_y(
-                                &transformed_point,
+                            let transformed_vertex = rotate_around_y(
+                                &transformed_vertex,
                                 orientation.y,
                             );
-                            let transformed_point = rotate_around_z(
-                                &transformed_point,
+                            let transformed_vertex = rotate_around_z(
+                                &transformed_vertex,
                                 orientation.z,
                             );
-                            transformed_point
+
+                            let transformed_vertex =
+                                &transformed_vertex + &model_displacement;
+
+                            transformed_vertex
                         };
 
-                        // move away based on camera position
-                        let transformed_point = Vector3 {
-                            x: transformed_point.x,
-                            y: transformed_point.y,
-                            z: transformed_point.z - camera_position.z,
-                        };
-
-                        transformed_point
+                        transformed_vertex
                     };
-
-                    match perspective_projection(&transformed_point) {
-                        Some(projected_point) => {
-                            triangle.points[index] = projected_point;
-                        }
-                        None => {}
-                    }
+                    transformed_vertices[index] = transformed_vertex;
                 }
 
-                triangles_to_render.push(triangle);
+                // Backface culling
+                let culled = {
+                    // find the normal of face (left-handed system)
+                    /*
+                        A
+                       / \
+                      C - B
+                    */
+                    let vector_a = &transformed_vertices[0];
+                    let vector_b = &transformed_vertices[1];
+                    let vector_c = &transformed_vertices[2];
+
+                    let ab_vector = vector_b - vector_a;
+                    let ac_vector = vector_c - vector_a;
+                    let face_normal =
+                        calc_cross_product(&ab_vector, &ac_vector);
+
+                    // calculate the to camera vector
+                    let face_to_camera = &camera_position - &vector_a;
+
+                    let dot_product =
+                        Vector3::dot_product(&face_normal, &face_to_camera);
+
+                    dot_product < 0.0
+                };
+
+                // Project
+                if !culled {
+                    let mut triangle = Triangle {
+                        ..Default::default()
+                    };
+                    for (index, vertex) in
+                        (&mut transformed_vertices).into_iter().enumerate()
+                    {
+                        match perspective_projection(vertex) {
+                            Some(projected_point) => {
+                                triangle.points[index] = projected_point;
+                            }
+                            None => {}
+                        }
+                    }
+                    triangles_to_render.push(triangle);
+                }
             }
         }
 

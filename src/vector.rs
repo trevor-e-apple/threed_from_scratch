@@ -262,9 +262,9 @@ pub fn rotate_around_z(v: &Vector3, angle: f32) -> Vector3 {
     }
 }
 
-pub fn cross_product(a: &Vector3, b: &Vector3) -> Vector3 {
+pub fn calc_cross_product(a: &Vector3, b: &Vector3) -> Vector3 {
     Vector3 {
-        x: a.x * b.z - a.z * b.y,
+        x: a.y * b.z - a.z * b.y,
         y: a.z * b.x - a.x * b.z,
         z: a.x * b.y - a.y * b.x,
     }
