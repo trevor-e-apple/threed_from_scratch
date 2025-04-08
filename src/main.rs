@@ -2,6 +2,7 @@ extern crate sdl3;
 
 mod mesh;
 mod point;
+mod render;
 mod triangle;
 mod vector;
 
@@ -12,6 +13,10 @@ use std::{
 };
 
 use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
+use render::{
+    draw_dot_grid, draw_filled_triangle, draw_triangle, perspective_projection,
+    ColorBuffer,
+};
 use sdl3::{
     event::Event,
     keyboard::Keycode,
@@ -23,127 +28,12 @@ use sdl3::{
 use triangle::Triangle;
 use vector::{
     calc_cross_product, rotate_around_x, rotate_around_y, rotate_around_z,
-    Vector2, Vector2i, Vector3,
+    Vector2, Vector3,
 };
 
-const FOV_FACTOR: f32 = 640.0;
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
 const FRAME_TARGET_TIME_NS: u32 = (1000.0 * FRAME_TARGET_TIME_MS) as u32;
-
-struct ColorBuffer {
-    pub buffer: Vec<u32>,
-    pub width: usize,
-    pub height: usize,
-}
-
-impl ColorBuffer {
-    /// Initializes a new instance of Self
-    pub fn new(width: usize, height: usize) -> Self {
-        Self {
-            buffer: vec![0; 4 * width * height],
-            width,
-            height,
-        }
-    }
-
-    /// Gets the value of a single pixel
-    pub fn get_pixel(&self, x: usize, y: usize) -> u32 {
-        *self.buffer.get(y * self.width + x).unwrap()
-    }
-
-    /// Sets a single pixel's value
-    pub fn set_pixel(&mut self, x: usize, y: usize, color: u32) {
-        if y >= self.height || x >= self.width {
-            return;
-        }
-
-        let pixel = self.buffer.get_mut(y * self.width + x).unwrap();
-        *pixel = color;
-    }
-
-    /// Clears the color buffer to a specified color
-    pub fn clear(&mut self, color: u32) {
-        for pixel in &mut self.buffer {
-            *pixel = color;
-        }
-    }
-}
-
-/// Draws a grid on the color buffer at every 'step' pixels
-fn draw_dot_grid(color_buffer: &mut ColorBuffer, step: usize, color: u32) {
-    // draw horizontal lines
-    for y in (0..color_buffer.height).step_by(step) {
-        for x in (0..color_buffer.width).step_by(step) {
-            color_buffer.set_pixel(x, y, color);
-        }
-    }
-}
-
-fn draw_rect(
-    color_buffer: &mut ColorBuffer,
-    x: i32,
-    y: i32,
-    width: i32,
-    height: i32,
-    color: u32,
-) {
-    for y in y..(y + height) {
-        for x in x..(x + width) {
-            color_buffer.set_pixel(x as usize, y as usize, color);
-        }
-    }
-}
-
-fn draw_line(
-    color_buffer: &mut ColorBuffer,
-    x_1: i32,
-    y_1: i32,
-    x_2: i32,
-    y_2: i32,
-    color: u32,
-) {
-    let delta_x = x_2 - x_1;
-    let delta_y = y_2 - y_1;
-
-    let side_length = {
-        if delta_x.abs() > delta_y.abs() {
-            delta_x.abs()
-        } else {
-            delta_y.abs()
-        }
-    };
-
-    let x_increment = delta_x as f64 / side_length as f64;
-    let y_increment = delta_y as f64 / side_length as f64;
-
-    let mut x = x_1 as f64;
-    let mut y = y_1 as f64;
-    for _ in 0..side_length {
-        x += x_increment;
-        y += y_increment;
-
-        color_buffer.set_pixel(x.round() as usize, y.round() as usize, color);
-    }
-}
-
-fn orthographic_projection(vector: &Vector3) -> Vector2 {
-    Vector2 {
-        x: FOV_FACTOR * vector.x,
-        y: FOV_FACTOR * vector.y,
-    }
-}
-
-fn perspective_projection(vector: &Vector3) -> Option<Vector2> {
-    if vector.z != 0.0 {
-        Some(Vector2 {
-            x: (FOV_FACTOR * vector.x) / vector.z,
-            y: (FOV_FACTOR * vector.y) / vector.z,
-        })
-    } else {
-        None
-    }
-}
 
 pub fn main() -> ExitCode {
     // Grab arguments
@@ -364,75 +254,39 @@ pub fn main() -> ExitCode {
         {
             color_buffer.clear(0xFF000000);
             draw_dot_grid(&mut color_buffer, 10, 0xFFFFFFFF);
+            let centering_vector = Vector2 {
+                x: (window_width as f32 / 2.0),
+                y: (window_height as f32 / 2.0),
+            };
 
-            for triangle in &triangles_to_render {
-                let centering_vector = Vector2 {
-                    x: (window_width as f32 / 2.0),
-                    y: (window_height as f32 / 2.0),
-                };
-                let point_0 = Vector2i::from_vector2(
-                    &(&triangle.points[0] + &centering_vector),
-                );
-                let point_1 = Vector2i::from_vector2(
-                    &(&triangle.points[1] + &centering_vector),
-                );
-                let point_2 = Vector2i::from_vector2(
-                    &(&triangle.points[2] + &centering_vector),
-                );
+            // TODO: restore triangle renders
+            // for triangle in &triangles_to_render {
+            //     draw_triangle(&mut color_buffer, triangle, &centering_vector);
+            // }
 
-                // draw lines of triangle
-                const LINE_COLOR: u32 = 0xFFFFFFFF;
-                draw_line(
-                    &mut color_buffer,
-                    point_0.x,
-                    point_0.y,
-                    point_1.x,
-                    point_1.y,
-                    LINE_COLOR,
-                );
-                draw_line(
-                    &mut color_buffer,
-                    point_1.x,
-                    point_1.y,
-                    point_2.x,
-                    point_2.y,
-                    LINE_COLOR,
-                );
-                draw_line(
-                    &mut color_buffer,
-                    point_2.x,
-                    point_2.y,
-                    point_0.x,
-                    point_0.y,
-                    LINE_COLOR,
-                );
-
-                // draw vertices
-                draw_rect(
-                    &mut color_buffer,
-                    point_0.x as i32,
-                    point_0.y as i32,
-                    4,
-                    4,
-                    0xFFFFFF00,
-                );
-                draw_rect(
-                    &mut color_buffer,
-                    point_1.x,
-                    point_1.y,
-                    4,
-                    4,
-                    0xFFFFFF00,
-                );
-                draw_rect(
-                    &mut color_buffer,
-                    point_2.x,
-                    point_2.y,
-                    4,
-                    4,
-                    0xFFFFFF00,
-                );
-            }
+            draw_triangle(
+                &mut color_buffer,
+                &Triangle {
+                    points: [
+                        Vector2 { x: 300.0, y: 100.0 },
+                        Vector2 { x: 50.0, y: 400.0 },
+                        Vector2 { x: 500.0, y: 700.0 },
+                    ],
+                },
+                &Vector2 { x: 0.0, y: 0.0 },
+            );
+            draw_filled_triangle(
+                &mut color_buffer,
+                &Triangle {
+                    points: [
+                        Vector2 { x: 300.0, y: 100.0 },
+                        Vector2 { x: 50.0, y: 400.0 },
+                        Vector2 { x: 500.0, y: 700.0 },
+                    ],
+                },
+                &Vector2 { x: 0.0, y: 0.0 },
+                0xFFFFFFFF,
+            );
 
             // write color buffer to texture
             unsafe {
