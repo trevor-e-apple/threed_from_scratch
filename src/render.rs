@@ -221,6 +221,35 @@ pub fn draw_filled_triangle(
             x_end_f += inv_end_slope;
         }
     }
+
+    // Fill flat top triangle
+    {
+        let (y_start, y_end) =
+            (midpoint.y.round() as i32, point2.y.round() as i32);
+
+        let point1_slope = (point2.x - point1.x) / (point2.y - point1.y);
+        let midpoint_slope = (point2.x - midpoint.x) / (point2.y - midpoint.y);
+        let (x_start_f, x_end_f, inv_start_slope, inv_end_slope) =
+            if point1.x < point2.x {
+                (point1.x, midpoint.x, point1_slope, midpoint_slope)
+            } else {
+                (midpoint.x, point1.x, midpoint_slope, point1_slope)
+            };
+        let mut x_start_f = x_start_f;
+        let mut x_end_f = x_end_f;
+
+        for y in y_start..=y_end {
+            let x_start = x_start_f.round() as i32;
+            let x_end = x_end_f.round() as i32;
+
+            for x in x_start..=x_end {
+                color_buffer.set_pixel(x as usize, y as usize, color);
+            }
+
+            x_start_f += inv_start_slope;
+            x_end_f += inv_end_slope;
+        }
+    }
 }
 
 pub fn orthographic_projection(vector: &Vector3) -> Vector2 {
