@@ -259,34 +259,15 @@ pub fn main() -> ExitCode {
                 y: (window_height as f32 / 2.0),
             };
 
-            // TODO: restore triangle renders
-            // for triangle in &triangles_to_render {
-            //     draw_triangle(&mut color_buffer, triangle, &centering_vector);
-            // }
-
-            draw_triangle(
-                &mut color_buffer,
-                &Triangle {
-                    points: [
-                        Vector2 { x: 300.0, y: 100.0 },
-                        Vector2 { x: 50.0, y: 400.0 },
-                        Vector2 { x: 500.0, y: 700.0 },
-                    ],
-                },
-                &Vector2 { x: 0.0, y: 0.0 },
-            );
-            draw_filled_triangle(
-                &mut color_buffer,
-                &Triangle {
-                    points: [
-                        Vector2 { x: 300.0, y: 100.0 },
-                        Vector2 { x: 50.0, y: 400.0 },
-                        Vector2 { x: 500.0, y: 700.0 },
-                    ],
-                },
-                &Vector2 { x: 0.0, y: 0.0 },
-                0xFFFFFFFF,
-            );
+            for triangle in &triangles_to_render {
+                draw_filled_triangle(
+                    &mut color_buffer,
+                    triangle,
+                    &centering_vector,
+                    0xFFFFFFFF,
+                );
+                // draw_triangle(&mut color_buffer, triangle, &centering_vector);
+            }
 
             // write color buffer to texture
             unsafe {

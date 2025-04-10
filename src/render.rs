@@ -105,6 +105,7 @@ pub fn draw_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
     offset_vector: &Vector2,
+    color: u32,
 ) {
     let point_0 =
         Vector2i::from_vector2(&(&triangle.points[0] + offset_vector));
@@ -114,14 +115,13 @@ pub fn draw_triangle(
         Vector2i::from_vector2(&(&triangle.points[2] + offset_vector));
 
     // draw lines of triangle
-    const LINE_COLOR: u32 = 0xFFFFFFFF;
     draw_line(
         color_buffer,
         point_0.x,
         point_0.y,
         point_1.x,
         point_1.y,
-        LINE_COLOR,
+        color,
     );
     draw_line(
         color_buffer,
@@ -129,7 +129,7 @@ pub fn draw_triangle(
         point_1.y,
         point_2.x,
         point_2.y,
-        LINE_COLOR,
+        color,
     );
     draw_line(
         color_buffer,
@@ -137,20 +137,89 @@ pub fn draw_triangle(
         point_2.y,
         point_0.x,
         point_0.y,
-        LINE_COLOR,
+        color,
     );
+}
 
-    // draw vertices
-    draw_rect(
-        color_buffer,
-        point_0.x as i32,
-        point_0.y as i32,
-        4,
-        4,
-        0xFFFFFF00,
-    );
-    draw_rect(color_buffer, point_1.x, point_1.y, 4, 4, 0xFFFFFF00);
-    draw_rect(color_buffer, point_2.x, point_2.y, 4, 4, 0xFFFFFF00);
+///////////////////////////////////////////////////////////////////////////////
+// Draw a filled a triangle with a flat bottom
+///////////////////////////////////////////////////////////////////////////////
+//
+//        (x0,y0)
+//          / \
+//         /   \
+//        /     \
+//       /       \
+//      /         \
+//  (x1,y1)------(x2,y2)
+//
+///////////////////////////////////////////////////////////////////////////////
+fn draw_flat_bottom_triangle(
+    color_buffer: &mut ColorBuffer,
+    x0: i32,
+    y0: i32,
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
+    color: u32,
+) {
+    let (y_start, y_end) = (y0, y1);
+
+    // TODO: we might need to check for very narrow triangles that are just a line from the perspective of the camera
+    let inv_slope_1 = ((x1 - x0) as f32) / ((y1 - y0) as f32);
+    let inv_slope_2 = (x2 - x0) as f32 / ((y2 - y0) as f32);
+
+    let mut x_start_f = x0 as f32;
+    let mut x_end_f = x0 as f32;
+    for y in y_start..=y_end {
+        let x_start = x_start_f.round() as i32;
+        let x_end = x_end_f.round() as i32;
+
+        draw_line(color_buffer, x_start, y, x_end, y, color);
+
+        x_start_f += inv_slope_1;
+        x_end_f += inv_slope_2;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Draw a filled a triangle with a flat top
+///////////////////////////////////////////////////////////////////////////////
+//
+//  (x0,y0)------(x1,y1)
+//      \         /
+//       \       /
+//        \     /
+//         \   /
+//          \ /
+//        (x2,y2)
+//
+///////////////////////////////////////////////////////////////////////////////
+fn draw_flat_top_triangle(
+    color_buffer: &mut ColorBuffer,
+    x0: i32,
+    y0: i32,
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
+    color: u32,
+) {
+    let inv_slope_1 = ((x0 - x2) as f32) / ((y0 - y2) as f32);
+    let inv_slope_2 = ((x1 - x2) as f32) / ((y1 - y2) as f32);
+
+    let mut x_start_f = x2 as f32;
+    let mut x_end_f = x2 as f32;
+    for y in (y1..y2).rev() {
+        let x_start = x_start_f.round() as i32;
+        let x_end = x_end_f.round() as i32;
+
+        draw_line(color_buffer, x_start, y, x_end, y, color);
+        // y is decreasing, so we subtract
+        x_start_f -= inv_slope_1;
+        x_end_f -= inv_slope_2;
+    }
 }
 
 pub fn draw_filled_triangle(
@@ -161,9 +230,9 @@ pub fn draw_filled_triangle(
 ) {
     // need to sort the vertices by ascending (y0 < y1 < y2)
     let (point0, point1, point2) = {
-        let point0 = &triangle.points[0];
-        let point1 = &triangle.points[1];
-        let point2 = &triangle.points[2];
+        let point0 = &triangle.points[0] + offset_vector;
+        let point1 = &triangle.points[1] + offset_vector;
+        let point2 = &triangle.points[2] + offset_vector;
 
         let (point0, point1) = if point0.y > point1.y {
             (point1, point0)
@@ -184,71 +253,58 @@ pub fn draw_filled_triangle(
         (point0, point1, point2)
     };
 
-    // calculate the mid points of the triangle
-    let midpoint_ = {
-        let x = (((point2.x - point0.x) * (point1.y - point0.y))
-            / (point2.y - point0.y))
-            + point0.x;
-        Vector2 { x, y: point1.y }
-    };
-    let midpoint = &midpoint_;
-
-    // Fill flat bottom triangle
-    {
-        let (y_start, y_end) =
-            (point0.y.round() as i32, midpoint.y.round() as i32);
-
-        // TODO: we might need to check for very narrow triangles that are just a line from the perspective of the camera
-        let point1_slope = (point1.x - point0.x) / (point1.y - point0.y);
-        let midpoint_slope = (midpoint.x - point0.x) / (midpoint.y - point0.y);
-
-        let (inv_start_slope, inv_end_slope) = if point1.x <= point0.x {
-            (point1_slope, midpoint_slope)
-        } else {
-            (midpoint_slope, point1_slope)
+    if point1.y == point2.y {
+        draw_flat_bottom_triangle(
+            color_buffer,
+            point0.x as i32,
+            point0.y as i32,
+            point1.x as i32,
+            point1.y as i32,
+            point2.x as i32,
+            point2.y as i32,
+            color,
+        );
+    } else if point0.y == point1.y {
+        draw_flat_top_triangle(
+            color_buffer,
+            point0.x as i32,
+            point0.y as i32,
+            point1.x as i32,
+            point1.y as i32,
+            point2.x as i32,
+            point2.y as i32,
+            color,
+        );
+    } else {
+        // calculate the mid points of the triangle
+        let midpoint_ = {
+            let x = (((point2.x - point0.x) * (point1.y - point0.y))
+                / (point2.y - point0.y))
+                + point0.x;
+            Vector2 { x, y: point1.y }
         };
+        let midpoint = &midpoint_;
 
-        let mut x_start_f = point0.x;
-        let mut x_end_f = point0.x;
-        for y in y_start..=y_end {
-            let x_start = x_start_f.round() as i32;
-            let x_end = x_end_f.round() as i32;
-            for x in x_start..=x_end {
-                color_buffer.set_pixel(x as usize, y as usize, color);
-            }
-
-            x_start_f += inv_start_slope;
-            x_end_f += inv_end_slope;
-        }
-    }
-
-    // Fill flat top triangle
-    {
-        let (y_start, y_end) =
-            (midpoint.y.round() as i32, point2.y.round() as i32);
-
-        let point1_slope = (point2.x - point1.x) / (point2.y - point1.y);
-        let midpoint_slope = (point2.x - midpoint.x) / (point2.y - midpoint.y);
-        let (x_start_f, x_end_f, inv_start_slope, inv_end_slope) =
-            if point1.x < point2.x {
-                (point1.x, midpoint.x, point1_slope, midpoint_slope)
-            } else {
-                (midpoint.x, point1.x, midpoint_slope, point1_slope)
-            };
-        let mut x_start_f = x_start_f;
-        let mut x_end_f = x_end_f;
-
-        for y in y_start..=y_end {
-            let x_start = x_start_f.round() as i32;
-            let x_end = x_end_f.round() as i32;
-
-            for x in x_start..=x_end {
-                color_buffer.set_pixel(x as usize, y as usize, color);
-            }
-
-            x_start_f += inv_start_slope;
-            x_end_f += inv_end_slope;
-        }
+        draw_flat_bottom_triangle(
+            color_buffer,
+            point0.x as i32,
+            point0.y as i32,
+            point1.x as i32,
+            point1.y as i32,
+            midpoint.x as i32,
+            midpoint.y as i32,
+            color,
+        );
+        draw_flat_top_triangle(
+            color_buffer,
+            point1.x as i32,
+            point1.y as i32,
+            midpoint.x as i32,
+            midpoint.y as i32,
+            point2.x as i32,
+            point2.y as i32,
+            color,
+        );
     }
 }
 
