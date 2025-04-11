@@ -253,6 +253,7 @@ pub fn draw_filled_triangle(
         (point0, point1, point2)
     };
 
+    // this flow control avoids division by 0 in a somewhat elegant manner
     if point1.y == point2.y {
         draw_flat_bottom_triangle(
             color_buffer,
