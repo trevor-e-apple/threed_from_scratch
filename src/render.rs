@@ -101,6 +101,24 @@ pub fn draw_line(
     }
 }
 
+pub fn draw_triangle_vertices(
+    color_buffer: &mut ColorBuffer,
+    triangle: &Triangle,
+    offset_vector: &Vector2,
+    color: u32,
+) {
+    let point_0 =
+        Vector2i::from_vector2(&(&triangle.points[0] + offset_vector));
+    let point_1 =
+        Vector2i::from_vector2(&(&triangle.points[1] + offset_vector));
+    let point_2 =
+        Vector2i::from_vector2(&(&triangle.points[2] + offset_vector));
+
+    draw_rect(color_buffer, point_0.x, point_0.y, 5, 5, color);
+    draw_rect(color_buffer, point_1.x, point_1.y, 5, 5, color);
+    draw_rect(color_buffer, point_2.x, point_2.y, 5, 5, color);
+}
+
 pub fn draw_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,

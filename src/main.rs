@@ -14,8 +14,7 @@ use std::{
 
 use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
 use render::{
-    draw_dot_grid, draw_filled_triangle, draw_triangle, perspective_projection,
-    ColorBuffer,
+    draw_dot_grid, draw_filled_triangle, draw_rect, draw_triangle, draw_triangle_vertices, perspective_projection, ColorBuffer
 };
 use sdl3::{
     event::Event,
@@ -34,6 +33,20 @@ use vector::{
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
 const FRAME_TARGET_TIME_NS: u32 = (1000.0 * FRAME_TARGET_TIME_MS) as u32;
+
+#[derive(PartialEq)]
+enum RenderMode {
+    Wireframe,
+    WireframeVertices,
+    FilledTriangles,
+    WireframeFilledTriangles,
+}
+
+#[derive(PartialEq)]
+enum BackfaceCullingMode {
+    Enabled,
+    Disabled,
+}
 
 pub fn main() -> ExitCode {
     // Grab arguments
@@ -116,6 +129,10 @@ pub fn main() -> ExitCode {
         z: 5.0,
     };
 
+    // Initialize render mode
+    let render_mode: RenderMode = RenderMode::FilledTriangles;
+    let culling_mode: BackfaceCullingMode = BackfaceCullingMode::Enabled;
+
     canvas.set_draw_color(Color::RGB(0xFE, 0x03, 0x6A));
     canvas.clear();
     canvas.present();
@@ -193,7 +210,7 @@ pub fn main() -> ExitCode {
                 }
 
                 // Backface culling
-                let culled = {
+                let culled = if culling_mode == BackfaceCullingMode::Enabled {
                     // find the normal of face (left-handed system)
                     /*
                         A
@@ -228,6 +245,8 @@ pub fn main() -> ExitCode {
                         Vector3::dot_product(&face_normal, &face_to_camera);
 
                     dot_product < 0.0
+                } else {
+                    false
                 };
 
                 // Project
@@ -259,14 +278,40 @@ pub fn main() -> ExitCode {
                 y: (window_height as f32 / 2.0),
             };
 
-            for triangle in &triangles_to_render {
-                draw_filled_triangle(
-                    &mut color_buffer,
-                    triangle,
-                    &centering_vector,
-                    0xFFFFFFFF,
-                );
-                // draw_triangle(&mut color_buffer, triangle, &centering_vector);
+
+            if render_mode == RenderMode::FilledTriangles
+                || render_mode == RenderMode::WireframeFilledTriangles
+            {
+                for triangle in &triangles_to_render {
+                    draw_filled_triangle(
+                        &mut color_buffer,
+                        triangle,
+                        &centering_vector,
+                        0xFFFFFFFF,
+                    );
+                }
+            }
+
+            if render_mode != RenderMode::FilledTriangles {
+                for triangle in &triangles_to_render {
+                    draw_triangle(
+                        &mut color_buffer,
+                        triangle,
+                        &centering_vector,
+                        0xFF000000,
+                    );
+                }
+            }
+
+            if render_mode == RenderMode::WireframeVertices {
+                for triangle in &triangles_to_render {
+                    draw_triangle_vertices(
+                        &mut color_buffer,
+                        triangle,
+                        &centering_vector,
+                        0xFFFF0000,
+                    );
+                }
             }
 
             // write color buffer to texture
