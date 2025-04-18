@@ -14,7 +14,7 @@ use std::{
 
 use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
 use render::{
-    draw_dot_grid, draw_filled_triangle, draw_rect, draw_triangle, draw_triangle_vertices, perspective_projection, ColorBuffer
+    draw_dot_grid, draw_filled_triangle, draw_triangle, draw_triangle_vertices, perspective_projection, ColorBuffer
 };
 use sdl3::{
     event::Event,
@@ -130,8 +130,8 @@ pub fn main() -> ExitCode {
     };
 
     // Initialize render mode
-    let render_mode: RenderMode = RenderMode::FilledTriangles;
-    let culling_mode: BackfaceCullingMode = BackfaceCullingMode::Enabled;
+    let mut render_mode: RenderMode = RenderMode::FilledTriangles;
+    let mut culling_mode: BackfaceCullingMode = BackfaceCullingMode::Enabled;
 
     canvas.set_draw_color(Color::RGB(0xFE, 0x03, 0x6A));
     canvas.clear();
@@ -149,6 +149,24 @@ pub fn main() -> ExitCode {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
+                Event::KeyDown {keycode: Some(Keycode::C), ..} => {
+                    culling_mode = BackfaceCullingMode::Enabled;
+                },
+                Event::KeyDown {keycode: Some(Keycode::D), ..} => {
+                    culling_mode = BackfaceCullingMode::Disabled;
+                }
+                Event::KeyDown {keycode: Some(Keycode::_1), ..} => {
+                    render_mode = RenderMode::WireframeVertices;
+                }
+                Event::KeyDown {keycode: Some(Keycode::_2), ..} => {
+                    render_mode = RenderMode::Wireframe;
+                }
+                Event::KeyDown { keycode: Some(Keycode::_3), ..} => {
+                    render_mode = RenderMode::FilledTriangles;
+                }
+                Event::KeyDown { keycode: Some(Keycode::_4), ..} => {
+                    render_mode = RenderMode::WireframeFilledTriangles;
+                }
                 _ => {}
             }
         }
@@ -298,7 +316,7 @@ pub fn main() -> ExitCode {
                         &mut color_buffer,
                         triangle,
                         &centering_vector,
-                        0xFF000000,
+                        0xFF00FF00,
                     );
                 }
             }
