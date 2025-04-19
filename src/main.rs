@@ -14,7 +14,7 @@ use std::{
 
 use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
 use render::{
-    draw_dot_grid, draw_filled_triangle, draw_triangle, draw_triangle_vertices, perspective_projection, ColorBuffer
+    draw_filled_triangle, draw_triangle, draw_triangle_vertices, perspective_projection, ColorBuffer
 };
 use sdl3::{
     event::Event,
@@ -270,6 +270,7 @@ pub fn main() -> ExitCode {
                 // Project
                 if !culled {
                     let mut triangle = Triangle {
+                        color: face.color,
                         ..Default::default()
                     };
                     for (index, vertex) in
@@ -304,7 +305,7 @@ pub fn main() -> ExitCode {
                         &mut color_buffer,
                         triangle,
                         &centering_vector,
-                        0xFFAAAAAA,
+                        triangle.color,
                     );
                 }
             }
