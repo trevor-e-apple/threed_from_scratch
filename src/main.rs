@@ -290,7 +290,6 @@ pub fn main() -> ExitCode {
         // render
         {
             color_buffer.clear(0xFF000000);
-            draw_dot_grid(&mut color_buffer, 10, 0xFFFFFFFF);
             let centering_vector = Vector2 {
                 x: (window_width as f32 / 2.0),
                 y: (window_height as f32 / 2.0),
@@ -305,7 +304,7 @@ pub fn main() -> ExitCode {
                         &mut color_buffer,
                         triangle,
                         &centering_vector,
-                        0xFFFFFFFF,
+                        0xFFAAAAAA,
                     );
                 }
             }
@@ -316,7 +315,7 @@ pub fn main() -> ExitCode {
                         &mut color_buffer,
                         triangle,
                         &centering_vector,
-                        0xFF00FF00,
+                        0xFFFFFFFF,
                     );
                 }
             }

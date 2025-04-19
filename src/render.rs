@@ -97,7 +97,7 @@ pub fn draw_line(
         x += x_increment;
         y += y_increment;
 
-        color_buffer.set_pixel(x.round() as usize, y.round() as usize, color);
+        color_buffer.set_pixel(x as usize, y as usize, color);
     }
 }
 
@@ -191,8 +191,8 @@ fn draw_flat_bottom_triangle(
     let mut x_start_f = x0 as f32;
     let mut x_end_f = x0 as f32;
     for y in y_start..=y_end {
-        let x_start = x_start_f.round() as i32;
-        let x_end = x_end_f.round() as i32;
+        let x_start = x_start_f as i32;
+        let x_end = x_end_f as i32;
 
         draw_line(color_buffer, x_start, y, x_end, y, color);
 
@@ -229,9 +229,9 @@ fn draw_flat_top_triangle(
 
     let mut x_start_f = x2 as f32;
     let mut x_end_f = x2 as f32;
-    for y in (y1..y2).rev() {
-        let x_start = x_start_f.round() as i32;
-        let x_end = x_end_f.round() as i32;
+    for y in (y1..=y2).rev() {
+        let x_start = x_start_f as i32;
+        let x_end = x_end_f as i32;
 
         draw_line(color_buffer, x_start, y, x_end, y, color);
         // y is decreasing, so we subtract
