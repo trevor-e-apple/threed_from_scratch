@@ -12,4 +12,5 @@ pub struct Face {
 pub struct Triangle {
     pub points: [Vector2; 3],
     pub color: u32,
+    pub avg_depth: f32,
 }
