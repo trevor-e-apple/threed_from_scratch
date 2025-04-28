@@ -1,5 +1,6 @@
 extern crate sdl3;
 
+mod matrix;
 mod mesh;
 mod point;
 mod render;
