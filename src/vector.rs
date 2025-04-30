@@ -282,3 +282,115 @@ pub fn calc_cross_product(a: &Vector3, b: &Vector3) -> Vector3 {
         z: a.x * b.y - a.y * b.x,
     }
 }
+
+#[derive(Clone, Default)]
+pub struct Vector4 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub w: f32,
+}
+
+impl ops::Add<Vector4> for Vector4 {
+    type Output = Vector4;
+
+    fn add(self, rhs: Vector4) -> Vector4 {
+        Vector4 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+            w: self.w + rhs.w,
+        }
+    }
+}
+
+impl ops::Add<&Vector4> for &Vector4 {
+    type Output = Vector4;
+
+    fn add(self, rhs: &Vector4) -> Vector4 {
+        Vector4 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+            w: self.w + rhs.w,
+        }
+    }
+}
+
+impl ops::Sub<Vector4> for Vector4 {
+    type Output = Vector4;
+
+    fn sub(self, rhs: Vector4) -> Vector4 {
+        Vector4 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+            w: self.w - rhs.w,
+        }
+    }
+}
+
+impl ops::Sub<&Vector4> for &Vector4 {
+    type Output = Vector4;
+
+    fn sub(self, rhs: &Vector4) -> Vector4 {
+        Vector4 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+            w: self.w - rhs.w,
+        }
+    }
+}
+
+impl ops::Mul<Vector4> for f32 {
+    type Output = Vector4;
+
+    fn mul(self, rhs: Vector4) -> Vector4 {
+        Vector4 {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+            w: self * rhs.w,
+        }
+    }
+}
+
+impl ops::Mul<&Vector4> for f32 {
+    type Output = Vector4;
+
+    fn mul(self, rhs: &Vector4) -> Vector4 {
+        Vector4 {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+            w: self * rhs.w,
+        }
+    }
+}
+
+impl ops::Mul<f32> for Vector4 {
+    type Output = Vector4;
+
+    fn mul(self, rhs: f32) -> Vector4 {
+        Vector4 {
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
+            w: self.w * rhs,
+        }
+    }
+}
+
+impl ops::Mul<f32> for &Vector4 {
+    type Output = Vector4;
+
+    fn mul(self, rhs: f32) -> Vector4 {
+        Vector4 {
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
+            w: self.w * rhs,
+        }
+    }
+}

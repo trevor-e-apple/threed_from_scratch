@@ -13,9 +13,11 @@ use std::{
     time::{Duration, Instant},
 };
 
+use matrix::Matrix4;
 use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
 use render::{
-    draw_filled_triangle, draw_triangle, draw_triangle_vertices, perspective_projection, ColorBuffer
+    draw_filled_triangle, draw_triangle, draw_triangle_vertices,
+    perspective_projection, ColorBuffer,
 };
 use sdl3::{
     event::Event,
@@ -28,7 +30,7 @@ use sdl3::{
 use triangle::Triangle;
 use vector::{
     calc_cross_product, rotate_around_x, rotate_around_y, rotate_around_z,
-    Vector2, Vector3,
+    Vector2, Vector3, Vector4,
 };
 
 const FRAMES_PER_SEC: f32 = 30.0;
@@ -124,6 +126,7 @@ pub fn main() -> ExitCode {
         y: 0.0,
         z: 0.0,
     };
+    let mut scale: f32 = 1.0;
     let model_displacement = Vector3 {
         x: 0.0,
         y: 0.0,
@@ -150,22 +153,40 @@ pub fn main() -> ExitCode {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
-                Event::KeyDown {keycode: Some(Keycode::C), ..} => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::C),
+                    ..
+                } => {
                     culling_mode = BackfaceCullingMode::Enabled;
-                },
-                Event::KeyDown {keycode: Some(Keycode::D), ..} => {
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::D),
+                    ..
+                } => {
                     culling_mode = BackfaceCullingMode::Disabled;
                 }
-                Event::KeyDown {keycode: Some(Keycode::_1), ..} => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::_1),
+                    ..
+                } => {
                     render_mode = RenderMode::WireframeVertices;
                 }
-                Event::KeyDown {keycode: Some(Keycode::_2), ..} => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::_2),
+                    ..
+                } => {
                     render_mode = RenderMode::Wireframe;
                 }
-                Event::KeyDown { keycode: Some(Keycode::_3), ..} => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::_3),
+                    ..
+                } => {
                     render_mode = RenderMode::FilledTriangles;
                 }
-                Event::KeyDown { keycode: Some(Keycode::_4), ..} => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::_4),
+                    ..
+                } => {
                     render_mode = RenderMode::WireframeFilledTriangles;
                 }
                 _ => {}
@@ -177,6 +198,7 @@ pub fn main() -> ExitCode {
             orientation.x += 0.00125;
             orientation.y += 0.00125;
             orientation.z += 0.00125;
+            scale += 0.001;
         }
 
         // Transform and project
@@ -202,12 +224,33 @@ pub fn main() -> ExitCode {
                     },
                 ];
 
+                // TODO: make all transforms performed with a single matrix
+                // Scale
+                let scale_matrix = Matrix4::scale(scale, scale, scale);
+
                 // Transform
                 for (index, vertex) in vertices.into_iter().enumerate() {
                     let transformed_vertex = {
                         let transformed_vertex = {
-                            let transformed_vertex =
-                                rotate_around_x(&vertex, orientation.x);
+                            let transformed_vertex = Matrix4::mult_vector(
+                                &scale_matrix,
+                                Vector4 {
+                                    x: vertex.x,
+                                    y: vertex.y,
+                                    z: vertex.z,
+                                    w: 1.0,
+                                },
+                            );
+                            let transformed_vertex = Vector3 {
+                                x: transformed_vertex.x,
+                                y: transformed_vertex.y,
+                                z: transformed_vertex.z,
+                            };
+
+                            let transformed_vertex = rotate_around_x(
+                                &transformed_vertex,
+                                orientation.x,
+                            );
                             let transformed_vertex = rotate_around_y(
                                 &transformed_vertex,
                                 orientation.y,
@@ -296,7 +339,8 @@ pub fn main() -> ExitCode {
         }
 
         // sort triangles by average depth (painter's algorithm)
-        triangles_to_render.sort_by(|a, b| b.avg_depth.partial_cmp(&a.avg_depth).unwrap());
+        triangles_to_render
+            .sort_by(|a, b| b.avg_depth.partial_cmp(&a.avg_depth).unwrap());
 
         // render
         {
@@ -305,7 +349,6 @@ pub fn main() -> ExitCode {
                 x: (window_width as f32 / 2.0),
                 y: (window_height as f32 / 2.0),
             };
-
 
             if render_mode == RenderMode::FilledTriangles
                 || render_mode == RenderMode::WireframeFilledTriangles
