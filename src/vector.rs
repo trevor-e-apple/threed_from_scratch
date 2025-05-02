@@ -291,6 +291,17 @@ pub struct Vector4 {
     pub w: f32,
 }
 
+impl Vector4 {
+    pub fn from_vector3(v: &Vector3) -> Self {
+        Vector4 {
+            x: v.x,
+            y: v.y,
+            z: v.z,
+            w: 1.0,
+        }
+    }
+}
+
 impl ops::Add<Vector4> for Vector4 {
     type Output = Vector4;
 

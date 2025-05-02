@@ -8,3 +8,7 @@ edition = "2021"
 [dependencies]
 png = "0.17.10"
 sdl3 = {version = "0.14.14"}
+
+[profile.dev]
+opt-level = 0      # Ensures no optimization (debug-friendly)
+debug = true       # Include debug info

@@ -126,6 +126,15 @@ pub fn main() -> ExitCode {
         y: 0.0,
         z: 0.0,
     };
+
+    // Initialize model translation
+    let mut translation = Vector3 {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
+
+    // Initialize model scale
     let mut scale: f32 = 1.0;
     let model_displacement = Vector3 {
         x: 0.0,
@@ -195,9 +204,13 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.00125;
-            orientation.y += 0.00125;
-            orientation.z += 0.00125;
+            // orientation.x += 0.00125;
+            // orientation.y += 0.00125;
+            // orientation.z += 0.00125;
+
+            translation.x += 0.01;
+            translation.z += 0.01;
+
             scale += 0.001;
         }
 
@@ -227,19 +240,22 @@ pub fn main() -> ExitCode {
                 // TODO: make all transforms performed with a single matrix
                 // Scale
                 let scale_matrix = Matrix4::scale(scale, scale, scale);
+                let translation_matrix = Matrix4::translate(
+                    translation.x,
+                    translation.y,
+                    translation.z,
+                );
+
+                let transform_matrix =
+                    Matrix4::mult_mat4(&translation_matrix, &scale_matrix);
 
                 // Transform
                 for (index, vertex) in vertices.into_iter().enumerate() {
                     let transformed_vertex = {
                         let transformed_vertex = {
                             let transformed_vertex = Matrix4::mult_vector(
-                                &scale_matrix,
-                                Vector4 {
-                                    x: vertex.x,
-                                    y: vertex.y,
-                                    z: vertex.z,
-                                    w: 1.0,
-                                },
+                                &transform_matrix,
+                                Vector4::from_vector3(&vertex),
                             );
                             let transformed_vertex = Vector3 {
                                 x: transformed_vertex.x,
