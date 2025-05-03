@@ -204,14 +204,14 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            // orientation.x += 0.00125;
-            // orientation.y += 0.00125;
-            // orientation.z += 0.00125;
+            orientation.x += 0.00125;
+            orientation.y += 0.00125;
+            orientation.z += 0.00125;
 
-            translation.x += 0.01;
-            translation.z += 0.01;
+            translation.x += 0.005;
+            translation.z += 0.005;
 
-            scale += 0.001;
+            scale += 0.0001;
         }
 
         // Transform and project
@@ -237,17 +237,34 @@ pub fn main() -> ExitCode {
                     },
                 ];
 
-                // TODO: make all transforms performed with a single matrix
-                // Scale
-                let scale_matrix = Matrix4::scale(scale, scale, scale);
-                let translation_matrix = Matrix4::translate(
-                    translation.x,
-                    translation.y,
-                    translation.z,
-                );
+                let (transform_matrix, translation_matrix) = {
+                    let transform_matrix = Matrix4::identity();
 
-                let transform_matrix =
-                    Matrix4::mult_mat4(&translation_matrix, &scale_matrix);
+                    let transform_matrix = Matrix4::mult_mat4(
+                        &transform_matrix,
+                        &Matrix4::scale(scale, scale, scale),
+                    );
+                    let transform_matrix = Matrix4::mult_mat4(
+                        &transform_matrix,
+                        &Matrix4::rotate_around_x(orientation.x),
+                    );
+                    let transform_matrix = Matrix4::mult_mat4(
+                        &transform_matrix,
+                        &Matrix4::rotate_around_y(orientation.y),
+                    );
+                    let transform_matrix = Matrix4::mult_mat4(
+                        &transform_matrix,
+                        &Matrix4::rotate_around_z(orientation.z),
+                    );
+
+                    let translation_matrix = Matrix4::translate(
+                        translation.x,
+                        translation.y,
+                        translation.z,
+                    );
+
+                    (transform_matrix, translation_matrix)
+                };
 
                 // Transform
                 for (index, vertex) in vertices.into_iter().enumerate() {
@@ -255,26 +272,17 @@ pub fn main() -> ExitCode {
                         let transformed_vertex = {
                             let transformed_vertex = Matrix4::mult_vector(
                                 &transform_matrix,
-                                Vector4::from_vector3(&vertex),
+                                &Vector4::from_vector3(&vertex),
+                            );
+                            let transformed_vertex = Matrix4::mult_vector(
+                                &translation_matrix,
+                                &transformed_vertex,
                             );
                             let transformed_vertex = Vector3 {
                                 x: transformed_vertex.x,
                                 y: transformed_vertex.y,
                                 z: transformed_vertex.z,
                             };
-
-                            let transformed_vertex = rotate_around_x(
-                                &transformed_vertex,
-                                orientation.x,
-                            );
-                            let transformed_vertex = rotate_around_y(
-                                &transformed_vertex,
-                                orientation.y,
-                            );
-                            let transformed_vertex = rotate_around_z(
-                                &transformed_vertex,
-                                orientation.z,
-                            );
 
                             let transformed_vertex =
                                 &transformed_vertex + &model_displacement;

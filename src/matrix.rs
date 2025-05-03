@@ -38,6 +38,48 @@ impl Matrix4 {
         }
     }
 
+    pub fn rotate_around_z(angle: f32) -> Self {
+        let cos_angle = angle.cos();
+        let sin_angle = angle.sin();
+
+        let mut result = Self::identity();
+
+        result.data[0][0] = cos_angle;
+        result.data[1][0] = sin_angle;
+        result.data[0][1] = -1.0 * sin_angle;
+        result.data[1][1] = cos_angle;
+
+        result
+    }
+
+    pub fn rotate_around_x(angle: f32) -> Self {
+        let cos_angle = angle.cos();
+        let sin_angle = angle.sin();
+
+        let mut result = Self::identity();
+
+        result.data[1][1] = cos_angle;
+        result.data[2][1] = sin_angle;
+        result.data[1][2] = -1.0 * sin_angle;
+        result.data[2][2] = cos_angle;
+
+        result
+    }
+
+    pub fn rotate_around_y(angle: f32) -> Self {
+        let cos_angle = angle.cos();
+        let sin_angle = angle.sin();
+
+        let mut result = Self::identity();
+
+        result.data[0][0] = cos_angle;
+        result.data[0][2] = sin_angle;
+        result.data[2][0] = -1.0 * sin_angle;
+        result.data[2][2] = cos_angle;
+
+        result
+    }
+
     fn dot(a: &Matrix4, b: &Matrix4, i: usize, j: usize) -> f32 {
         a.data[i][0] * b.data[0][j]
             + a.data[i][1] * b.data[1][j]
@@ -76,12 +118,24 @@ impl Matrix4 {
         }
     }
 
-    pub fn mult_vector(a: &Self, b: Vector4) -> Vector4 {
+    pub fn mult_vector(a: &Self, b: &Vector4) -> Vector4 {
         Vector4 {
-            x: b.x * a.data[0][0] + b.y * a.data[0][1] + b.z * a.data[0][2] + b.w * a.data[0][3],
-            y: b.x * a.data[1][0] + b.y * a.data[1][1] + b.z * a.data[1][2] + b.w * a.data[1][3],
-            z: b.x * a.data[2][0] + b.y * a.data[2][1] + b.z * a.data[2][2] + b.w * a.data[2][3],
-            w: b.x * a.data[3][0] + b.y * a.data[3][1] + b.z * a.data[3][2] + b.w * a.data[3][3],
+            x: b.x * a.data[0][0]
+                + b.y * a.data[0][1]
+                + b.z * a.data[0][2]
+                + b.w * a.data[0][3],
+            y: b.x * a.data[1][0]
+                + b.y * a.data[1][1]
+                + b.z * a.data[1][2]
+                + b.w * a.data[1][3],
+            z: b.x * a.data[2][0]
+                + b.y * a.data[2][1]
+                + b.z * a.data[2][2]
+                + b.w * a.data[2][3],
+            w: b.x * a.data[3][0]
+                + b.y * a.data[3][1]
+                + b.z * a.data[3][2]
+                + b.w * a.data[3][3],
         }
     }
 }
