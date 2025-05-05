@@ -209,9 +209,9 @@ pub fn main() -> ExitCode {
             orientation.z += 0.00125;
 
             translation.x += 0.005;
-            translation.z += 0.005;
+            // translation.z += 0.005;
 
-            scale += 0.0001;
+            // scale += 0.0001;
         }
 
         // Transform and project
@@ -237,24 +237,24 @@ pub fn main() -> ExitCode {
                     },
                 ];
 
-                let (transform_matrix, translation_matrix) = {
-                    let transform_matrix = Matrix4::identity();
+                let world_matrix = {
+                    let world_matrix = Matrix4::identity();
 
-                    let transform_matrix = Matrix4::mult_mat4(
-                        &transform_matrix,
+                    let world_matrix = Matrix4::mult_mat4(
                         &Matrix4::scale(scale, scale, scale),
+                        &world_matrix,
                     );
-                    let transform_matrix = Matrix4::mult_mat4(
-                        &transform_matrix,
+                    let world_matrix = Matrix4::mult_mat4(
                         &Matrix4::rotate_around_x(orientation.x),
+                        &world_matrix,
                     );
-                    let transform_matrix = Matrix4::mult_mat4(
-                        &transform_matrix,
+                    let world_matrix = Matrix4::mult_mat4(
                         &Matrix4::rotate_around_y(orientation.y),
+                        &world_matrix,
                     );
-                    let transform_matrix = Matrix4::mult_mat4(
-                        &transform_matrix,
+                    let world_matrix = Matrix4::mult_mat4(
                         &Matrix4::rotate_around_z(orientation.z),
+                        &world_matrix,
                     );
 
                     let translation_matrix = Matrix4::translate(
@@ -262,8 +262,10 @@ pub fn main() -> ExitCode {
                         translation.y,
                         translation.z,
                     );
+                    let world_matrix =
+                        Matrix4::mult_mat4(&translation_matrix, &world_matrix);
 
-                    (transform_matrix, translation_matrix)
+                    world_matrix
                 };
 
                 // Transform
@@ -271,12 +273,8 @@ pub fn main() -> ExitCode {
                     let transformed_vertex = {
                         let transformed_vertex = {
                             let transformed_vertex = Matrix4::mult_vector(
-                                &transform_matrix,
+                                &world_matrix,
                                 &Vector4::from_vector3(&vertex),
-                            );
-                            let transformed_vertex = Matrix4::mult_vector(
-                                &translation_matrix,
-                                &transformed_vertex,
                             );
                             let transformed_vertex = Vector3 {
                                 x: transformed_vertex.x,
