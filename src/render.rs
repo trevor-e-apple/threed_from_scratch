@@ -1,9 +1,8 @@
 use crate::{
+    matrix::Matrix4,
     triangle::Triangle,
-    vector::{Vector2, Vector2i, Vector3},
+    vector::{Vector2, Vector2i, Vector4},
 };
-
-const FOV_FACTOR: f32 = 640.0;
 
 pub struct ColorBuffer {
     pub buffer: Vec<u32>,
@@ -104,15 +103,11 @@ pub fn draw_line(
 pub fn draw_triangle_vertices(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
-    offset_vector: &Vector2,
     color: u32,
 ) {
-    let point_0 =
-        Vector2i::from_vector2(&(&triangle.points[0] + offset_vector));
-    let point_1 =
-        Vector2i::from_vector2(&(&triangle.points[1] + offset_vector));
-    let point_2 =
-        Vector2i::from_vector2(&(&triangle.points[2] + offset_vector));
+    let point_0 = Vector2i::from_vector2(&triangle.points[0]);
+    let point_1 = Vector2i::from_vector2(&triangle.points[1]);
+    let point_2 = Vector2i::from_vector2(&triangle.points[2]);
 
     draw_rect(color_buffer, point_0.x, point_0.y, 5, 5, color);
     draw_rect(color_buffer, point_1.x, point_1.y, 5, 5, color);
@@ -122,15 +117,11 @@ pub fn draw_triangle_vertices(
 pub fn draw_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
-    offset_vector: &Vector2,
     color: u32,
 ) {
-    let point_0 =
-        Vector2i::from_vector2(&(&triangle.points[0] + offset_vector));
-    let point_1 =
-        Vector2i::from_vector2(&(&triangle.points[1] + offset_vector));
-    let point_2 =
-        Vector2i::from_vector2(&(&triangle.points[2] + offset_vector));
+    let point_0 = Vector2i::from_vector2(&triangle.points[0]);
+    let point_1 = Vector2i::from_vector2(&triangle.points[1]);
+    let point_2 = Vector2i::from_vector2(&triangle.points[2]);
 
     // draw lines of triangle
     draw_line(
@@ -243,14 +234,13 @@ fn draw_flat_top_triangle(
 pub fn draw_filled_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
-    offset_vector: &Vector2,
     color: u32,
 ) {
     // need to sort the vertices by ascending (y0 < y1 < y2)
     let (point0, point1, point2) = {
-        let point0 = &triangle.points[0] + offset_vector;
-        let point1 = &triangle.points[1] + offset_vector;
-        let point2 = &triangle.points[2] + offset_vector;
+        let point0 = &triangle.points[0];
+        let point1 = &triangle.points[1];
+        let point2 = &triangle.points[2];
 
         let (point0, point1) = if point0.y > point1.y {
             (point1, point0)
@@ -327,19 +317,34 @@ pub fn draw_filled_triangle(
     }
 }
 
-pub fn orthographic_projection(vector: &Vector3) -> Vector2 {
-    Vector2 {
-        x: FOV_FACTOR * vector.x,
-        y: FOV_FACTOR * vector.y,
-    }
-}
+// pub fn orthographic_projection(vector: &Vector3) -> Vector2 {
+//     Vector2 {
+//         x: FOV_FACTOR * vector.x,
+//         y: FOV_FACTOR * vector.y,
+//     }
+// }
 
-pub fn perspective_projection(vector: &Vector3) -> Option<Vector2> {
+// pub fn perspective_projection(vector: &Vector3) -> Option<Vector2> {
+//     if vector.z != 0.0 {
+//         Some(Vector2 {
+//             x: (FOV_FACTOR * vector.x) / vector.z,
+//             y: (FOV_FACTOR * vector.y) / vector.z,
+//         })
+//     } else {
+//         None
+//     }
+// }
+
+pub fn perspective_projection(
+    projection_matrix: &Matrix4,
+    vector: &Vector4,
+) -> Option<Vector4> {
     if vector.z != 0.0 {
-        Some(Vector2 {
-            x: (FOV_FACTOR * vector.x) / vector.z,
-            y: (FOV_FACTOR * vector.y) / vector.z,
-        })
+        let mut result = Matrix4::mult_vector(projection_matrix, vector);
+        result.x /= result.w;
+        result.y /= result.w;
+        result.z /= result.w;
+        Some(result)
     } else {
         None
     }

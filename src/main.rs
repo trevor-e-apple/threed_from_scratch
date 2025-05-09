@@ -85,6 +85,10 @@ pub fn main() -> ExitCode {
             window_height
         }
     };
+    let aspect_ratio = window_height as f32 / window_width as f32;
+
+    let fov = (std::f64::consts::PI / 3.0) as f32;
+
     let window = video_subsystem
         .window("threed_from_scratch", window_width, window_height)
         .position_centered()
@@ -114,32 +118,36 @@ pub fn main() -> ExitCode {
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
 
     // Initialize camera
-    let camera_position = Vector3 {
+    let camera_position = Vector4 {
         x: 0.0,
         y: 0.0,
         z: 0.0,
+        w: 1.0,
     };
 
     // Initialize model orientation
-    let mut orientation = Vector3 {
+    let mut orientation = Vector4 {
         x: 0.0,
         y: 0.0,
         z: 0.0,
+        w: 1.0,
     };
 
     // Initialize model translation
-    let mut translation = Vector3 {
+    let mut translation = Vector4 {
         x: 0.0,
         y: 0.0,
         z: 0.0,
+        w: 1.0,
     };
 
     // Initialize model scale
     let mut scale: f32 = 1.0;
-    let model_displacement = Vector3 {
+    let model_displacement = Vector4 {
         x: 0.0,
         y: 0.0,
         z: 5.0,
+        w: 1.0,
     };
 
     // Initialize render mode
@@ -208,7 +216,7 @@ pub fn main() -> ExitCode {
             orientation.y += 0.00125;
             orientation.z += 0.00125;
 
-            translation.x += 0.005;
+            // translation.x += 0.005;
             // translation.z += 0.005;
 
             // scale += 0.0001;
@@ -225,14 +233,14 @@ pub fn main() -> ExitCode {
                     vertices[face.c - 1].clone(),
                 ];
 
-                let mut transformed_vertices: [Vector3; 3] = [
-                    Vector3 {
+                let mut transformed_vertices: [Vector4; 3] = [
+                    Vector4 {
                         ..Default::default()
                     },
-                    Vector3 {
+                    Vector4 {
                         ..Default::default()
                     },
-                    Vector3 {
+                    Vector4 {
                         ..Default::default()
                     },
                 ];
@@ -276,11 +284,6 @@ pub fn main() -> ExitCode {
                                 &world_matrix,
                                 &Vector4::from_vector3(&vertex),
                             );
-                            let transformed_vertex = Vector3 {
-                                x: transformed_vertex.x,
-                                y: transformed_vertex.y,
-                                z: transformed_vertex.z,
-                            };
 
                             let transformed_vertex =
                                 &transformed_vertex + &model_displacement;
@@ -301,9 +304,12 @@ pub fn main() -> ExitCode {
                        / \
                       C - B
                     */
-                    let vector_a = &transformed_vertices[0];
-                    let vector_b = &transformed_vertices[1];
-                    let vector_c = &transformed_vertices[2];
+                    let vector_a =
+                        &Vector3::from_vector4(&transformed_vertices[0]);
+                    let vector_b =
+                        &Vector3::from_vector4(&transformed_vertices[1]);
+                    let vector_c =
+                        &Vector3::from_vector4(&transformed_vertices[2]);
 
                     let ab_vector = {
                         let mut ab_vector = vector_b - vector_a;
@@ -323,7 +329,8 @@ pub fn main() -> ExitCode {
                     };
 
                     // calculate the to camera vector
-                    let face_to_camera = &camera_position - &vector_a;
+                    let face_to_camera =
+                        &Vector3::from_vector4(&camera_position) - &vector_a;
 
                     let dot_product =
                         Vector3::dot_product(&face_normal, &face_to_camera);
@@ -340,12 +347,35 @@ pub fn main() -> ExitCode {
                         ..Default::default()
                     };
 
+                    let projection_matrix = Matrix4::projection_matrix(
+                        fov,
+                        aspect_ratio,
+                        0.1,
+                        100.0,
+                    );
+
                     let mut avg_depth = 0.0;
-                    for (index, vertex) in
-                        (&mut transformed_vertices).into_iter().enumerate()
-                    {
-                        match perspective_projection(vertex) {
+                    for (index, vertex) in (&mut transformed_vertices).into_iter().enumerate() {
+                        match perspective_projection(&projection_matrix, vertex)
+                        {
                             Some(projected_point) => {
+                                let mut projected_point =
+                                    Vector2::from_vector4(&projected_point);
+                                // perform windowing transform (scale then translate)
+                                // the division by 2 is b/c we are mapping the canonical view volume (which has bounds x,y: [-1, 1]) to screen
+                                // space (which has bounds x: [0, window_width], y: [0, window_height])
+                                {
+                                    projected_point.x *=
+                                        window_width as f32 / 2.0;
+                                    projected_point.y *=
+                                        window_height as f32 / 2.0;
+
+                                    projected_point.x +=
+                                        window_width as f32 / 2.0;
+                                    projected_point.y +=
+                                        window_height as f32 / 2.0;
+                                }
+
                                 triangle.points[index] = projected_point;
                                 avg_depth += vertex.z;
                             }
@@ -367,10 +397,6 @@ pub fn main() -> ExitCode {
         // render
         {
             color_buffer.clear(0xFF000000);
-            let centering_vector = Vector2 {
-                x: (window_width as f32 / 2.0),
-                y: (window_height as f32 / 2.0),
-            };
 
             if render_mode == RenderMode::FilledTriangles
                 || render_mode == RenderMode::WireframeFilledTriangles
@@ -379,7 +405,6 @@ pub fn main() -> ExitCode {
                     draw_filled_triangle(
                         &mut color_buffer,
                         triangle,
-                        &centering_vector,
                         triangle.color,
                     );
                 }
@@ -387,12 +412,7 @@ pub fn main() -> ExitCode {
 
             if render_mode != RenderMode::FilledTriangles {
                 for triangle in &triangles_to_render {
-                    draw_triangle(
-                        &mut color_buffer,
-                        triangle,
-                        &centering_vector,
-                        0xFFFFFFFF,
-                    );
+                    draw_triangle(&mut color_buffer, triangle, 0xFFFFFFFF);
                 }
             }
 
@@ -401,7 +421,6 @@ pub fn main() -> ExitCode {
                     draw_triangle_vertices(
                         &mut color_buffer,
                         triangle,
-                        &centering_vector,
                         0xFFFF0000,
                     );
                 }

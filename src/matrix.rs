@@ -5,6 +5,17 @@ pub struct Matrix4 {
 }
 
 impl Matrix4 {
+    pub fn zero() -> Self {
+        Self {
+            data: [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+        }
+    }
+
     pub fn identity() -> Self {
         Self {
             data: [
@@ -36,6 +47,24 @@ impl Matrix4 {
                 [0.0, 0.0, 0.0, 1.0],
             ],
         }
+    }
+
+    pub fn projection_matrix(
+        fov: f32,
+        aspect: f32,
+        znear: f32,
+        zfar: f32,
+    ) -> Self {
+        let mut result = Self::zero();
+
+        let fov_cot = 1.0 / fov.tan();
+        result.data[0][0] = aspect * fov_cot;
+        result.data[1][1] = fov_cot;
+        result.data[2][2] = zfar / (zfar - znear);
+        result.data[2][3] = (-1.0 * znear * zfar) / (zfar - znear);
+        result.data[3][2] = 1.0;
+
+        result
     }
 
     pub fn rotate_around_z(angle: f32) -> Self {

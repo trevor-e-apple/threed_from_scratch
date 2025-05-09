@@ -6,6 +6,12 @@ pub struct Vector2 {
     pub y: f32,
 }
 
+impl Vector2 {
+    pub fn from_vector4(v: &Vector4) -> Self {
+        Self { x: v.x, y: v.y }
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct Vector2i {
     pub x: i32,
@@ -130,6 +136,16 @@ pub struct Vector3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+}
+
+impl Vector3 {
+    pub fn from_vector4(v: &Vector4) -> Self {
+        Self {
+            x: v.x,
+            y: v.y,
+            z: v.z,
+        }
+    }
 }
 
 impl ops::Add<Vector3> for Vector3 {
