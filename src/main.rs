@@ -1,5 +1,6 @@
 extern crate sdl3;
 
+mod light_source;
 mod matrix;
 mod mesh;
 mod point;
@@ -13,6 +14,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use light_source::{apply_intensity, LightSource};
 use matrix::Matrix4;
 use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
 use render::{
@@ -150,6 +152,13 @@ pub fn main() -> ExitCode {
         w: 1.0,
     };
 
+    // Initialize light source
+    let light_source = LightSource::new(Vector3 {
+        x: 0.1,
+        y: -0.1,
+        z: 1.0,
+    });
+
     // Initialize render mode
     let mut render_mode: RenderMode = RenderMode::FilledTriangles;
     let mut culling_mode: BackfaceCullingMode = BackfaceCullingMode::Enabled;
@@ -212,9 +221,9 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.00125;
-            orientation.y += 0.00125;
-            orientation.z += 0.00125;
+            orientation.x += 0.0025;
+            orientation.y += 0.0025;
+            orientation.z += 0.0025;
 
             // translation.x += 0.005;
             // translation.z += 0.005;
@@ -296,21 +305,18 @@ pub fn main() -> ExitCode {
                     transformed_vertices[index] = transformed_vertex;
                 }
 
-                // Backface culling
-                let culled = if culling_mode == BackfaceCullingMode::Enabled {
-                    // find the normal of face (left-handed system)
-                    /*
-                        A
-                       / \
-                      C - B
-                    */
-                    let vector_a =
-                        &Vector3::from_vector4(&transformed_vertices[0]);
-                    let vector_b =
-                        &Vector3::from_vector4(&transformed_vertices[1]);
-                    let vector_c =
-                        &Vector3::from_vector4(&transformed_vertices[2]);
+                // Pull out face vectors (left-handed system)
+                /*
+                     A
+                    /  \
+                    C - B
+                */
+                let vector_a = &Vector3::from_vector4(&transformed_vertices[0]);
+                let vector_b = &Vector3::from_vector4(&transformed_vertices[1]);
+                let vector_c = &Vector3::from_vector4(&transformed_vertices[2]);
 
+                // Find face normal
+                let face_normal: Vector3 = {
                     let ab_vector = {
                         let mut ab_vector = vector_b - vector_a;
                         ab_vector.normalize();
@@ -328,7 +334,14 @@ pub fn main() -> ExitCode {
                         face_normal
                     };
 
-                    // calculate the to camera vector
+                    face_normal
+                };
+
+                // Backface culling
+                let culled: bool = if culling_mode
+                    == BackfaceCullingMode::Enabled
+                {
+                    // calculate the to-camera vector
                     let face_to_camera =
                         &Vector3::from_vector4(&camera_position) - &vector_a;
 
@@ -342,50 +355,83 @@ pub fn main() -> ExitCode {
 
                 // Project
                 if !culled {
-                    let mut triangle = Triangle {
-                        color: face.color,
-                        ..Default::default()
+                    // Lighting
+                    let light_intensity: f32 = {
+                        let dot_product = Vector3::dot_product(
+                            &face_normal,
+                            &light_source.direction,
+                        );
+
+                        /*
+                         * If the dot product is negative, then the normal and the light are pointing in opposite directions,
+                         * which means that there should be light
+                         *
+                         * If the dot product is 0, then the normal and the light are orthogonal, and there should be no light.
+                         *
+                         * If the dot product is positive, then the normal is pointing in the opposite direction of the light, and there
+                         * should be no light.
+                         *
+                         * Note that if both vectors are normalized, then the dot product shall be in the range [-1.0, 1.0]
+                         */
+                        if dot_product < 0.0 {
+                            -1.0 * dot_product
+                        } else {
+                            0.0
+                        }
                     };
 
-                    let projection_matrix = Matrix4::projection_matrix(
-                        fov,
-                        aspect_ratio,
-                        0.1,
-                        100.0,
-                    );
+                    if light_intensity > 0.0 {
+                        let color =
+                            apply_intensity(face.color, light_intensity);
+                        let mut triangle = Triangle {
+                            color,
+                            ..Default::default()
+                        };
 
-                    let mut avg_depth = 0.0;
-                    for (index, vertex) in (&mut transformed_vertices).into_iter().enumerate() {
-                        match perspective_projection(&projection_matrix, vertex)
+                        let projection_matrix = Matrix4::projection_matrix(
+                            fov,
+                            aspect_ratio,
+                            0.1,
+                            100.0,
+                        );
+
+                        let mut avg_depth = 0.0;
+                        for (index, vertex) in
+                            (&mut transformed_vertices).into_iter().enumerate()
                         {
-                            Some(projected_point) => {
-                                let mut projected_point =
-                                    Vector2::from_vector4(&projected_point);
-                                // perform windowing transform (scale then translate)
-                                // the division by 2 is b/c we are mapping the canonical view volume (which has bounds x,y: [-1, 1]) to screen
-                                // space (which has bounds x: [0, window_width], y: [0, window_height])
-                                {
-                                    projected_point.x *=
-                                        window_width as f32 / 2.0;
-                                    projected_point.y *=
-                                        window_height as f32 / 2.0;
+                            match perspective_projection(
+                                &projection_matrix,
+                                vertex,
+                            ) {
+                                Some(projected_point) => {
+                                    let mut projected_point =
+                                        Vector2::from_vector4(&projected_point);
+                                    // perform windowing transform (scale then translate)
+                                    // the division by 2 is b/c we are mapping the canonical view volume (which has bounds x,y: [-1, 1]) to screen
+                                    // space (which has bounds x: [0, window_width], y: [0, window_height])
+                                    {
+                                        projected_point.x *=
+                                            window_width as f32 / 2.0;
+                                        projected_point.y *=
+                                            window_height as f32 / 2.0;
 
-                                    projected_point.x +=
-                                        window_width as f32 / 2.0;
-                                    projected_point.y +=
-                                        window_height as f32 / 2.0;
+                                        projected_point.x +=
+                                            window_width as f32 / 2.0;
+                                        projected_point.y +=
+                                            window_height as f32 / 2.0;
+                                    }
+
+                                    triangle.points[index] = projected_point;
+                                    avg_depth += vertex.z;
                                 }
-
-                                triangle.points[index] = projected_point;
-                                avg_depth += vertex.z;
+                                None => {}
                             }
-                            None => {}
                         }
-                    }
-                    avg_depth /= transformed_vertices.len() as f32;
-                    triangle.avg_depth = avg_depth;
+                        avg_depth /= transformed_vertices.len() as f32;
+                        triangle.avg_depth = avg_depth;
 
-                    triangles_to_render.push(triangle);
+                        triangles_to_render.push(triangle);
+                    }
                 }
             }
         }
