@@ -154,8 +154,8 @@ pub fn main() -> ExitCode {
 
     // Initialize light source
     let light_source = LightSource::new(Vector3 {
-        x: 0.1,
-        y: -0.1,
+        x: 0.0,
+        y: 0.0,
         z: 1.0,
     });
 

@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "display.h": "c"
+        "display.h": "c",
+        "light.h": "c",
+        "mesh.h": "c"
     }
 }
