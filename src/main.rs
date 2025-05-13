@@ -415,6 +415,9 @@ pub fn main() -> ExitCode {
                                         projected_point.y *=
                                             window_height as f32 / 2.0;
 
+                                        // since y grows down in screen space, but up in world space / canonical image space
+                                        projected_point.y *= -1.0;
+
                                         projected_point.x +=
                                             window_width as f32 / 2.0;
                                         projected_point.y +=
