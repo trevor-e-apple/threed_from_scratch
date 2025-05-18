@@ -317,23 +317,13 @@ pub fn draw_filled_triangle(
     }
 }
 
-// pub fn orthographic_projection(vector: &Vector3) -> Vector2 {
-//     Vector2 {
-//         x: FOV_FACTOR * vector.x,
-//         y: FOV_FACTOR * vector.y,
-//     }
-// }
+pub fn draw_textured_triangle(
+    color_buffer: &mut ColorBuffer,
+    triangle: &Triangle,
+    texture: &[u32],
+) {
 
-// pub fn perspective_projection(vector: &Vector3) -> Option<Vector2> {
-//     if vector.z != 0.0 {
-//         Some(Vector2 {
-//             x: (FOV_FACTOR * vector.x) / vector.z,
-//             y: (FOV_FACTOR * vector.y) / vector.z,
-//         })
-//     } else {
-//         None
-//     }
-// }
+}
 
 pub fn perspective_projection(
     projection_matrix: &Matrix4,

@@ -5,21 +5,19 @@ mod matrix;
 mod mesh;
 mod point;
 mod render;
+mod texture;
 mod triangle;
 mod vector;
 
 use std::{
-    env,
-    process::ExitCode,
-    time::{Duration, Instant},
+    env, process::ExitCode, slice, time::{Duration, Instant}
 };
 
 use light_source::{apply_intensity, LightSource};
 use matrix::Matrix4;
 use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
 use render::{
-    draw_filled_triangle, draw_triangle, draw_triangle_vertices,
-    perspective_projection, ColorBuffer,
+    draw_filled_triangle, draw_textured_triangle, draw_triangle, draw_triangle_vertices, perspective_projection, ColorBuffer
 };
 use sdl3::{
     event::Event,
@@ -29,11 +27,9 @@ use sdl3::{
         pixels::SDL_PIXELFORMAT_ARGB8888, render::SDL_TEXTUREACCESS_STREAMING,
     },
 };
+use texture::REDBRICK_TEXTURE;
 use triangle::Triangle;
-use vector::{
-    calc_cross_product, rotate_around_x, rotate_around_y, rotate_around_z,
-    Vector2, Vector3, Vector4,
-};
+use vector::{calc_cross_product, Vector2, Vector3, Vector4};
 
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
@@ -45,6 +41,8 @@ enum RenderMode {
     WireframeVertices,
     FilledTriangles,
     WireframeFilledTriangles,
+    TexturedTriangles,
+    WireframeTexturedTriangles,
 }
 
 #[derive(PartialEq)]
@@ -63,6 +61,11 @@ pub fn main() -> ExitCode {
     } else {
         let model_path = args[1].clone();
         load_obj_mesh(&model_path)
+    };
+
+    let texture = unsafe {
+        let redbrick_texture_ptr = REDBRICK_TEXTURE.as_ptr() as *const u32;
+        slice::from_raw_parts(redbrick_texture_ptr, REDBRICK_TEXTURE.len() / size_of::<u32>())
     };
 
     // Init SDL
@@ -214,6 +217,18 @@ pub fn main() -> ExitCode {
                     ..
                 } => {
                     render_mode = RenderMode::WireframeFilledTriangles;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::_5),
+                    ..
+                } => {
+                    render_mode = RenderMode::TexturedTriangles;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::_6),
+                    ..
+                } => {
+                    render_mode = RenderMode::WireframeTexturedTriangles;
                 }
                 _ => {}
             }
@@ -384,6 +399,7 @@ pub fn main() -> ExitCode {
                         let color =
                             apply_intensity(face.color, light_intensity);
                         let mut triangle = Triangle {
+                            texel_coordinates: [face.a_uv.clone(), face.b_uv.clone(), face.c_uv.clone()],
                             color,
                             ..Default::default()
                         };
@@ -457,9 +473,17 @@ pub fn main() -> ExitCode {
                         triangle.color,
                     );
                 }
+            } else if render_mode == RenderMode::TexturedTriangles
+                || render_mode == RenderMode::WireframeTexturedTriangles
+            {
+                for triangle in &triangles_to_render {
+                    draw_textured_triangle(&mut color_buffer, &triangle, texture);
+                }
             }
 
-            if render_mode != RenderMode::FilledTriangles {
+            if !(render_mode == RenderMode::FilledTriangles
+                || render_mode == RenderMode::TexturedTriangles)
+            {
                 for triangle in &triangles_to_render {
                     draw_triangle(&mut color_buffer, triangle, 0xFFFFFFFF);
                 }
