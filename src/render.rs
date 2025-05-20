@@ -1,6 +1,6 @@
 use crate::{
     matrix::Matrix4,
-    triangle::Triangle,
+    triangle::{get_sorted_triangle_vertices, Triangle},
     vector::{Vector2, Vector2i, Vector4},
 };
 
@@ -236,30 +236,10 @@ pub fn draw_filled_triangle(
     triangle: &Triangle,
     color: u32,
 ) {
-    // need to sort the vertices by ascending (y0 < y1 < y2)
-    let (point0, point1, point2) = {
-        let point0 = &triangle.points[0];
-        let point1 = &triangle.points[1];
-        let point2 = &triangle.points[2];
-
-        let (point0, point1) = if point0.y > point1.y {
-            (point1, point0)
-        } else {
-            (point0, point1)
-        };
-        let (point1, point2) = if point1.y > point2.y {
-            (point2, point1)
-        } else {
-            (point1, point2)
-        };
-        let (point0, point1) = if point0.y > point1.y {
-            (point1, point0)
-        } else {
-            (point0, point1)
-        };
-
-        (point0, point1, point2)
-    };
+    let (vertex0, vertex1, vertex2) = get_sorted_triangle_vertices(triangle);
+    let point0 = vertex0.0;
+    let point1 = vertex1.0;
+    let point2 = vertex2.0;
 
     // this flow control avoids division by 0 in a somewhat elegant manner
     if point1.y == point2.y {
@@ -322,7 +302,113 @@ pub fn draw_textured_triangle(
     triangle: &Triangle,
     texture: &[u32],
 ) {
+    // Find triangle vertex order
+    let (vertex0, vertex1, vertex2) = get_sorted_triangle_vertices(triangle);
 
+    let x_0 = vertex0.0.x as i32;
+    let y_0 = vertex0.0.y as i32;
+    let x_1 = vertex1.0.x as i32;
+    let y_1 = vertex1.0.y as i32;
+    let x_2 = vertex2.0.x as i32;
+    let y_2 = vertex2.0.y as i32;
+
+    // Fill flat bottom triangle (y0 to y1)
+    if (y_1 - y_0) != 0 {
+        // Find inverse slopes (delta-x over delta-y)
+        let (inv_slope_1, inv_slope_2) = {
+            let inv_slope_1 = {
+                let denom = (y_1 - y_0).abs();
+                if denom == 0 {
+                    0.0
+                } else {
+                    (vertex1.0.x - vertex0.0.x) / (denom as f32)
+                }
+            };
+            let inv_slope_2 = {
+                let denom = (y_2 - y_0).abs();
+                if denom == 0 {
+                    0.0
+                } else {
+                    (vertex2.0.x - vertex0.0.x) / (denom as f32)
+                }
+            };
+
+            (inv_slope_1, inv_slope_2)
+        };
+
+        let y_start = y_0;
+        let y_end = y_1;
+
+        for current_y in y_start..=y_end {
+            let x_start = ((current_y - y_start) as f32 * inv_slope_1
+                + x_0 as f32) as i32;
+            let x_end = ((current_y - y_start) as f32 * inv_slope_2
+                + x_0 as f32) as i32;
+
+            let (x_start, x_end) = if x_end < x_start {
+                (x_end, x_start)
+            } else {
+                (x_start, x_end)
+            };
+
+            for x in x_start..x_end {
+                color_buffer.set_pixel(
+                    x as usize,
+                    current_y as usize,
+                    0xFFFF00FF,
+                );
+            }
+        }
+    }
+
+    // Fill flat top triangle (y1 to y2)
+    if (y_2 - y_1) != 0 {
+        // Find inverse slopes (delta-x over delta-y)
+        let (inv_slope_0, inv_slope_1) = {
+            let inv_slope_0 = {
+                let denom = (y_2 - y_0).abs();
+                if denom == 0 {
+                    0.0
+                } else {
+                    (vertex2.0.x - vertex0.0.x) / denom as f32
+                }
+            };
+            let inv_slope_1 = {
+                let denom = (y_2 - y_1).abs();
+                if denom == 0 {
+                    0.0
+                } else {
+                    (vertex2.0.x - vertex1.0.x) / denom as f32
+                }
+            };
+
+            (inv_slope_0, inv_slope_1)
+        };
+
+        let y_start = vertex1.0.y as i32;
+        let y_end = vertex2.0.y as i32;
+
+        for current_y in y_start..=y_end {
+            let x_start = ((current_y - y_0) as f32 * inv_slope_0
+                + x_0 as f32) as i32;
+            let x_end = ((current_y - y_1) as f32 * inv_slope_1
+                + x_1 as f32) as i32;
+
+            let (x_start, x_end) = if x_end < x_start {
+                (x_end, x_start)
+            } else {
+                (x_start, x_end)
+            };
+
+            for x in x_start..x_end {
+                color_buffer.set_pixel(
+                    x as usize,
+                    current_y as usize,
+                    0xFF00FF00,
+                );
+            }
+        }
+    }
 }
 
 pub fn perspective_projection(

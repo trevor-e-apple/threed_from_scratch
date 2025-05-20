@@ -10,14 +10,18 @@ mod triangle;
 mod vector;
 
 use std::{
-    env, process::ExitCode, slice, time::{Duration, Instant}
+    env,
+    process::ExitCode,
+    slice,
+    time::{Duration, Instant},
 };
 
 use light_source::{apply_intensity, LightSource};
 use matrix::Matrix4;
 use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
 use render::{
-    draw_filled_triangle, draw_textured_triangle, draw_triangle, draw_triangle_vertices, perspective_projection, ColorBuffer
+    draw_filled_triangle, draw_textured_triangle, draw_triangle,
+    draw_triangle_vertices, perspective_projection, ColorBuffer,
 };
 use sdl3::{
     event::Event,
@@ -65,7 +69,10 @@ pub fn main() -> ExitCode {
 
     let texture = unsafe {
         let redbrick_texture_ptr = REDBRICK_TEXTURE.as_ptr() as *const u32;
-        slice::from_raw_parts(redbrick_texture_ptr, REDBRICK_TEXTURE.len() / size_of::<u32>())
+        slice::from_raw_parts(
+            redbrick_texture_ptr,
+            REDBRICK_TEXTURE.len() / size_of::<u32>(),
+        )
     };
 
     // Init SDL
@@ -236,9 +243,9 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.0025;
-            orientation.y += 0.0025;
-            orientation.z += 0.0025;
+            orientation.x += 0.00025;
+            orientation.y += 0.00025;
+            orientation.z += 0.00025;
 
             // translation.x += 0.005;
             // translation.z += 0.005;
@@ -399,7 +406,11 @@ pub fn main() -> ExitCode {
                         let color =
                             apply_intensity(face.color, light_intensity);
                         let mut triangle = Triangle {
-                            texel_coordinates: [face.a_uv.clone(), face.b_uv.clone(), face.c_uv.clone()],
+                            texel_coordinates: [
+                                face.a_uv.clone(),
+                                face.b_uv.clone(),
+                                face.c_uv.clone(),
+                            ],
                             color,
                             ..Default::default()
                         };
@@ -477,7 +488,11 @@ pub fn main() -> ExitCode {
                 || render_mode == RenderMode::WireframeTexturedTriangles
             {
                 for triangle in &triangles_to_render {
-                    draw_textured_triangle(&mut color_buffer, &triangle, texture);
+                    draw_textured_triangle(
+                        &mut color_buffer,
+                        &triangle,
+                        texture,
+                    );
                 }
             }
 
