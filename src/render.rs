@@ -321,7 +321,7 @@ pub fn draw_textured_triangle(
                 if denom == 0 {
                     0.0
                 } else {
-                    (vertex1.0.x - vertex0.0.x) / (denom as f32)
+                    (x_1 - x_0) as f32 / (denom as f32)
                 }
             };
             let inv_slope_2 = {
@@ -329,7 +329,7 @@ pub fn draw_textured_triangle(
                 if denom == 0 {
                     0.0
                 } else {
-                    (vertex2.0.x - vertex0.0.x) / (denom as f32)
+                    (x_2 - x_0) as f32 / (denom as f32)
                 }
             };
 
@@ -370,7 +370,7 @@ pub fn draw_textured_triangle(
                 if denom == 0 {
                     0.0
                 } else {
-                    (vertex2.0.x - vertex0.0.x) / denom as f32
+                    (x_2 - x_0) as f32 / denom as f32
                 }
             };
             let inv_slope_1 = {
@@ -378,7 +378,7 @@ pub fn draw_textured_triangle(
                 if denom == 0 {
                     0.0
                 } else {
-                    (vertex2.0.x - vertex1.0.x) / denom as f32
+                    (x_2 - x_1) as f32 / denom as f32
                 }
             };
 
