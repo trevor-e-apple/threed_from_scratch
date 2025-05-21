@@ -1,7 +1,8 @@
 use crate::{
     matrix::Matrix4,
+    texture::Texture2,
     triangle::{get_sorted_triangle_vertices, Triangle},
-    vector::{Vector2, Vector2i, Vector4},
+    vector::{calc_cross_product, Vector2, Vector2i, Vector3, Vector4},
 };
 
 pub struct ColorBuffer {
@@ -297,6 +298,37 @@ pub fn draw_filled_triangle(
     }
 }
 
+fn draw_texel(
+    color_buffer: &mut ColorBuffer,
+    x: i32,
+    y: i32,
+    vertex0: &(Vector2, Texture2),
+    vertex1: &(Vector2, Texture2),
+    vertex2: &(Vector2, Texture2),
+    texture: &[u32],
+) {
+    // Calculate Barycentric coordinates
+    let (alpha, beta, gamma) = {
+        let v0_point = Vector3::from_vector2(&vertex0.0);
+        let v1_point = Vector3::from_vector2(&vertex1.0);
+        let v2_point = Vector3::from_vector2(&vertex2.0);
+
+        let v0_v1 = &v1_point - &v0_point;
+        let v0_v2 = &v2_point - &v0_point;
+
+        let total_area = calc_cross_product(&v0_v1, &v0_v2);
+
+        let alpha: f64 = {
+            calc_cross_product(a, b);
+        };
+        let beta: f64 = {};
+
+        let gamma = 1.0 - alpha - beta;
+
+        (alpha, beta, gamma)
+    };
+}
+
 pub fn draw_textured_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
@@ -352,10 +384,19 @@ pub fn draw_textured_triangle(
             };
 
             for x in x_start..x_end {
-                color_buffer.set_pixel(
-                    x as usize,
-                    current_y as usize,
-                    0xFFFF00FF,
+                // color_buffer.set_pixel(
+                //     x as usize,
+                //     current_y as usize,
+                //     0xFFFF00FF,
+                // );
+                draw_texel(
+                    color_buffer,
+                    x,
+                    current_y,
+                    vertex0,
+                    vertex1,
+                    vertex2,
+                    texture,
                 );
             }
         }
@@ -389,10 +430,10 @@ pub fn draw_textured_triangle(
         let y_end = vertex2.0.y as i32;
 
         for current_y in y_start..=y_end {
-            let x_start = ((current_y - y_0) as f32 * inv_slope_0
-                + x_0 as f32) as i32;
-            let x_end = ((current_y - y_1) as f32 * inv_slope_1
-                + x_1 as f32) as i32;
+            let x_start =
+                ((current_y - y_0) as f32 * inv_slope_0 + x_0 as f32) as i32;
+            let x_end =
+                ((current_y - y_1) as f32 * inv_slope_1 + x_1 as f32) as i32;
 
             let (x_start, x_end) = if x_end < x_start {
                 (x_end, x_start)
@@ -401,10 +442,19 @@ pub fn draw_textured_triangle(
             };
 
             for x in x_start..x_end {
-                color_buffer.set_pixel(
-                    x as usize,
-                    current_y as usize,
-                    0xFF00FF00,
+                // color_buffer.set_pixel(
+                //     x as usize,
+                //     current_y as usize,
+                //     0xFF00FF00,
+                // );
+                draw_texel(
+                    color_buffer,
+                    x,
+                    current_y,
+                    vertex0,
+                    vertex1,
+                    vertex2,
+                    texture,
                 );
             }
         }

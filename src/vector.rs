@@ -139,6 +139,14 @@ pub struct Vector3 {
 }
 
 impl Vector3 {
+    pub fn from_vector2(v: &Vector2) -> Self {
+        Self {
+            x: v.x,
+            y: v.y,
+            z: 0.0,
+        }
+    }
+
     pub fn from_vector4(v: &Vector4) -> Self {
         Self {
             x: v.x,
