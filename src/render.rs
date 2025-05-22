@@ -1,8 +1,8 @@
 use crate::{
     matrix::Matrix4,
-    texture::Texture2,
+    texture::{Texture, TextureUv},
     triangle::{get_sorted_triangle_vertices, Triangle},
-    vector::{calc_cross_product, Vector2, Vector2i, Vector3, Vector4},
+    vector::{Vector2, Vector2i, Vector4},
 };
 
 pub struct ColorBuffer {
@@ -302,37 +302,75 @@ fn draw_texel(
     color_buffer: &mut ColorBuffer,
     x: i32,
     y: i32,
-    vertex0: &(Vector2, Texture2),
-    vertex1: &(Vector2, Texture2),
-    vertex2: &(Vector2, Texture2),
-    texture: &[u32],
+    vertex0: &(Vector2, TextureUv),
+    vertex1: &(Vector2, TextureUv),
+    vertex2: &(Vector2, TextureUv),
+    texture: &Texture,
 ) {
     // Calculate Barycentric coordinates
+    //
+    //         (B)
+    //         /|\
+    //        / | \
+    //       /  |  \
+    //      /  (P)  \
+    //     /  /   \  \
+    //    / /       \ \
+    //   //           \\
+    //  (A)------------(C)
+    //
     let (alpha, beta, gamma) = {
-        let v0_point = Vector3::from_vector2(&vertex0.0);
-        let v1_point = Vector3::from_vector2(&vertex1.0);
-        let v2_point = Vector3::from_vector2(&vertex2.0);
+        let a = vertex0.0.clone();
+        let b = vertex1.0.clone();
+        let c = vertex2.0.clone();
+        let p = Vector2 { x: x as f32, y: y as f32 };
 
-        let v0_v1 = &v1_point - &v0_point;
-        let v0_v2 = &v2_point - &v0_point;
+        let ab = &b - &a;
+        let ac = &c - &a;
+        let ap = &p - &a;
+        let pc = &c - &p;
+        let pb = &b - &p;
 
-        let total_area = calc_cross_product(&v0_v1, &v0_v2);
+        let abc_parallelagram_area = ac.x * ab.y - ac.y * ab.x; // || AC x AB ||
 
-        let alpha: f64 = {
-            calc_cross_product(a, b);
-        };
-        let beta: f64 = {};
+        // Area of PBC divided by the entire area
+        let alpha = (pc.x * pb.y - pc.y * pb.x) / abc_parallelagram_area;
 
+        // Area of APC divided by the entire area
+        let beta = (ac.x * ap.y - ac.y * ap.x) / abc_parallelagram_area;
+
+        // Gamma is the remaining part of the ratio
         let gamma = 1.0 - alpha - beta;
 
         (alpha, beta, gamma)
     };
+
+    // Interpolate UV values
+    let (interpolated_u, interpolated_v) = {
+        let uv0 = vertex0.1.clone();
+        let uv1 = vertex1.1.clone();
+        let uv2 = vertex2.1.clone();
+
+        let interpolated_u = uv0.u * alpha + uv1.u * beta + uv2.u * gamma;
+        let interpolated_v = uv0.v * alpha + uv1.u * beta + uv2.u * gamma;
+
+        (interpolated_u, interpolated_v)
+    };
+
+
+    // Map UV value to texture coordinates
+    let texture_x = (texture.width as f32 * interpolated_u).abs() as usize;
+    let texture_y = (texture.height as f32 * interpolated_v).abs() as usize;
+
+    // Draw pixel
+    let pixel_color = texture.get_pixel(texture_x, texture_y);
+    color_buffer.set_pixel(x as usize, y as usize, pixel_color);
 }
 
 pub fn draw_textured_triangle(
     color_buffer: &mut ColorBuffer,
     triangle: &Triangle,
-    texture: &[u32],
+    texture: &Texture,
 ) {
     // Find triangle vertex order
     let (vertex0, vertex1, vertex2) = get_sorted_triangle_vertices(triangle);
@@ -393,9 +431,9 @@ pub fn draw_textured_triangle(
                     color_buffer,
                     x,
                     current_y,
-                    vertex0,
-                    vertex1,
-                    vertex2,
+                    &vertex0,
+                    &vertex1,
+                    &vertex2,
                     texture,
                 );
             }
@@ -451,9 +489,9 @@ pub fn draw_textured_triangle(
                     color_buffer,
                     x,
                     current_y,
-                    vertex0,
-                    vertex1,
-                    vertex2,
+                    &vertex0,
+                    &vertex1,
+                    &vertex2,
                     texture,
                 );
             }

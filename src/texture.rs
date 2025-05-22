@@ -1,9 +1,23 @@
 #[derive(Clone, Default)]
-pub struct Texture2 {
+pub struct TextureUv {
     pub u: f32,
     pub v: f32,
 }
 
+pub struct Texture {
+    pub width: usize,
+    pub height: usize,
+    pub data: Vec<u32>
+}
+
+impl Texture {
+    pub fn get_pixel(&self, x: usize, y: usize) -> u32 {
+        self.data[self.width * y + x]
+    }
+}
+
+pub const REDBRICK_TEXTURE_WIDTH: usize = 64;
+pub const REDBRICK_TEXTURE_HEIGHT: usize = 64; 
 pub const REDBRICK_TEXTURE: [u8; 16384] = [
     0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff,
     0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff,

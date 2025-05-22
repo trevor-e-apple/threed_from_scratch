@@ -31,7 +31,7 @@ use sdl3::{
         pixels::SDL_PIXELFORMAT_ARGB8888, render::SDL_TEXTUREACCESS_STREAMING,
     },
 };
-use texture::REDBRICK_TEXTURE;
+use texture::{Texture, REDBRICK_TEXTURE, REDBRICK_TEXTURE_HEIGHT, REDBRICK_TEXTURE_WIDTH};
 use triangle::Triangle;
 use vector::{calc_cross_product, Vector2, Vector3, Vector4};
 
@@ -69,10 +69,16 @@ pub fn main() -> ExitCode {
 
     let texture = unsafe {
         let redbrick_texture_ptr = REDBRICK_TEXTURE.as_ptr() as *const u32;
-        slice::from_raw_parts(
-            redbrick_texture_ptr,
-            REDBRICK_TEXTURE.len() / size_of::<u32>(),
-        )
+        // slice::from_raw_parts(
+        //     redbrick_texture_ptr,
+        //     REDBRICK_TEXTURE.len() / size_of::<u32>(),
+        // );
+        let data = Vec::with_capacity(REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT);
+        for index in 0..(REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT) {
+            data.push(*redbrick_texture_ptr);
+        }
+
+        Texture { width: REDBRICK_TEXTURE_WIDTH, height: REDBRICK_TEXTURE_HEIGHT, data }
     };
 
     // Init SDL
@@ -491,7 +497,7 @@ pub fn main() -> ExitCode {
                     draw_textured_triangle(
                         &mut color_buffer,
                         &triangle,
-                        texture,
+                        &texture,
                     );
                 }
             }
