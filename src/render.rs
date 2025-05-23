@@ -437,10 +437,6 @@ pub fn draw_textured_triangle(
         };
 
         for current_y in y_0..=y_1 {
-            // let x_start = ((current_y - y_start) as f32 * inv_slope_1
-            //     + x_0 as f32) as i32;
-            // let x_end = ((current_y - y_start) as f32 * inv_slope_2
-            //     + x_0 as f32) as i32;
             let x_start =
                 (x_1 as f32 + ((current_y - y_1) as f32 * inv_slope_1)) as i32;
             let x_end =
@@ -452,12 +448,7 @@ pub fn draw_textured_triangle(
                 (x_start, x_end)
             };
 
-            for x in x_start..x_end {
-                // color_buffer.set_pixel(
-                //     x as usize,
-                //     current_y as usize,
-                //     0xFFFF00FF,
-                // );
+            for x in x_start..=x_end {
                 draw_texel(
                     color_buffer,
                     x,
@@ -507,12 +498,7 @@ pub fn draw_textured_triangle(
                 (x_start, x_end)
             };
 
-            for x in x_start..x_end {
-                // color_buffer.set_pixel(
-                //     x as usize,
-                //     current_y as usize,
-                //     0xFF00FF00,
-                // );
+            for x in x_start..=x_end {
                 draw_texel(
                     color_buffer,
                     x,

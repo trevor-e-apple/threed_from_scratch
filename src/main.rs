@@ -256,7 +256,7 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.00125;
+            orientation.x += 0.0025;
             orientation.y += 0.0025;
             orientation.z += 0.0025;
 
