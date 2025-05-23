@@ -323,7 +323,10 @@ fn draw_texel(
         let a = vertex0.0.clone();
         let b = vertex1.0.clone();
         let c = vertex2.0.clone();
-        let p = Vector2 { x: x as f32, y: y as f32 };
+        let p = Vector2 {
+            x: x as f32,
+            y: y as f32,
+        };
 
         let ab = &b - &a;
         let ac = &c - &a;
@@ -345,6 +348,10 @@ fn draw_texel(
         (alpha, beta, gamma)
     };
 
+    if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
+        return;
+    }
+
     // Interpolate UV values
     let (interpolated_u, interpolated_v) = {
         let uv0 = vertex0.1.clone();
@@ -352,15 +359,16 @@ fn draw_texel(
         let uv2 = vertex2.1.clone();
 
         let interpolated_u = uv0.u * alpha + uv1.u * beta + uv2.u * gamma;
-        let interpolated_v = uv0.v * alpha + uv1.u * beta + uv2.u * gamma;
+        let interpolated_v = uv0.v * alpha + uv1.v * beta + uv2.v * gamma;
 
         (interpolated_u, interpolated_v)
     };
 
-
     // Map UV value to texture coordinates
-    let texture_x = (texture.width as f32 * interpolated_u).abs() as usize;
-    let texture_y = (texture.height as f32 * interpolated_v).abs() as usize;
+    let texture_x =
+        ((texture.width - 1) as f32 * interpolated_u).abs() as usize;
+    let texture_y =
+        ((texture.height - 1) as f32 * interpolated_v).abs() as usize;
 
     // Draw pixel
     let pixel_color = texture.get_pixel(texture_x, texture_y);
@@ -381,6 +389,28 @@ pub fn draw_textured_triangle(
     let y_1 = vertex1.0.y as i32;
     let x_2 = vertex2.0.x as i32;
     let y_2 = vertex2.0.y as i32;
+
+    let vertex0 = (
+        Vector2 {
+            x: x_0 as f32,
+            y: y_0 as f32,
+        },
+        vertex0.1,
+    );
+    let vertex1 = (
+        Vector2 {
+            x: x_1 as f32,
+            y: y_1 as f32,
+        },
+        vertex1.1,
+    );
+    let vertex2 = (
+        Vector2 {
+            x: x_2 as f32,
+            y: y_2 as f32,
+        },
+        vertex2.1,
+    );
 
     // Fill flat bottom triangle (y0 to y1)
     if (y_1 - y_0) != 0 {
@@ -406,14 +436,15 @@ pub fn draw_textured_triangle(
             (inv_slope_1, inv_slope_2)
         };
 
-        let y_start = y_0;
-        let y_end = y_1;
-
-        for current_y in y_start..=y_end {
-            let x_start = ((current_y - y_start) as f32 * inv_slope_1
-                + x_0 as f32) as i32;
-            let x_end = ((current_y - y_start) as f32 * inv_slope_2
-                + x_0 as f32) as i32;
+        for current_y in y_0..=y_1 {
+            // let x_start = ((current_y - y_start) as f32 * inv_slope_1
+            //     + x_0 as f32) as i32;
+            // let x_end = ((current_y - y_start) as f32 * inv_slope_2
+            //     + x_0 as f32) as i32;
+            let x_start =
+                (x_1 as f32 + ((current_y - y_1) as f32 * inv_slope_1)) as i32;
+            let x_end =
+                (x_0 as f32 + ((current_y - y_0) as f32 * inv_slope_2)) as i32;
 
             let (x_start, x_end) = if x_end < x_start {
                 (x_end, x_start)
@@ -464,10 +495,7 @@ pub fn draw_textured_triangle(
             (inv_slope_0, inv_slope_1)
         };
 
-        let y_start = vertex1.0.y as i32;
-        let y_end = vertex2.0.y as i32;
-
-        for current_y in y_start..=y_end {
+        for current_y in y_1..=y_2 {
             let x_start =
                 ((current_y - y_0) as f32 * inv_slope_0 + x_0 as f32) as i32;
             let x_end =

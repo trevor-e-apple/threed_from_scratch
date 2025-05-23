@@ -12,7 +12,6 @@ mod vector;
 use std::{
     env,
     process::ExitCode,
-    slice,
     time::{Duration, Instant},
 };
 
@@ -31,7 +30,9 @@ use sdl3::{
         pixels::SDL_PIXELFORMAT_ARGB8888, render::SDL_TEXTUREACCESS_STREAMING,
     },
 };
-use texture::{Texture, REDBRICK_TEXTURE, REDBRICK_TEXTURE_HEIGHT, REDBRICK_TEXTURE_WIDTH};
+use texture::{
+    Texture, REDBRICK_TEXTURE, REDBRICK_TEXTURE_HEIGHT, REDBRICK_TEXTURE_WIDTH,
+};
 use triangle::Triangle;
 use vector::{calc_cross_product, Vector2, Vector3, Vector4};
 
@@ -67,18 +68,24 @@ pub fn main() -> ExitCode {
         load_obj_mesh(&model_path)
     };
 
-    let texture = unsafe {
-        let redbrick_texture_ptr = REDBRICK_TEXTURE.as_ptr() as *const u32;
-        // slice::from_raw_parts(
-        //     redbrick_texture_ptr,
-        //     REDBRICK_TEXTURE.len() / size_of::<u32>(),
-        // );
-        let data = Vec::with_capacity(REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT);
+    let texture = {
+        // let redbrick_texture_ptr = REDBRICK_TEXTURE.as_ptr() as *const u32;
+        let mut data = Vec::with_capacity(
+            REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT,
+        );
         for index in 0..(REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT) {
-            data.push(*redbrick_texture_ptr);
+            let blue = REDBRICK_TEXTURE[4 * index] as u32;
+            let green = (REDBRICK_TEXTURE[4 * index + 1] as u32) << 8;
+            let red = (REDBRICK_TEXTURE[4 * index + 2] as u32) << 16;
+            let alpha = (REDBRICK_TEXTURE[4 * index + 3] as u32) << 24;
+            data.push(alpha + red + green + blue);
         }
 
-        Texture { width: REDBRICK_TEXTURE_WIDTH, height: REDBRICK_TEXTURE_HEIGHT, data }
+        Texture {
+            width: REDBRICK_TEXTURE_WIDTH,
+            height: REDBRICK_TEXTURE_HEIGHT,
+            data,
+        }
     };
 
     // Init SDL
@@ -250,8 +257,8 @@ pub fn main() -> ExitCode {
         // update
         {
             orientation.x += 0.00125;
-            // orientation.y += 0.0025;
-            // orientation.z += 0.0025;
+            orientation.y += 0.0025;
+            orientation.z += 0.0025;
 
             // translation.x += 0.005;
             // translation.z += 0.005;
