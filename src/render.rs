@@ -106,9 +106,9 @@ pub fn draw_triangle_vertices(
     triangle: &Triangle,
     color: u32,
 ) {
-    let point_0 = Vector2i::from_vector2(&triangle.points[0]);
-    let point_1 = Vector2i::from_vector2(&triangle.points[1]);
-    let point_2 = Vector2i::from_vector2(&triangle.points[2]);
+    let point_0 = Vector2i::from_vector4(&triangle.points[0]);
+    let point_1 = Vector2i::from_vector4(&triangle.points[1]);
+    let point_2 = Vector2i::from_vector4(&triangle.points[2]);
 
     draw_rect(color_buffer, point_0.x, point_0.y, 5, 5, color);
     draw_rect(color_buffer, point_1.x, point_1.y, 5, 5, color);
@@ -120,9 +120,9 @@ pub fn draw_triangle(
     triangle: &Triangle,
     color: u32,
 ) {
-    let point_0 = Vector2i::from_vector2(&triangle.points[0]);
-    let point_1 = Vector2i::from_vector2(&triangle.points[1]);
-    let point_2 = Vector2i::from_vector2(&triangle.points[2]);
+    let point_0 = Vector2i::from_vector4(&triangle.points[0]);
+    let point_1 = Vector2i::from_vector4(&triangle.points[1]);
+    let point_2 = Vector2i::from_vector4(&triangle.points[2]);
 
     // draw lines of triangle
     draw_line(
@@ -302,9 +302,9 @@ fn draw_texel(
     color_buffer: &mut ColorBuffer,
     x: i32,
     y: i32,
-    vertex0: &(Vector2, TextureUv),
-    vertex1: &(Vector2, TextureUv),
-    vertex2: &(Vector2, TextureUv),
+    vertex0: &(Vector4, TextureUv),
+    vertex1: &(Vector4, TextureUv),
+    vertex2: &(Vector4, TextureUv),
     texture: &Texture,
 ) {
     // Calculate Barycentric coordinates
@@ -320,9 +320,9 @@ fn draw_texel(
     //  (A)------------(C)
     //
     let (alpha, beta, gamma) = {
-        let a = vertex0.0.clone();
-        let b = vertex1.0.clone();
-        let c = vertex2.0.clone();
+        let a = Vector2::from_vector4(&vertex0.0);
+        let b = Vector2::from_vector4(&vertex1.0);
+        let c = Vector2::from_vector4(&vertex2.0);
         let p = Vector2 {
             x: x as f32,
             y: y as f32,
@@ -358,8 +358,20 @@ fn draw_texel(
         let uv1 = vertex1.1.clone();
         let uv2 = vertex2.1.clone();
 
-        let interpolated_u = uv0.u * alpha + uv1.u * beta + uv2.u * gamma;
-        let interpolated_v = uv0.v * alpha + uv1.v * beta + uv2.v * gamma;
+        // interpolate over the reciprocal of w (our Z-value prior to projection)
+        let interpolated_u = (uv0.u / vertex0.0.w) * alpha
+            + (uv1.u / vertex1.0.w) * beta
+            + (uv2.u / vertex2.0.w) * gamma;
+        let interpolated_v = (uv0.v / vertex0.0.w) * alpha
+            + (uv1.v / vertex1.0.w) * beta
+            + (uv2.v / vertex2.0.w) * gamma;
+
+        let interpolated_reciprocal_w =
+            (1.0 / vertex0.0.w) * alpha + (1.0 / vertex1.0.w) * beta + (1.0 / vertex2.0.w) * gamma;
+
+        // Undo reciprocal
+        let interpolated_u = interpolated_u / interpolated_reciprocal_w;
+        let interpolated_v = interpolated_v / interpolated_reciprocal_w;
 
         (interpolated_u, interpolated_v)
     };
@@ -391,23 +403,29 @@ pub fn draw_textured_triangle(
     let y_2 = vertex2.0.y as i32;
 
     let vertex0 = (
-        Vector2 {
+        Vector4 {
             x: x_0 as f32,
             y: y_0 as f32,
+            z: vertex0.0.z,
+            w: vertex0.0.w,
         },
         vertex0.1,
     );
     let vertex1 = (
-        Vector2 {
+        Vector4 {
             x: x_1 as f32,
             y: y_1 as f32,
+            z: vertex1.0.z,
+            w: vertex1.0.w,
         },
         vertex1.1,
     );
     let vertex2 = (
-        Vector2 {
+        Vector4 {
             x: x_2 as f32,
             y: y_2 as f32,
+            z: vertex2.0.z,
+            w: vertex2.0.w,
         },
         vertex2.1,
     );

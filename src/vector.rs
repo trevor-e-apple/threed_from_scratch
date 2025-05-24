@@ -429,3 +429,12 @@ impl ops::Mul<f32> for &Vector4 {
         }
     }
 }
+
+impl Vector2i {
+    pub fn from_vector4(v: &Vector4) -> Vector2i {
+        Vector2i {
+            x: v.x.round() as i32,
+            y: v.y.round() as i32,
+        }
+    }
+}

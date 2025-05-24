@@ -1,4 +1,4 @@
-use crate::{texture::TextureUv, vector::Vector2};
+use crate::{texture::TextureUv, vector::Vector4};
 
 #[derive(Clone, Default)]
 pub struct Face {
@@ -13,7 +13,7 @@ pub struct Face {
 
 #[derive(Clone, Default)]
 pub struct Triangle {
-    pub points: [Vector2; 3],
+    pub points: [Vector4; 3],
     pub texel_coordinates: [TextureUv; 3],
     pub color: u32,
     pub avg_depth: f32,
@@ -23,9 +23,9 @@ pub struct Triangle {
 pub fn get_sorted_triangle_vertices(
     triangle: &Triangle,
 ) -> (
-    (Vector2, TextureUv),
-    (Vector2, TextureUv),
-    (Vector2, TextureUv),
+    (Vector4, TextureUv),
+    (Vector4, TextureUv),
+    (Vector4, TextureUv),
 ) {
     let vertex0 = (&triangle.points[0], &triangle.texel_coordinates[0]);
     let vertex1 = (&triangle.points[1], &triangle.texel_coordinates[1]);

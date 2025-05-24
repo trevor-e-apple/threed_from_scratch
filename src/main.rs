@@ -445,7 +445,7 @@ pub fn main() -> ExitCode {
                             ) {
                                 Some(projected_point) => {
                                     let mut projected_point =
-                                        Vector2::from_vector4(&projected_point);
+                                        projected_point.clone();
                                     // perform windowing transform (scale then translate)
                                     // the division by 2 is b/c we are mapping the canonical view volume (which has bounds x,y: [-1, 1]) to screen
                                     // space (which has bounds x: [0, window_width], y: [0, window_height])
