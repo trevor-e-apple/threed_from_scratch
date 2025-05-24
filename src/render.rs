@@ -358,16 +358,21 @@ fn draw_texel(
         let uv1 = vertex1.1.clone();
         let uv2 = vertex2.1.clone();
 
-        // interpolate over the reciprocal of w (our Z-value prior to projection)
-        let interpolated_u = (uv0.u / vertex0.0.w) * alpha
-            + (uv1.u / vertex1.0.w) * beta
-            + (uv2.u / vertex2.0.w) * gamma;
-        let interpolated_v = (uv0.v / vertex0.0.w) * alpha
-            + (uv1.v / vertex1.0.w) * beta
-            + (uv2.v / vertex2.0.w) * gamma;
+        let reciprocal_w_0 = 1.0 / vertex0.0.w;
+        let reciprocal_w_1 = 1.0 / vertex1.0.w;
+        let reciprocal_w_2 = 1.0 / vertex2.0.w;
 
-        let interpolated_reciprocal_w =
-            (1.0 / vertex0.0.w) * alpha + (1.0 / vertex1.0.w) * beta + (1.0 / vertex2.0.w) * gamma;
+        // interpolate over the reciprocal of w (our Z-value prior to projection)
+        let interpolated_u = uv0.u * reciprocal_w_0 * alpha
+            + uv1.u * reciprocal_w_1 * beta
+            + uv2.u * reciprocal_w_2 * gamma;
+        let interpolated_v = uv0.v * reciprocal_w_0 * alpha
+            + uv1.v * reciprocal_w_1 * beta
+            + uv2.v * reciprocal_w_2 * gamma;
+
+        let interpolated_reciprocal_w = reciprocal_w_0 * alpha
+            + reciprocal_w_1 * beta
+            + reciprocal_w_2 * gamma;
 
         // Undo reciprocal
         let interpolated_u = interpolated_u / interpolated_reciprocal_w;
