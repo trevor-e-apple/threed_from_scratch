@@ -256,9 +256,9 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.0025;
-            orientation.y += 0.0025;
-            orientation.z += 0.0025;
+            // orientation.x += 0.0025;
+            // orientation.y += 0.0025;
+            // orientation.z += 0.0025;
 
             // translation.x += 0.005;
             // translation.z += 0.005;
