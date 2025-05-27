@@ -31,7 +31,8 @@ use sdl3::{
     },
 };
 use texture::{
-    Texture, REDBRICK_TEXTURE, REDBRICK_TEXTURE_HEIGHT, REDBRICK_TEXTURE_WIDTH,
+    load_png_texture, Texture, REDBRICK_TEXTURE, REDBRICK_TEXTURE_HEIGHT,
+    REDBRICK_TEXTURE_WIDTH,
 };
 use triangle::Triangle;
 use vector::{calc_cross_product, Vector2, Vector3, Vector4};
@@ -60,32 +61,36 @@ pub fn main() -> ExitCode {
     // Grab arguments
     let args: Vec<String> = env::args().collect();
 
-    let (vertices, faces) = if args.len() == 1 {
+    let (vertices, faces, texture) = if args.len() == 1 {
         println!("No model path passed in. Using in-memory cube data");
-        (MESH_VERTICES.to_vec(), MESH_FACES.to_vec())
-    } else {
+        let texture = {
+            let mut data = Vec::with_capacity(
+                REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT,
+            );
+            for index in 0..(REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT) {
+                let blue = REDBRICK_TEXTURE[4 * index] as u32;
+                let green = (REDBRICK_TEXTURE[4 * index + 1] as u32) << 8;
+                let red = (REDBRICK_TEXTURE[4 * index + 2] as u32) << 16;
+                let alpha = (REDBRICK_TEXTURE[4 * index + 3] as u32) << 24;
+                data.push(alpha + red + green + blue);
+            }
+
+            Texture {
+                width: REDBRICK_TEXTURE_WIDTH,
+                height: REDBRICK_TEXTURE_HEIGHT,
+                data,
+            }
+        };
+        (MESH_VERTICES.to_vec(), MESH_FACES.to_vec(), texture)
+    } else if args.len() == 3 {
         let model_path = args[1].clone();
-        load_obj_mesh(&model_path)
-    };
-
-    let texture = {
-        // let redbrick_texture_ptr = REDBRICK_TEXTURE.as_ptr() as *const u32;
-        let mut data = Vec::with_capacity(
-            REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT,
-        );
-        for index in 0..(REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT) {
-            let blue = REDBRICK_TEXTURE[4 * index] as u32;
-            let green = (REDBRICK_TEXTURE[4 * index + 1] as u32) << 8;
-            let red = (REDBRICK_TEXTURE[4 * index + 2] as u32) << 16;
-            let alpha = (REDBRICK_TEXTURE[4 * index + 3] as u32) << 24;
-            data.push(alpha + red + green + blue);
-        }
-
-        Texture {
-            width: REDBRICK_TEXTURE_WIDTH,
-            height: REDBRICK_TEXTURE_HEIGHT,
-            data,
-        }
+        let texture_path = args[2].clone();
+        let (vertices, faces) = load_obj_mesh(&model_path);
+        let texture = load_png_texture(&texture_path);
+        (vertices, faces, texture)
+    } else {
+        println!("Bad arguments");
+        return ExitCode::from(1);
     };
 
     // Init SDL

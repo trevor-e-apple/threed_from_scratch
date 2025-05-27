@@ -1,3 +1,5 @@
+use std::fs::File;
+
 #[derive(Clone, Default)]
 pub struct TextureUv {
     pub u: f32,
@@ -13,6 +15,35 @@ pub struct Texture {
 impl Texture {
     pub fn get_pixel(&self, x: usize, y: usize) -> u32 {
         self.data[(self.width * y) + x]
+    }
+}
+
+pub fn load_png_texture(path: &String) -> Texture {
+    // The decoder is a build for reader and can be used to set various decoding options
+    // via `Transformations`. The default output transformation is `Transformations::IDENTITY`.
+    let decoder = png::Decoder::new(File::open(path).unwrap());
+    let mut reader = decoder.read_info().unwrap();
+    // Allocate the output buffer.
+    let mut buf = vec![0; reader.output_buffer_size()];
+    // Read the next frame. An APNG might contain multiple frames.
+    let info = reader.next_frame(&mut buf).unwrap();
+    let width = info.width as usize;
+    let height = info.height as usize;
+
+    let mut u32_buffer =
+        Vec::<u32>::with_capacity(reader.output_buffer_size() / 4);
+    for index in 0..(width * height) {
+        let blue = buf[4 * index] as u32;
+        let green = (buf[4 * index + 1] as u32) << 8;
+        let red = (buf[4 * index + 2] as u32) << 16;
+        let alpha = (buf[4 * index + 3] as u32) << 24;
+        u32_buffer.push(alpha + red + green + blue);
+    }
+
+    Texture {
+        width: width,
+        height: height,
+        data: u32_buffer,
     }
 }
 
