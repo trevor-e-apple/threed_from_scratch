@@ -33,9 +33,10 @@ pub fn load_png_texture(path: &String) -> Texture {
     let mut u32_buffer =
         Vec::<u32>::with_capacity(reader.output_buffer_size() / 4);
     for index in 0..(width * height) {
-        let blue = buf[4 * index] as u32;
+        // PNG has data as RGBA but we want ARGB
+        let red = (buf[4 * index] as u32) << 16;
         let green = (buf[4 * index + 1] as u32) << 8;
-        let red = (buf[4 * index + 2] as u32) << 16;
+        let blue = (buf[4 * index + 2] as u32);
         let alpha = (buf[4 * index + 3] as u32) << 24;
         u32_buffer.push(alpha + red + green + blue);
     }

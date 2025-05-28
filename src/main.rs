@@ -93,6 +93,9 @@ pub fn main() -> ExitCode {
         return ExitCode::from(1);
     };
 
+    // TODO: remove
+    let texture = load_png_texture(&"./test_assets/cube.png".to_owned());
+
     // Init SDL
     let sdl_context = sdl3::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -261,9 +264,9 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            // orientation.x += 0.0025;
-            // orientation.y += 0.0025;
-            // orientation.z += 0.0025;
+            orientation.x += 0.0025;
+            orientation.y += 0.0025;
+            orientation.z += 0.0025;
 
             // translation.x += 0.005;
             // translation.z += 0.005;
