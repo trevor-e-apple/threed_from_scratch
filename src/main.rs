@@ -136,7 +136,7 @@ pub fn main() -> ExitCode {
     let mut orientation = Vector4 {
         x: 0.0,
         y: 0.0,
-        z: 3.14 / 2.0,
+        z: 0.0,
         w: 1.0,
     };
 
