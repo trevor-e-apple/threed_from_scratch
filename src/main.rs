@@ -17,7 +17,7 @@ use std::{
 
 use light_source::{apply_intensity, LightSource};
 use matrix::Matrix4;
-use mesh::{load_obj_mesh, MESH_FACES, MESH_VERTICES};
+use mesh::{load_obj_mesh, load_test_mesh};
 use render::{
     draw_filled_triangle, draw_textured_triangle, draw_triangle,
     draw_triangle_vertices, perspective_projection, ColorBuffer,
@@ -30,12 +30,9 @@ use sdl3::{
         pixels::SDL_PIXELFORMAT_ARGB8888, render::SDL_TEXTUREACCESS_STREAMING,
     },
 };
-use texture::{
-    load_png_texture, Texture, REDBRICK_TEXTURE, REDBRICK_TEXTURE_HEIGHT,
-    REDBRICK_TEXTURE_WIDTH,
-};
+use texture::{load_png_texture, load_test_texture};
 use triangle::Triangle;
-use vector::{calc_cross_product, Vector2, Vector3, Vector4};
+use vector::{calc_cross_product, Vector3, Vector4};
 
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
@@ -61,40 +58,17 @@ pub fn main() -> ExitCode {
     // Grab arguments
     let args: Vec<String> = env::args().collect();
 
-    let (vertices, faces, texture) = if args.len() == 1 {
+    let (mesh, texture) = if args.len() == 1 {
         println!("No model path passed in. Using in-memory cube data");
-        let texture = {
-            let mut data = Vec::with_capacity(
-                REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT,
-            );
-            for index in 0..(REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT) {
-                let blue = REDBRICK_TEXTURE[4 * index] as u32;
-                let green = (REDBRICK_TEXTURE[4 * index + 1] as u32) << 8;
-                let red = (REDBRICK_TEXTURE[4 * index + 2] as u32) << 16;
-                let alpha = (REDBRICK_TEXTURE[4 * index + 3] as u32) << 24;
-                data.push(alpha + red + green + blue);
-            }
-
-            Texture {
-                width: REDBRICK_TEXTURE_WIDTH,
-                height: REDBRICK_TEXTURE_HEIGHT,
-                data,
-            }
-        };
-        (MESH_VERTICES.to_vec(), MESH_FACES.to_vec(), texture)
+        (load_test_mesh(), load_test_texture())
     } else if args.len() == 3 {
         let model_path = args[1].clone();
         let texture_path = args[2].clone();
-        let (vertices, faces) = load_obj_mesh(&model_path);
-        let texture = load_png_texture(&texture_path);
-        (vertices, faces, texture)
+        (load_obj_mesh(&model_path), load_png_texture(&texture_path))
     } else {
         println!("Bad arguments");
         return ExitCode::from(1);
     };
-
-    // TODO: remove
-    let texture = load_png_texture(&"./test_assets/cube.png".to_owned());
 
     // Init SDL
     let sdl_context = sdl3::init().unwrap();
@@ -162,7 +136,7 @@ pub fn main() -> ExitCode {
     let mut orientation = Vector4 {
         x: 0.0,
         y: 0.0,
-        z: 0.0,
+        z: 3.14 / 2.0,
         w: 1.0,
     };
 
@@ -264,9 +238,9 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.0025;
-            orientation.y += 0.0025;
-            orientation.z += 0.0025;
+            // orientation.x += 0.0025;
+            // orientation.y += 0.0025;
+            // orientation.z += 0.00125;
 
             // translation.x += 0.005;
             // translation.z += 0.005;
@@ -278,12 +252,8 @@ pub fn main() -> ExitCode {
         {
             // loop over faces
             triangles_to_render.clear();
-            for face in &faces {
-                let vertices: [Vector3; 3] = [
-                    vertices[face.a - 1].clone(),
-                    vertices[face.b - 1].clone(),
-                    vertices[face.c - 1].clone(),
-                ];
+            for face in &mesh.faces {
+                let vertices: [Vector3; 3] = mesh.get_vertices(face);
 
                 let mut transformed_vertices: [Vector4; 3] = [
                     Vector4 {
@@ -427,11 +397,7 @@ pub fn main() -> ExitCode {
                         let color =
                             apply_intensity(face.color, light_intensity);
                         let mut triangle = Triangle {
-                            texel_coordinates: [
-                                face.a_uv.clone(),
-                                face.b_uv.clone(),
-                                face.c_uv.clone(),
-                            ],
+                            texel_coordinates: mesh.get_texel_coordinates(face),
                             color,
                             ..Default::default()
                         };

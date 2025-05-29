@@ -5,9 +5,9 @@ pub struct Face {
     pub a: usize,
     pub b: usize,
     pub c: usize,
-    pub a_uv: TextureUv,
-    pub b_uv: TextureUv,
-    pub c_uv: TextureUv,
+    pub a_uv: usize,
+    pub b_uv: usize,
+    pub c_uv: usize,
     pub color: u32,
 }
 

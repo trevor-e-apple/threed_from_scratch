@@ -48,9 +48,27 @@ pub fn load_png_texture(path: &String) -> Texture {
     }
 }
 
-pub const REDBRICK_TEXTURE_WIDTH: usize = 64;
-pub const REDBRICK_TEXTURE_HEIGHT: usize = 64;
-pub const REDBRICK_TEXTURE: [u8; 16384] = [
+pub fn load_test_texture() -> Texture {
+    let mut data =
+        Vec::with_capacity(REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT);
+    for index in 0..(REDBRICK_TEXTURE_WIDTH * REDBRICK_TEXTURE_HEIGHT) {
+        let blue = REDBRICK_TEXTURE[4 * index] as u32;
+        let green = (REDBRICK_TEXTURE[4 * index + 1] as u32) << 8;
+        let red = (REDBRICK_TEXTURE[4 * index + 2] as u32) << 16;
+        let alpha = (REDBRICK_TEXTURE[4 * index + 3] as u32) << 24;
+        data.push(alpha + red + green + blue);
+    }
+
+    Texture {
+        width: REDBRICK_TEXTURE_WIDTH,
+        height: REDBRICK_TEXTURE_HEIGHT,
+        data,
+    }
+}
+
+const REDBRICK_TEXTURE_WIDTH: usize = 64;
+const REDBRICK_TEXTURE_HEIGHT: usize = 64;
+const REDBRICK_TEXTURE: [u8; 16384] = [
     0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff,
     0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff,
     0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff, 0x38, 0x38, 0x38, 0xff,
