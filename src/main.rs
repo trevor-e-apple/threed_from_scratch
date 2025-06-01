@@ -149,7 +149,7 @@ pub fn main() -> ExitCode {
     };
 
     // Initialize model scale
-    let mut scale: f32 = 1.0;
+    let mut scale: f32 = 2.0;
     let model_displacement = Vector4 {
         x: 0.0,
         y: 0.0,
@@ -238,7 +238,7 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            // orientation.x += 0.0025;
+            orientation.x += 0.0025;
             // orientation.y += 0.0025;
             // orientation.z += 0.00125;
 

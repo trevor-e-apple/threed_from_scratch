@@ -7,6 +7,7 @@ use crate::{
 
 pub struct ColorBuffer {
     pub buffer: Vec<u32>,
+    pub zbuffer: Vec<f32>,
     pub width: usize,
     pub height: usize,
 }
@@ -15,7 +16,8 @@ impl ColorBuffer {
     /// Initializes a new instance of Self
     pub fn new(width: usize, height: usize) -> Self {
         Self {
-            buffer: vec![0; 4 * width * height],
+            buffer: vec![0; width * height],
+            zbuffer: vec![0.0; width * height],
             width,
             height,
         }
@@ -36,10 +38,29 @@ impl ColorBuffer {
         *pixel = color;
     }
 
-    /// Clears the color buffer to a specified color
-    pub fn clear(&mut self, color: u32) {
-        for pixel in &mut self.buffer {
+    pub fn set_pixel_zcell(&mut self, x: usize, y: usize, reciprocal_z: f32, color: u32) {
+        if y >= self.height || x >= self.width {
+            return;
+        }
+
+        let index = y * self.width + x;
+
+        if self.zbuffer[index] < reciprocal_z {
+            let pixel = self.buffer.get_mut(index).unwrap();
             *pixel = color;
+            self.zbuffer[index] = reciprocal_z;
+        }
+    }
+
+    /// Clears the color buffer to a specified color and clears zbuffer to 1.0.
+    /// The zbuffer is cleared to 1.0 because the z coordinates are normalized
+    /// and stored as a reciprocal.
+    pub fn clear(&mut self, color: u32) {
+        for index in 0..(self.width * self.height) {
+            let pixel = self.buffer.get_mut(index).unwrap();
+            *pixel = color;
+            let zcell = self.zbuffer.get_mut(index).unwrap();
+            *zcell = 0.0;
         }
     }
 }
@@ -353,7 +374,7 @@ fn draw_texel(
     }
 
     // Interpolate UV values
-    let (interpolated_u, interpolated_v) = {
+    let (interpolated_u, interpolated_v, interpolated_reciprocal_w) = {
         let uv0 = vertex0.1.clone();
         let uv1 = vertex1.1.clone();
         let uv2 = vertex2.1.clone();
@@ -378,7 +399,7 @@ fn draw_texel(
         let interpolated_u = interpolated_u / interpolated_reciprocal_w;
         let interpolated_v = interpolated_v / interpolated_reciprocal_w;
 
-        (interpolated_u, interpolated_v)
+        (interpolated_u, interpolated_v, interpolated_reciprocal_w)
     };
 
     // Map UV value to texture coordinates
@@ -389,7 +410,7 @@ fn draw_texel(
 
     // Draw pixel
     let pixel_color = texture.get_pixel(texture_x, texture_y);
-    color_buffer.set_pixel(x as usize, y as usize, pixel_color);
+    color_buffer.set_pixel_zcell(x as usize, y as usize, interpolated_reciprocal_w, pixel_color);
 }
 
 pub fn draw_textured_triangle(
