@@ -258,65 +258,214 @@ pub fn draw_filled_triangle(
     triangle: &Triangle,
     color: u32,
 ) {
+    // Find triangle vertex order
     let (vertex0, vertex1, vertex2) = get_sorted_triangle_vertices(triangle);
-    let point0 = vertex0.0;
-    let point1 = vertex1.0;
-    let point2 = vertex2.0;
 
-    // this flow control avoids division by 0 in a somewhat elegant manner
-    if point1.y == point2.y {
-        draw_flat_bottom_triangle(
-            color_buffer,
-            point0.x as i32,
-            point0.y as i32,
-            point1.x as i32,
-            point1.y as i32,
-            point2.x as i32,
-            point2.y as i32,
-            color,
-        );
-    } else if point0.y == point1.y {
-        draw_flat_top_triangle(
-            color_buffer,
-            point0.x as i32,
-            point0.y as i32,
-            point1.x as i32,
-            point1.y as i32,
-            point2.x as i32,
-            point2.y as i32,
-            color,
-        );
-    } else {
-        // calculate the mid points of the triangle
-        let midpoint_ = {
-            let x = (((point2.x - point0.x) * (point1.y - point0.y))
-                / (point2.y - point0.y))
-                + point0.x;
-            Vector2 { x, y: point1.y }
+    let x_0 = vertex0.0.x as i32;
+    let y_0 = vertex0.0.y as i32;
+    let x_1 = vertex1.0.x as i32;
+    let y_1 = vertex1.0.y as i32;
+    let x_2 = vertex2.0.x as i32;
+    let y_2 = vertex2.0.y as i32;
+
+    let vertex0 = (
+        Vector4 {
+            x: x_0 as f32,
+            y: y_0 as f32,
+            z: vertex0.0.z,
+            w: vertex0.0.w,
+        },
+        vertex0.1,
+    );
+    let vertex1 = (
+        Vector4 {
+            x: x_1 as f32,
+            y: y_1 as f32,
+            z: vertex1.0.z,
+            w: vertex1.0.w,
+        },
+        vertex1.1,
+    );
+    let vertex2 = (
+        Vector4 {
+            x: x_2 as f32,
+            y: y_2 as f32,
+            z: vertex2.0.z,
+            w: vertex2.0.w,
+        },
+        vertex2.1,
+    );
+
+    // Fill flat bottom triangle (y0 to y1)
+    if (y_1 - y_0) != 0 {
+        // Find inverse slopes (delta-x over delta-y)
+        let (inv_slope_1, inv_slope_2) = {
+            let inv_slope_1 = {
+                let denom = (y_1 - y_0).abs();
+                if denom == 0 {
+                    0.0
+                } else {
+                    (x_1 - x_0) as f32 / (denom as f32)
+                }
+            };
+            let inv_slope_2 = {
+                let denom = (y_2 - y_0).abs();
+                if denom == 0 {
+                    0.0
+                } else {
+                    (x_2 - x_0) as f32 / (denom as f32)
+                }
+            };
+
+            (inv_slope_1, inv_slope_2)
         };
-        let midpoint = &midpoint_;
 
-        draw_flat_bottom_triangle(
-            color_buffer,
-            point0.x as i32,
-            point0.y as i32,
-            point1.x as i32,
-            point1.y as i32,
-            midpoint.x as i32,
-            midpoint.y as i32,
-            color,
-        );
-        draw_flat_top_triangle(
-            color_buffer,
-            point1.x as i32,
-            point1.y as i32,
-            midpoint.x as i32,
-            midpoint.y as i32,
-            point2.x as i32,
-            point2.y as i32,
-            color,
-        );
+        for current_y in y_0..=y_1 {
+            let x_start =
+                (x_1 as f32 + ((current_y - y_1) as f32 * inv_slope_1)) as i32;
+            let x_end =
+                (x_0 as f32 + ((current_y - y_0) as f32 * inv_slope_2)) as i32;
+
+            let (x_start, x_end) = if x_end < x_start {
+                (x_end, x_start)
+            } else {
+                (x_start, x_end)
+            };
+
+            for x in x_start..=x_end {
+                draw_pixel_zbuffer(
+                    color_buffer,
+                    x,
+                    current_y,
+                    &vertex0,
+                    &vertex1,
+                    &vertex2,
+                    color,
+                );
+            }
+        }
     }
+
+    // Fill flat top triangle (y1 to y2)
+    if (y_2 - y_1) != 0 {
+        // Find inverse slopes (delta-x over delta-y)
+        let (inv_slope_0, inv_slope_1) = {
+            let inv_slope_0 = {
+                let denom = (y_2 - y_0).abs();
+                if denom == 0 {
+                    0.0
+                } else {
+                    (x_2 - x_0) as f32 / denom as f32
+                }
+            };
+            let inv_slope_1 = {
+                let denom = (y_2 - y_1).abs();
+                if denom == 0 {
+                    0.0
+                } else {
+                    (x_2 - x_1) as f32 / denom as f32
+                }
+            };
+
+            (inv_slope_0, inv_slope_1)
+        };
+
+        for current_y in y_1..=y_2 {
+            let x_start =
+                ((current_y - y_0) as f32 * inv_slope_0 + x_0 as f32) as i32;
+            let x_end =
+                ((current_y - y_1) as f32 * inv_slope_1 + x_1 as f32) as i32;
+
+            let (x_start, x_end) = if x_end < x_start {
+                (x_end, x_start)
+            } else {
+                (x_start, x_end)
+            };
+
+            for x in x_start..=x_end {
+                draw_pixel_zbuffer(
+                    color_buffer,
+                    x,
+                    current_y,
+                    &vertex0,
+                    &vertex1,
+                    &vertex2,
+                    color,
+                );
+            }
+        }
+    }
+}
+
+fn draw_pixel_zbuffer(
+    color_buffer: &mut ColorBuffer,
+    x: i32,
+    y: i32,
+    vertex0: &(Vector4, TextureUv),
+    vertex1: &(Vector4, TextureUv),
+    vertex2: &(Vector4, TextureUv),
+    color: u32,
+) {
+    // Calculate Barycentric coordinates
+    //
+    //         (B)
+    //         /|\
+    //        / | \
+    //       /  |  \
+    //      /  (P)  \
+    //     /  /   \  \
+    //    / /       \ \
+    //   //           \\
+    //  (A)------------(C)
+    //
+    let (alpha, beta, gamma) = {
+        let a = Vector2::from_vector4(&vertex0.0);
+        let b = Vector2::from_vector4(&vertex1.0);
+        let c = Vector2::from_vector4(&vertex2.0);
+        let p = Vector2 {
+            x: x as f32,
+            y: y as f32,
+        };
+
+        let ab = &b - &a;
+        let ac = &c - &a;
+        let ap = &p - &a;
+        let pc = &c - &p;
+        let pb = &b - &p;
+
+        let abc_parallelagram_area = ac.x * ab.y - ac.y * ab.x; // || AC x AB ||
+
+        // Area of PBC divided by the entire area
+        let alpha = (pc.x * pb.y - pc.y * pb.x) / abc_parallelagram_area;
+
+        // Area of APC divided by the entire area
+        let beta = (ac.x * ap.y - ac.y * ap.x) / abc_parallelagram_area;
+
+        // Gamma is the remaining part of the ratio
+        let gamma = 1.0 - alpha - beta;
+
+        (alpha, beta, gamma)
+    };
+
+    if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
+        return;
+    }
+
+    // Interpolate UV values
+    let interpolated_reciprocal_w = {
+        let reciprocal_w_0 = 1.0 / vertex0.0.w;
+        let reciprocal_w_1 = 1.0 / vertex1.0.w;
+        let reciprocal_w_2 = 1.0 / vertex2.0.w;
+
+        let interpolated_reciprocal_w = reciprocal_w_0 * alpha
+            + reciprocal_w_1 * beta
+            + reciprocal_w_2 * gamma;
+
+        interpolated_reciprocal_w
+    };
+
+    // Draw pixel
+    color_buffer.set_pixel_zcell(x as usize, y as usize, interpolated_reciprocal_w, color);
 }
 
 fn draw_texel(

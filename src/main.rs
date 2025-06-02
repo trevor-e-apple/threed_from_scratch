@@ -149,7 +149,7 @@ pub fn main() -> ExitCode {
     };
 
     // Initialize model scale
-    let mut scale: f32 = 2.0;
+    let mut scale: f32 = 1.5;
     let model_displacement = Vector4 {
         x: 0.0,
         y: 0.0,
@@ -239,8 +239,8 @@ pub fn main() -> ExitCode {
         // update
         {
             orientation.x += 0.0025;
-            // orientation.y += 0.0025;
-            // orientation.z += 0.00125;
+            orientation.y += 0.0025;
+            orientation.z += 0.00125;
 
             // translation.x += 0.005;
             // translation.z += 0.005;
@@ -409,7 +409,6 @@ pub fn main() -> ExitCode {
                             100.0,
                         );
 
-                        let mut avg_depth = 0.0;
                         for (index, vertex) in
                             (&mut transformed_vertices).into_iter().enumerate()
                         {
@@ -439,23 +438,15 @@ pub fn main() -> ExitCode {
                                     }
 
                                     triangle.points[index] = projected_point;
-                                    avg_depth += vertex.z;
                                 }
                                 None => {}
                             }
                         }
-                        avg_depth /= transformed_vertices.len() as f32;
-                        triangle.avg_depth = avg_depth;
-
                         triangles_to_render.push(triangle);
                     }
                 }
             }
         }
-
-        // sort triangles by average depth (painter's algorithm)
-        triangles_to_render
-            .sort_by(|a, b| b.avg_depth.partial_cmp(&a.avg_depth).unwrap());
 
         // render
         {
