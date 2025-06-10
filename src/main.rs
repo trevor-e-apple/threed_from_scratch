@@ -250,6 +250,38 @@ pub fn main() -> ExitCode {
 
         // Transform and project
         {
+            // World matrix is invariant for each model
+            let world_matrix = {
+                let world_matrix = Matrix4::identity();
+
+                let world_matrix = Matrix4::mult_mat4(
+                    &Matrix4::scale(scale, scale, scale),
+                    &world_matrix,
+                );
+                let world_matrix = Matrix4::mult_mat4(
+                    &Matrix4::rotate_around_x(orientation.x),
+                    &world_matrix,
+                );
+                let world_matrix = Matrix4::mult_mat4(
+                    &Matrix4::rotate_around_y(orientation.y),
+                    &world_matrix,
+                );
+                let world_matrix = Matrix4::mult_mat4(
+                    &Matrix4::rotate_around_z(orientation.z),
+                    &world_matrix,
+                );
+
+                let translation_matrix = Matrix4::translate(
+                    translation.x,
+                    translation.y,
+                    translation.z,
+                );
+                let world_matrix =
+                    Matrix4::mult_mat4(&translation_matrix, &world_matrix);
+
+                world_matrix
+            };
+
             // loop over faces
             triangles_to_render.clear();
             for face in &mesh.faces {
@@ -266,37 +298,6 @@ pub fn main() -> ExitCode {
                         ..Default::default()
                     },
                 ];
-
-                let world_matrix = {
-                    let world_matrix = Matrix4::identity();
-
-                    let world_matrix = Matrix4::mult_mat4(
-                        &Matrix4::scale(scale, scale, scale),
-                        &world_matrix,
-                    );
-                    let world_matrix = Matrix4::mult_mat4(
-                        &Matrix4::rotate_around_x(orientation.x),
-                        &world_matrix,
-                    );
-                    let world_matrix = Matrix4::mult_mat4(
-                        &Matrix4::rotate_around_y(orientation.y),
-                        &world_matrix,
-                    );
-                    let world_matrix = Matrix4::mult_mat4(
-                        &Matrix4::rotate_around_z(orientation.z),
-                        &world_matrix,
-                    );
-
-                    let translation_matrix = Matrix4::translate(
-                        translation.x,
-                        translation.y,
-                        translation.z,
-                    );
-                    let world_matrix =
-                        Matrix4::mult_mat4(&translation_matrix, &world_matrix);
-
-                    world_matrix
-                };
 
                 // Transform
                 for (index, vertex) in vertices.into_iter().enumerate() {
