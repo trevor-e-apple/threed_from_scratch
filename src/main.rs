@@ -1,5 +1,6 @@
 extern crate sdl3;
 
+mod camera;
 mod light_source;
 mod matrix;
 mod mesh;
@@ -33,6 +34,8 @@ use sdl3::{
 use texture::{load_png_texture, load_test_texture};
 use triangle::Triangle;
 use vector::{calc_cross_product, Vector3, Vector4};
+
+use crate::camera::Camera;
 
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
@@ -125,12 +128,7 @@ pub fn main() -> ExitCode {
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
 
     // Initialize camera
-    let camera_position = Vector4 {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-        w: 1.0,
-    };
+    let mut camera = Camera::new();
 
     // Initialize model orientation
     let mut orientation = Vector4 {
@@ -239,17 +237,54 @@ pub fn main() -> ExitCode {
         // update
         {
             orientation.x += 0.0025;
-            orientation.y += 0.0025;
-            orientation.z += 0.00125;
+            // orientation.y += 0.0025;
+            // orientation.z += 0.0025;
 
             // translation.x += 0.005;
             // translation.z += 0.005;
 
             // scale += 0.0001;
+
+            // camera.position.x += 0.00125;
+            // camera.position.y += 0.00125;
         }
 
         // Transform and project
         {
+            // World matrix is invariant for each model
+            let world_matrix = {
+                let world_matrix = Matrix4::identity();
+
+                let world_matrix = Matrix4::mult_mat4(
+                    &Matrix4::scale(scale, scale, scale),
+                    &world_matrix,
+                );
+                let world_matrix = Matrix4::mult_mat4(
+                    &Matrix4::rotate_around_x(orientation.x),
+                    &world_matrix,
+                );
+                let world_matrix = Matrix4::mult_mat4(
+                    &Matrix4::rotate_around_y(orientation.y),
+                    &world_matrix,
+                );
+                let world_matrix = Matrix4::mult_mat4(
+                    &Matrix4::rotate_around_z(orientation.z),
+                    &world_matrix,
+                );
+
+                let translation_matrix = Matrix4::translate(
+                    translation.x,
+                    translation.y,
+                    translation.z,
+                );
+                let world_matrix =
+                    Matrix4::mult_mat4(&translation_matrix, &world_matrix);
+
+                world_matrix
+            };
+
+            let view_matrix = camera.view_matrix();
+
             // loop over faces
             triangles_to_render.clear();
             for face in &mesh.faces {
@@ -267,40 +302,9 @@ pub fn main() -> ExitCode {
                     },
                 ];
 
-                let world_matrix = {
-                    let world_matrix = Matrix4::identity();
-
-                    let world_matrix = Matrix4::mult_mat4(
-                        &Matrix4::scale(scale, scale, scale),
-                        &world_matrix,
-                    );
-                    let world_matrix = Matrix4::mult_mat4(
-                        &Matrix4::rotate_around_x(orientation.x),
-                        &world_matrix,
-                    );
-                    let world_matrix = Matrix4::mult_mat4(
-                        &Matrix4::rotate_around_y(orientation.y),
-                        &world_matrix,
-                    );
-                    let world_matrix = Matrix4::mult_mat4(
-                        &Matrix4::rotate_around_z(orientation.z),
-                        &world_matrix,
-                    );
-
-                    let translation_matrix = Matrix4::translate(
-                        translation.x,
-                        translation.y,
-                        translation.z,
-                    );
-                    let world_matrix =
-                        Matrix4::mult_mat4(&translation_matrix, &world_matrix);
-
-                    world_matrix
-                };
-
                 // Transform
                 for (index, vertex) in vertices.into_iter().enumerate() {
-                    let transformed_vertex = {
+                    let world_transformed_vertex = {
                         let transformed_vertex = {
                             let transformed_vertex = Matrix4::mult_vector(
                                 &world_matrix,
@@ -315,6 +319,10 @@ pub fn main() -> ExitCode {
 
                         transformed_vertex
                     };
+                    let transformed_vertex = Matrix4::mult_vector(
+                        &view_matrix,
+                        &world_transformed_vertex,
+                    );
                     transformed_vertices[index] = transformed_vertex;
                 }
 
@@ -351,20 +359,18 @@ pub fn main() -> ExitCode {
                 };
 
                 // Backface culling
-                let culled: bool = if culling_mode
-                    == BackfaceCullingMode::Enabled
-                {
-                    // calculate the to-camera vector
-                    let face_to_camera =
-                        &Vector3::from_vector4(&camera_position) - &vector_a;
+                let culled: bool =
+                    if culling_mode == BackfaceCullingMode::Enabled {
+                        // calculate the to-camera vector
+                        let face_to_camera = &camera.position - &vector_a;
 
-                    let dot_product =
-                        Vector3::dot_product(&face_normal, &face_to_camera);
+                        let dot_product =
+                            Vector3::dot_product(&face_normal, &face_to_camera);
 
-                    dot_product < 0.0
-                } else {
-                    false
-                };
+                        dot_product < 0.0
+                    } else {
+                        false
+                    };
 
                 // Project
                 if !culled {

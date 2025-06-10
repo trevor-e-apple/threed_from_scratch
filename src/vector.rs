@@ -264,6 +264,11 @@ impl Vector3 {
         self.z = scalar * self.z;
     }
 
+    pub fn calc_normalized_vector(v: &Vector3) -> Vector3 {
+        let scalar = 1.0 / v.magnitude();
+        scalar * v
+    }
+
     pub fn dot_product(a: &Self, b: &Self) -> f32 {
         a.x * b.x + a.y * b.y + a.z * b.z
     }

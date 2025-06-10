@@ -1,4 +1,4 @@
-use crate::vector::Vector4;
+use crate::vector::{calc_cross_product, Vector3, Vector4};
 
 pub struct Matrix4 {
     pub data: [[f32; 4]; 4],

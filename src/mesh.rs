@@ -83,14 +83,16 @@ pub fn load_obj_mesh(path: &String) -> Mesh {
 
             texel_coordinates.push(TextureUv {
                 u: elements[0],
-                v: 1.0 - elements[1], // we use top left coordinates 
+                v: 1.0 - elements[1], // we use top left coordinates
             });
         } else if line.starts_with("f ") {
             let rest_of_line = &line[2..];
             // most faces are 3 vertices (a triangle), but there is a possibility for a polygon
             let mut coordinate_elements: [usize; 3] = [0; 3];
             let mut texel_elements: [usize; 3] = [0; 3];
-            for (element_index, element_str) in rest_of_line.split(" ").enumerate() {
+            for (element_index, element_str) in
+                rest_of_line.split(" ").enumerate()
+            {
                 let vertex_info: Vec<&str> = element_str.split("/").collect();
                 let vertex_index: usize = match vertex_info[0].parse() {
                     Ok(vertex_index) => vertex_index,
@@ -125,7 +127,6 @@ pub fn load_obj_mesh(path: &String) -> Mesh {
         faces,
     }
 }
-
 
 const MESH_VERTICES: [Vector3; 8] = [
     Vector3 {
