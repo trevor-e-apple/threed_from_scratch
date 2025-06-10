@@ -67,31 +67,6 @@ impl Matrix4 {
         result
     }
 
-    /// eye_pos: the position of the eye (camera) in world space
-    /// target_pos: the position in world space to look at
-    /// up: The cross product between this value and the target vector will define the x-axis for the camera
-    pub fn look_at_view_matrix(
-        eye_pos: Vector3,
-        target_pos: Vector3,
-        up: Vector3,
-    ) -> Self {
-        let z = Vector3::calc_normalized_vector(&(&target_pos - &eye_pos)); // the camera's z-axis
-        let x = Vector3::calc_normalized_vector(&calc_cross_product(&up, &z)); // the camera's x-axis
-        let y = calc_cross_product(&z, &x); // camera's y-axis
-
-        // The view matrix is a translation and a rotation. The rotation corresponds to the
-        // inverse of the rotation of the camera's axes,
-        // This matrix is the result of the matrix multiplication of those two matrices.
-        Self {
-            data: [
-                [x.x, x.y, x.z, -1.0 * Vector3::dot_product(&x, &eye_pos)],
-                [y.x, y.y, y.z, -1.0 * Vector3::dot_product(&y, &eye_pos)],
-                [z.x, z.y, z.z, -1.0 * Vector3::dot_product(&z, &eye_pos)],
-                [0.0, 0.0, 0.0, 1.0],
-            ],
-        }
-    }
-
     pub fn rotate_around_z(angle: f32) -> Self {
         let cos_angle = angle.cos();
         let sin_angle = angle.sin();

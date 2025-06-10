@@ -1,5 +1,6 @@
 extern crate sdl3;
 
+mod camera;
 mod light_source;
 mod matrix;
 mod mesh;
@@ -33,6 +34,8 @@ use sdl3::{
 use texture::{load_png_texture, load_test_texture};
 use triangle::Triangle;
 use vector::{calc_cross_product, Vector3, Vector4};
+
+use crate::camera::Camera;
 
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
@@ -125,12 +128,7 @@ pub fn main() -> ExitCode {
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
 
     // Initialize camera
-    let mut camera_position = Vector4 {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-        w: 1.0,
-    };
+    let mut camera = Camera::new();
 
     // Initialize model orientation
     let mut orientation = Vector4 {
@@ -247,7 +245,8 @@ pub fn main() -> ExitCode {
 
             // scale += 0.0001;
 
-            camera_position.y += 0.0025;
+            // camera.position.x += 0.00125;
+            camera.position.y += 0.00125;
         }
 
         // Transform and project
@@ -284,15 +283,7 @@ pub fn main() -> ExitCode {
                 world_matrix
             };
 
-            let view_matrix = Matrix4::look_at_view_matrix(
-                Vector3::from_vector4(&camera_position),
-                Vector3::from_vector4(&model_displacement),
-                Vector3 {
-                    x: 0.0,
-                    y: 1.0,
-                    z: 0.0,
-                },
-            );
+            let view_matrix = camera.view_matrix();
 
             // loop over faces
             triangles_to_render.clear();
@@ -368,20 +359,18 @@ pub fn main() -> ExitCode {
                 };
 
                 // Backface culling
-                let culled: bool = if culling_mode
-                    == BackfaceCullingMode::Enabled
-                {
-                    // calculate the to-camera vector
-                    let face_to_camera =
-                        &Vector3::from_vector4(&camera_position) - &vector_a;
+                let culled: bool =
+                    if culling_mode == BackfaceCullingMode::Enabled {
+                        // calculate the to-camera vector
+                        let face_to_camera = &camera.position - &vector_a;
 
-                    let dot_product =
-                        Vector3::dot_product(&face_normal, &face_to_camera);
+                        let dot_product =
+                            Vector3::dot_product(&face_normal, &face_to_camera);
 
-                    dot_product < 0.0
-                } else {
-                    false
-                };
+                        dot_product < 0.0
+                    } else {
+                        false
+                    };
 
                 // Project
                 if !culled {
