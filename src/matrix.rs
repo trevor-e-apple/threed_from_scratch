@@ -69,7 +69,7 @@ impl Matrix4 {
 
     /// eye_pos: the position of the eye (camera) in world space
     /// target_pos: the position in world space to look at
-    /// up: 
+    /// up: The cross product between this value and the target vector will define the x-axis for the camera 
     pub fn look_at_view_matrix(eye_pos: Vector3, target_pos: Vector3, up: Vector3) -> Self {
         let z = Vector3::calc_normalized_vector(&(&target_pos - &eye_pos)); // the camera's z-axis
         let x = Vector3::calc_normalized_vector(&calc_cross_product(&up, &z)); // the camera's x-axis
