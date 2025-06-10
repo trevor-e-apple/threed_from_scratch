@@ -125,7 +125,7 @@ pub fn main() -> ExitCode {
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
 
     // Initialize camera
-    let camera_position = Vector4 {
+    let mut camera_position = Vector4 {
         x: 0.0,
         y: 0.0,
         z: 0.0,
@@ -238,14 +238,16 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.0025;
+            // orientation.x += 0.0025;
             // orientation.y += 0.0025;
-            // orientation.z += 0.00125;
+            // orientation.z += 0.0025;
 
             // translation.x += 0.005;
             // translation.z += 0.005;
 
             // scale += 0.0001;
+
+            camera_position.y += 0.0025;
         }
 
         // Transform and project
@@ -282,6 +284,16 @@ pub fn main() -> ExitCode {
                 world_matrix
             };
 
+            let view_matrix = Matrix4::look_at_view_matrix(
+                Vector3::from_vector4(&camera_position),
+                Vector3::from_vector4(&model_displacement),
+                Vector3 {
+                    x: 0.0,
+                    y: 1.0,
+                    z: 0.0,
+                },
+            );
+
             // loop over faces
             triangles_to_render.clear();
             for face in &mesh.faces {
@@ -301,7 +313,7 @@ pub fn main() -> ExitCode {
 
                 // Transform
                 for (index, vertex) in vertices.into_iter().enumerate() {
-                    let transformed_vertex = {
+                    let world_transformed_vertex = {
                         let transformed_vertex = {
                             let transformed_vertex = Matrix4::mult_vector(
                                 &world_matrix,
@@ -316,6 +328,10 @@ pub fn main() -> ExitCode {
 
                         transformed_vertex
                     };
+                    let transformed_vertex = Matrix4::mult_vector(
+                        &view_matrix,
+                        &world_transformed_vertex,
+                    );
                     transformed_vertices[index] = transformed_vertex;
                 }
 

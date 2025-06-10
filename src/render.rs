@@ -38,7 +38,13 @@ impl ColorBuffer {
         *pixel = color;
     }
 
-    pub fn set_pixel_zcell(&mut self, x: usize, y: usize, reciprocal_z: f32, color: u32) {
+    pub fn set_pixel_zcell(
+        &mut self,
+        x: usize,
+        y: usize,
+        reciprocal_z: f32,
+        color: u32,
+    ) {
         if y >= self.height || x >= self.width {
             return;
         }
@@ -410,7 +416,12 @@ fn draw_texel(
 
     // Draw pixel
     let pixel_color = texture.get_pixel(texture_x, texture_y);
-    color_buffer.set_pixel_zcell(x as usize, y as usize, interpolated_reciprocal_w, pixel_color);
+    color_buffer.set_pixel_zcell(
+        x as usize,
+        y as usize,
+        interpolated_reciprocal_w,
+        pixel_color,
+    );
 }
 
 pub fn draw_textured_triangle(
