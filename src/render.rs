@@ -471,7 +471,12 @@ fn draw_pixel_zbuffer(
     };
 
     // Draw pixel
-    color_buffer.set_pixel_zcell(x as usize, y as usize, interpolated_reciprocal_w, color);
+    color_buffer.set_pixel_zcell(
+        x as usize,
+        y as usize,
+        interpolated_reciprocal_w,
+        color,
+    );
 }
 
 fn draw_texel(

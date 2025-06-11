@@ -142,18 +142,12 @@ pub fn main() -> ExitCode {
     let mut translation = Vector4 {
         x: 0.0,
         y: 0.0,
-        z: 0.0,
+        z: 2.5,
         w: 1.0,
     };
 
     // Initialize model scale
     let mut scale: f32 = 1.5;
-    let model_displacement = Vector4 {
-        x: 0.0,
-        y: 0.0,
-        z: 5.0,
-        w: 1.0,
-    };
 
     // Initialize light source
     let light_source = LightSource::new(Vector3 {
@@ -236,7 +230,7 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            orientation.x += 0.0025;
+            // orientation.x += 0.0025;
             // orientation.y += 0.0025;
             // orientation.z += 0.0025;
 
@@ -245,9 +239,11 @@ pub fn main() -> ExitCode {
 
             // scale += 0.0001;
 
-            // camera.position.x += 0.00125;
-            // camera.position.y += 0.00125;
+            // camera.position.x += 0.0025;
+            camera.position.y += 0.0025;
         }
+
+        camera.target = Vector3::from_vector4(&translation);
 
         // Transform and project
         {
@@ -304,25 +300,14 @@ pub fn main() -> ExitCode {
 
                 // Transform
                 for (index, vertex) in vertices.into_iter().enumerate() {
-                    let world_transformed_vertex = {
-                        let transformed_vertex = {
-                            let transformed_vertex = Matrix4::mult_vector(
-                                &world_matrix,
-                                &Vector4::from_vector3(&vertex),
-                            );
-
-                            let transformed_vertex =
-                                &transformed_vertex + &model_displacement;
-
-                            transformed_vertex
-                        };
-
-                        transformed_vertex
-                    };
+                    // world transform
                     let transformed_vertex = Matrix4::mult_vector(
-                        &view_matrix,
-                        &world_transformed_vertex,
+                        &world_matrix,
+                        &Vector4::from_vector3(&vertex),
                     );
+                    // view transform
+                    let transformed_vertex =
+                        Matrix4::mult_vector(&view_matrix, &transformed_vertex);
                     transformed_vertices[index] = transformed_vertex;
                 }
 
