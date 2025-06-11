@@ -150,6 +150,8 @@ pub fn main() -> ExitCode {
     let mut scale: f32 = 1.5;
 
     // Initialize light source
+    // NOTE: the light direction is in camera space, not world space, since it is not 
+    // transformed via the view matrix
     let light_source = LightSource::new(Vector3 {
         x: 0.0,
         y: 0.0,
