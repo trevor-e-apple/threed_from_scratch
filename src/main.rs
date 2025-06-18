@@ -172,10 +172,13 @@ pub fn main() -> ExitCode {
         let frame_start_time = Instant::now();
 
         let (camera_direction, camera_right) = {
-            let mut camera_direction = camera.target.clone();
+            // direction that the camera is pointing relative to the camera's origin
+            let mut camera_direction = &camera.target - &camera.position;
             camera_direction.normalize();
+
             let mut camera_right = calc_cross_product(&camera_direction, &camera.up);
             camera_right.normalize();
+
             (camera_direction, camera_right)
         };
 
@@ -191,25 +194,33 @@ pub fn main() -> ExitCode {
                     keycode: Some(Keycode::W),
                     ..
                 } => {
-                    camera.position = camera.position + (CAMERA_UNITS_PER_FRAME * &camera_direction);
+                    let delta = CAMERA_UNITS_PER_FRAME * &camera_direction;
+                    camera.position = &camera.position + &delta;
+                    camera.target = &camera.target + &delta;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::S),
                     ..
                 } => {
-                    camera.position = camera.position - (CAMERA_UNITS_PER_FRAME * &camera_direction);
+                    let delta = -1.0 * CAMERA_UNITS_PER_FRAME * &camera_direction;
+                    camera.position = &camera.position + &delta;
+                    camera.target = &camera.target + &delta;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::A),
                     ..
                 } => {
-                    camera.position = camera.position + (CAMERA_UNITS_PER_FRAME * &camera_right);
+                    let delta = CAMERA_UNITS_PER_FRAME * &camera_right;
+                    camera.position = &camera.position + &delta;
+                    camera.target = &camera.target + &delta;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::D),
                     ..
                 } => {
-                    camera.position = camera.position - (CAMERA_UNITS_PER_FRAME * &camera_right);
+                    let delta = -1.0 * CAMERA_UNITS_PER_FRAME * &camera_right;
+                    camera.position = &camera.position + &delta;
+                    camera.target = &camera.target + &delta;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Left),
