@@ -40,6 +40,7 @@ use crate::camera::Camera;
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
 const FRAME_TARGET_TIME_NS: u32 = (1000.0 * FRAME_TARGET_TIME_MS) as u32;
+const CAMERA_UNITS_PER_FRAME: f32 = 1.0 * (1.0 / FRAMES_PER_SEC); // speed in units / frame 
 
 #[derive(PartialEq)]
 enum RenderMode {
@@ -170,6 +171,14 @@ pub fn main() -> ExitCode {
     'running: loop {
         let frame_start_time = Instant::now();
 
+        let (camera_direction, camera_right) = {
+            let mut camera_direction = camera.target.clone();
+            camera_direction.normalize();
+            let mut camera_right = calc_cross_product(&camera_direction, &camera.up);
+            camera_right.normalize();
+            (camera_direction, camera_right)
+        };
+
         // process input
         for event in event_pump.poll_iter() {
             match event {
@@ -179,13 +188,49 @@ pub fn main() -> ExitCode {
                     ..
                 } => break 'running,
                 Event::KeyDown {
+                    keycode: Some(Keycode::W),
+                    ..
+                } => {
+                    camera.position = camera.position + (CAMERA_UNITS_PER_FRAME * &camera_direction);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::S),
+                    ..
+                } => {
+                    camera.position = camera.position - (CAMERA_UNITS_PER_FRAME * &camera_direction);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::A),
+                    ..
+                } => {
+                    camera.position = camera.position + (CAMERA_UNITS_PER_FRAME * &camera_right);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::D),
+                    ..
+                } => {
+                    camera.position = camera.position - (CAMERA_UNITS_PER_FRAME * &camera_right);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => {
+                    todo!("Rotate camera left");
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => {
+                    todo!("Rotate camera right");
+                }
+                Event::KeyDown {
                     keycode: Some(Keycode::C),
                     ..
                 } => {
                     culling_mode = BackfaceCullingMode::Enabled;
                 }
                 Event::KeyDown {
-                    keycode: Some(Keycode::D),
+                    keycode: Some(Keycode::V),
                     ..
                 } => {
                     culling_mode = BackfaceCullingMode::Disabled;
@@ -242,10 +287,10 @@ pub fn main() -> ExitCode {
             // scale += 0.0001;
 
             // camera.position.x += 0.0025;
-            camera.position.y += 0.0025;
+            // camera.position.y += 0.0025;
         }
 
-        camera.target = Vector3::from_vector4(&translation);
+        // camera.target = Vector3::from_vector4(&translation);
 
         // Transform and project
         {
