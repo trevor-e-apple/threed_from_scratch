@@ -40,7 +40,7 @@ use crate::camera::Camera;
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
 const FRAME_TARGET_TIME_NS: u32 = (1000.0 * FRAME_TARGET_TIME_MS) as u32;
-const CAMERA_UNITS_PER_FRAME: f32 = 1.0 * (1.0 / FRAMES_PER_SEC); // speed in units / frame 
+const CAMERA_UNITS_PER_FRAME: f32 = 1.0 * (1.0 / FRAMES_PER_SEC); // speed in units / frame
 
 #[derive(PartialEq)]
 enum RenderMode {
@@ -151,7 +151,7 @@ pub fn main() -> ExitCode {
     let mut scale: f32 = 1.5;
 
     // Initialize light source
-    // NOTE: the light direction is in camera space, not world space, since it is not 
+    // NOTE: the light direction is in camera space, not world space, since it is not
     // transformed via the view matrix
     let light_source = LightSource::new(Vector3 {
         x: 0.0,
@@ -176,7 +176,8 @@ pub fn main() -> ExitCode {
             let mut camera_direction = &camera.target - &camera.position;
             camera_direction.normalize();
 
-            let mut camera_right = calc_cross_product(&camera_direction, &camera.up);
+            let mut camera_right =
+                calc_cross_product(&camera_direction, &camera.up);
             camera_right.normalize();
 
             (camera_direction, camera_right)
@@ -202,7 +203,8 @@ pub fn main() -> ExitCode {
                     keycode: Some(Keycode::S),
                     ..
                 } => {
-                    let delta = -1.0 * CAMERA_UNITS_PER_FRAME * &camera_direction;
+                    let delta =
+                        -1.0 * CAMERA_UNITS_PER_FRAME * &camera_direction;
                     camera.position = &camera.position + &delta;
                     camera.target = &camera.target + &delta;
                 }
@@ -226,13 +228,31 @@ pub fn main() -> ExitCode {
                     keycode: Some(Keycode::Left),
                     ..
                 } => {
-                    todo!("Rotate camera left");
+                    // todo!("Rotate camera left");
+                    // Rotate camera left
+                    let rotation_matrix = Matrix4::rotate_around_y(-0.01);
+                    let new_direction = Matrix4::mult_vector(
+                        &rotation_matrix,
+                        &Vector4::from_vector3(&camera_direction),
+                    );
+
+                    // compute new target
+                    camera.target = &camera.position
+                        + &Vector3::from_vector4(&new_direction);
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Right),
                     ..
                 } => {
-                    todo!("Rotate camera right");
+                    let rotation_matrix = Matrix4::rotate_around_y(0.01);
+                    let new_direction = Matrix4::mult_vector(
+                        &rotation_matrix,
+                        &Vector4::from_vector3(&camera_direction),
+                    );
+
+                    // compute new target
+                    camera.target = &camera.position
+                        + &Vector3::from_vector4(&new_direction);
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::C),
