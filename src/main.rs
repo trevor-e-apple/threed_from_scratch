@@ -424,8 +424,10 @@ pub fn main() -> ExitCode {
                 // Backface culling
                 let culled: bool =
                     if culling_mode == BackfaceCullingMode::Enabled {
-                        // calculate the to-camera vector
-                        let face_to_camera = &camera.position - &vector_a;
+                        // Calculate the to-camera vector.
+                        // Since this is performed after the view matrix transform,
+                        // the camera is at the origin
+                        let face_to_camera = -1.0 * vector_a;
 
                         let dot_product =
                             Vector3::dot_product(&face_normal, &face_to_camera);
@@ -438,6 +440,8 @@ pub fn main() -> ExitCode {
                 // Project
                 if !culled {
                     // Lighting
+                    // Note that lighting is currently applied *after* the view matrix transform, which means the 
+                    // "direction" of the light is always from the camera position. 
                     let light_intensity: f32 = {
                         let dot_product = Vector3::dot_product(
                             &face_normal,
