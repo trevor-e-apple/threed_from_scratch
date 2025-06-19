@@ -40,7 +40,7 @@ use crate::camera::Camera;
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
 const FRAME_TARGET_TIME_NS: u32 = (1000.0 * FRAME_TARGET_TIME_MS) as u32;
-const CAMERA_UNITS_PER_FRAME: f32 = 1.0 * (1.0 / FRAMES_PER_SEC); // speed in units / frame
+const CAMERA_UNITS_PER_FRAME: f32 = 2.0 * (1.0 / FRAMES_PER_SEC); // speed in units / frame
 
 #[derive(PartialEq)]
 enum RenderMode {
@@ -230,7 +230,7 @@ pub fn main() -> ExitCode {
                 } => {
                     // todo!("Rotate camera left");
                     // Rotate camera left
-                    let rotation_matrix = Matrix4::rotate_around_y(-0.01);
+                    let rotation_matrix = Matrix4::rotate_around_y(-0.02);
                     let new_direction = Matrix4::mult_vector(
                         &rotation_matrix,
                         &Vector4::from_vector3(&camera_direction),
@@ -244,7 +244,7 @@ pub fn main() -> ExitCode {
                     keycode: Some(Keycode::Right),
                     ..
                 } => {
-                    let rotation_matrix = Matrix4::rotate_around_y(0.01);
+                    let rotation_matrix = Matrix4::rotate_around_y(0.02);
                     let new_direction = Matrix4::mult_vector(
                         &rotation_matrix,
                         &Vector4::from_vector3(&camera_direction),
