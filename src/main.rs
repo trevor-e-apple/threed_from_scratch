@@ -148,7 +148,7 @@ pub fn main() -> ExitCode {
     };
 
     // Initialize model scale
-    let mut scale: f32 = 1.5;
+    let mut scale: f32 = 1.0;
 
     // Initialize light source
     // NOTE: the light direction is in camera space, not world space, since it is not
