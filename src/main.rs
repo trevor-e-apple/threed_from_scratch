@@ -225,10 +225,27 @@ pub fn main() -> ExitCode {
                     camera.target = &camera.target + &delta;
                 }
                 Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => {
+                    // Move camera up
+                    let delta = CAMERA_UNITS_PER_FRAME * &camera.up;
+                    camera.position = &camera.position + &delta;
+                    camera.target = &camera.target + &delta;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => {
+                    // move camera down
+                    let delta = -1.0 * CAMERA_UNITS_PER_FRAME * &camera.up;
+                    camera.position = &camera.position + &delta;
+                    camera.target = &camera.target + &delta;
+                }
+                Event::KeyDown {
                     keycode: Some(Keycode::Left),
                     ..
                 } => {
-                    // todo!("Rotate camera left");
                     // Rotate camera left
                     let rotation_matrix = Matrix4::rotate_around_y(-0.02);
                     let new_direction = Matrix4::mult_vector(
