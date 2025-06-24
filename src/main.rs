@@ -1,6 +1,7 @@
 extern crate sdl3;
 
 mod camera;
+mod clipping;
 mod light_source;
 mod matrix;
 mod mesh;
@@ -457,8 +458,8 @@ pub fn main() -> ExitCode {
                 // Project
                 if !culled {
                     // Lighting
-                    // Note that lighting is currently applied *after* the view matrix transform, which means the 
-                    // "direction" of the light is always from the camera position. 
+                    // Note that lighting is currently applied *after* the view matrix transform, which means the
+                    // "direction" of the light is always from the camera position.
                     let light_intensity: f32 = {
                         let dot_product = Vector3::dot_product(
                             &face_normal,
