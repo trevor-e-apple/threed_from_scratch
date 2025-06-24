@@ -339,11 +339,9 @@ pub fn main() -> ExitCode {
             // camera.position.y += 0.0025;
         }
 
-        // camera.target = Vector3::from_vector4(&translation);
-
         // Transform and project
         {
-            // World matrix is invariant for each model
+            // World matrix is invariant for each face
             let world_matrix = {
                 let world_matrix = Matrix4::identity();
 
