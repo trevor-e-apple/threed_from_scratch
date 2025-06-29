@@ -721,18 +721,3 @@ pub fn draw_textured_triangle(
         }
     }
 }
-
-pub fn perspective_projection(
-    projection_matrix: &Matrix4,
-    vector: &Vector4,
-) -> Option<Vector4> {
-    if vector.z != 0.0 {
-        let mut result = Matrix4::mult_vector(projection_matrix, vector);
-        result.x /= result.w;
-        result.y /= result.w;
-        result.z /= result.w;
-        Some(result)
-    } else {
-        None
-    }
-}

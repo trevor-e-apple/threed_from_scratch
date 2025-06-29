@@ -16,7 +16,6 @@ pub struct Triangle {
     pub points: [Vector4; 3],
     pub texel_coordinates: [TextureUv; 3],
     pub color: u32,
-    pub avg_depth: f32,
 }
 
 /// sorts the triangle vertex data by their y coordinates. Ascending order.

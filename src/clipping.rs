@@ -1,4 +1,4 @@
-use crate::vector::Vector3;
+use crate::{triangle::Triangle, vector::Vector3};
 
 pub struct Plane {
     pub position: Vector3,
@@ -55,16 +55,40 @@ impl FrustumPlanes {
             },
         };
         let right_plane = Plane {
-            position: Vector3 { x: 0.0, y: 0.0, z: 0.0 },
-            normal: Vector3 {x: -1.0 * half_fov.cos(), y: 0.0, z: half_fov.sin()},
+            position: Vector3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            normal: Vector3 {
+                x: -1.0 * half_fov.cos(),
+                y: 0.0,
+                z: half_fov.sin(),
+            },
         };
         let top_plane = Plane {
-            position: Vector3 { x: 0.0, y: 0.0, z: 0.0 },
-            normal: Vector3 { x: 0.0, y: -1.0 * half_fov.cos(), z: half_fov.sin() },
+            position: Vector3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            normal: Vector3 {
+                x: 0.0,
+                y: -1.0 * half_fov.cos(),
+                z: half_fov.sin(),
+            },
         };
         let bottom_plane = Plane {
-            position: Vector3 { x: 0.0, y: 0.0, z: 0.0 },
-            normal: Vector3 { x: 0.0, y: half_fov.cos(), z: half_fov.sin() },
+            position: Vector3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            normal: Vector3 {
+                x: 0.0,
+                y: half_fov.cos(),
+                z: half_fov.sin(),
+            },
         };
         Self {
             near_plane,
@@ -75,4 +99,19 @@ impl FrustumPlanes {
             right_plane,
         }
     }
+}
+
+pub fn clip_triangle(
+    frustum_planes: &FrustumPlanes,
+    triangle: Triangle,
+) -> Vec<Triangle> {
+    // Find the resulting polygon from the clipping
+    {}
+
+    // Convert the polygon into triangles
+    {
+        // Pick a vertex in the triangle
+    }
+
+    todo!()
 }

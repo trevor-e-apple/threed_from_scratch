@@ -6,6 +6,7 @@ mod light_source;
 mod matrix;
 mod mesh;
 mod point;
+mod projection;
 mod render;
 mod texture;
 mod triangle;
@@ -22,7 +23,7 @@ use matrix::Matrix4;
 use mesh::{load_obj_mesh, load_test_mesh};
 use render::{
     draw_filled_triangle, draw_textured_triangle, draw_triangle,
-    draw_triangle_vertices, perspective_projection, ColorBuffer,
+    draw_triangle_vertices, ColorBuffer,
 };
 use sdl3::{
     event::Event,
@@ -36,7 +37,7 @@ use texture::{load_png_texture, load_test_texture};
 use triangle::Triangle;
 use vector::{calc_cross_product, Vector3, Vector4};
 
-use crate::camera::Camera;
+use crate::{camera::Camera, projection::project_triangles};
 
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
@@ -373,7 +374,12 @@ pub fn main() -> ExitCode {
                 world_matrix
             };
 
+            // The view matrix is invariant for each face
             let view_matrix = camera.view_matrix();
+
+            // The projection matrix is invariant for each face
+            let projection_matrix =
+                Matrix4::projection_matrix(fov, aspect_ratio, 0.1, 100.0);
 
             // loop over faces
             triangles_to_render.clear();
@@ -485,53 +491,20 @@ pub fn main() -> ExitCode {
                     if light_intensity > 0.0 {
                         let color =
                             apply_intensity(face.color, light_intensity);
-                        let mut triangle = Triangle {
+                        let triangle = Triangle {
+                            points: transformed_vertices.clone(),
                             texel_coordinates: mesh.get_texel_coordinates(face),
                             color,
                             ..Default::default()
                         };
 
-                        let projection_matrix = Matrix4::projection_matrix(
-                            fov,
-                            aspect_ratio,
-                            0.1,
-                            100.0,
+                        project_triangles(
+                            &projection_matrix,
+                            window_width,
+                            window_height,
+                            &mut vec![triangle],
+                            &mut triangles_to_render,
                         );
-
-                        for (index, vertex) in
-                            (&mut transformed_vertices).into_iter().enumerate()
-                        {
-                            match perspective_projection(
-                                &projection_matrix,
-                                vertex,
-                            ) {
-                                Some(projected_point) => {
-                                    let mut projected_point =
-                                        projected_point.clone();
-                                    // perform windowing transform (scale then translate)
-                                    // the division by 2 is b/c we are mapping the canonical view volume (which has bounds x,y: [-1, 1]) to screen
-                                    // space (which has bounds x: [0, window_width], y: [0, window_height])
-                                    {
-                                        projected_point.x *=
-                                            window_width as f32 / 2.0;
-                                        projected_point.y *=
-                                            window_height as f32 / 2.0;
-
-                                        // since y grows down in screen space, but up in world space / canonical image space
-                                        projected_point.y *= -1.0;
-
-                                        projected_point.x +=
-                                            window_width as f32 / 2.0;
-                                        projected_point.y +=
-                                            window_height as f32 / 2.0;
-                                    }
-
-                                    triangle.points[index] = projected_point;
-                                }
-                                None => {}
-                            }
-                        }
-                        triangles_to_render.push(triangle);
                     }
                 }
             }
