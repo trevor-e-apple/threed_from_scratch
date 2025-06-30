@@ -500,27 +500,25 @@ pub fn main() -> ExitCode {
                         }
                     };
 
-                    if light_intensity > 0.0 {
-                        let color =
-                            apply_intensity(face.color, light_intensity);
-                        let triangle = Triangle {
-                            points: transformed_vertices.clone(),
-                            texel_coordinates: mesh.get_texel_coordinates(face),
-                            color,
-                            ..Default::default()
-                        };
+                    let color =
+                        apply_intensity(face.color, light_intensity);
+                    let triangle = Triangle {
+                        points: transformed_vertices.clone(),
+                        texel_coordinates: mesh.get_texel_coordinates(face),
+                        color,
+                        ..Default::default()
+                    };
 
-                        let mut triangles =
-                            clip_triangle(&frustum_planes, triangle);
+                    let mut triangles =
+                        clip_triangle(&frustum_planes, triangle);
 
-                        project_triangles(
-                            &projection_matrix,
-                            window_width,
-                            window_height,
-                            &mut triangles,
-                            &mut triangles_to_render,
-                        );
-                    }
+                    project_triangles(
+                        &projection_matrix,
+                        window_width,
+                        window_height,
+                        &mut triangles,
+                        &mut triangles_to_render,
+                    );
                 }
             }
         }
