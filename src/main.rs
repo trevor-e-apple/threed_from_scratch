@@ -104,9 +104,11 @@ pub fn main() -> ExitCode {
     // };
     let window_width = 800;
     let window_height = 600;
-    let aspect_ratio = window_height as f32 / window_width as f32;
+    let aspect_ratio_x = window_width as f32 / window_height as f32;
+    let aspect_ratio_y = window_height as f32 / window_width as f32;
 
-    let fov = (std::f64::consts::PI / 3.0) as f32;
+    let fov_y = (std::f64::consts::PI / 3.0) as f32;
+    let fov_x = ((fov_y / 2.0).tan() * aspect_ratio_x).atan() * 2.0;
 
     let window = video_subsystem
         .window("threed_from_scratch", window_width, window_height)
@@ -387,11 +389,11 @@ pub fn main() -> ExitCode {
             let zfar = 20.0;
 
             // The frustum planes are invariant for each face
-            let frustum_planes = FrustumPlanes::new(znear, zfar, fov);
+            let frustum_planes = FrustumPlanes::new(znear, zfar, fov_x, fov_y);
 
             // The projection matrix is invariant for each face
             let projection_matrix =
-                Matrix4::projection_matrix(fov, aspect_ratio, znear, zfar);
+                Matrix4::projection_matrix(fov_y, aspect_ratio_y, znear, zfar);
 
             // loop over faces
             triangles_to_render.clear();

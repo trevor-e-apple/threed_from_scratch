@@ -18,8 +18,14 @@ pub struct FrustumPlanes {
 
 impl FrustumPlanes {
     /// The normals for the planes should point to the inside of the frustum
-    pub fn new(znear: f32, zfar: f32, fov: f32) -> Self {
-        let half_fov = fov / 2.0;
+    pub fn new(znear: f32, zfar: f32, fov_x: f32, fov_y: f32) -> Self {
+        // let half_fov = fov / 2.0;
+        let cos_x = (fov_x / 2.0).cos();
+        let sin_x = (fov_x / 2.0).sin();
+
+        let cos_y = (fov_y / 2.0).cos();
+        let sin_y = (fov_y / 2.0).sin();
+
         let near_plane = Plane {
             position: Vector3 {
                 x: 0.0,
@@ -51,9 +57,9 @@ impl FrustumPlanes {
                 z: 0.0,
             },
             normal: Vector3 {
-                x: half_fov.cos(),
+                x: cos_x,
                 y: 0.0,
-                z: half_fov.sin(),
+                z: sin_x,
             },
         };
         let right_plane = Plane {
@@ -63,9 +69,9 @@ impl FrustumPlanes {
                 z: 0.0,
             },
             normal: Vector3 {
-                x: -1.0 * half_fov.cos(),
+                x: -1.0 * cos_x,
                 y: 0.0,
-                z: half_fov.sin(),
+                z: sin_x,
             },
         };
         let top_plane = Plane {
@@ -76,8 +82,8 @@ impl FrustumPlanes {
             },
             normal: Vector3 {
                 x: 0.0,
-                y: -1.0 * half_fov.cos(),
-                z: half_fov.sin(),
+                y: -1.0 * cos_y,
+                z: sin_y,
             },
         };
         let bottom_plane = Plane {
@@ -88,8 +94,8 @@ impl FrustumPlanes {
             },
             normal: Vector3 {
                 x: 0.0,
-                y: half_fov.cos(),
-                z: half_fov.sin(),
+                y: cos_y,
+                z: sin_y,
             },
         };
         Self {
