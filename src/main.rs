@@ -84,26 +84,24 @@ pub fn main() -> ExitCode {
     let sdl_context = sdl3::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
-    // let (fullscreen_width, fullscreen_height) = {
-    //     let displays = video_subsystem.displays().unwrap();
-    //     let display = displays.get(0).unwrap();
-    //     let display_mode = display.get_mode().unwrap();
+    let (fullscreen_width, fullscreen_height) = {
+        let displays = video_subsystem.displays().unwrap();
+        let display = displays.get(0).unwrap();
+        let display_mode = display.get_mode().unwrap();
 
-    //     (display_mode.w, display_mode.h)
-    // };
+        (display_mode.w, display_mode.h)
+    };
 
-    // let window_width = (0.5 * fullscreen_width as f32) as u32;
-    // let window_height = {
-    //     let window_height = (0.75 * window_width as f32) as u32;
+    let window_width = (0.5 * fullscreen_width as f32) as u32;
+    let window_height = {
+        let window_height = (0.75 * window_width as f32) as u32;
 
-    //     if window_height > fullscreen_height as u32 {
-    //         fullscreen_height as u32
-    //     } else {
-    //         window_height
-    //     }
-    // };
-    let window_width = 800;
-    let window_height = 600;
+        if window_height > fullscreen_height as u32 {
+            fullscreen_height as u32
+        } else {
+            window_height
+        }
+    };
     let aspect_ratio_x = window_width as f32 / window_height as f32;
     let aspect_ratio_y = window_height as f32 / window_width as f32;
 

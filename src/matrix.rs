@@ -57,9 +57,16 @@ impl Matrix4 {
     ) -> Self {
         let mut result = Self::zero();
 
-        let fov_cot = 1.0 / fov.tan();
-        result.data[0][0] = aspect * fov_cot;
-        result.data[1][1] = fov_cot;
+        // let fov_cot = 1.0 / fov.tan();
+        /*
+        m.m[0][0] = aspect * (1 / tan(fov / 2));
+        m.m[1][1] = 1 / tan(fov / 2);
+        m.m[2][2] = zfar / (zfar - znear);
+        m.m[2][3] = (-zfar * znear) / (zfar - znear);
+        m.m[3][2] = 1.0;
+         */
+        result.data[0][0] = aspect * (1.0 / (fov / 2.0).tan());
+        result.data[1][1] = (1.0 / (fov / 2.0).tan());
         result.data[2][2] = zfar / (zfar - znear);
         result.data[2][3] = (-1.0 * znear * zfar) / (zfar - znear);
         result.data[3][2] = 1.0;
