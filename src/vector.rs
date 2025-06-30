@@ -1,6 +1,6 @@
 use std::ops;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Copy)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
@@ -12,7 +12,7 @@ impl Vector2 {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Copy)]
 pub struct Vector2i {
     pub x: i32,
     pub y: i32,
@@ -131,7 +131,7 @@ impl Vector2i {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Copy)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
@@ -312,7 +312,7 @@ pub fn calc_cross_product(a: &Vector3, b: &Vector3) -> Vector3 {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, PartialEq, Copy)]
 pub struct Vector4 {
     pub x: f32,
     pub y: f32,

@@ -37,7 +37,11 @@ use texture::{load_png_texture, load_test_texture};
 use triangle::Triangle;
 use vector::{calc_cross_product, Vector3, Vector4};
 
-use crate::{camera::Camera, projection::project_triangles};
+use crate::{
+    camera::Camera,
+    clipping::{clip_triangle, FrustumPlanes},
+    projection::project_triangles,
+};
 
 const FRAMES_PER_SEC: f32 = 30.0;
 const FRAME_TARGET_TIME_MS: f32 = 1000.0 / FRAMES_PER_SEC;
@@ -80,24 +84,26 @@ pub fn main() -> ExitCode {
     let sdl_context = sdl3::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
-    let (fullscreen_width, fullscreen_height) = {
-        let displays = video_subsystem.displays().unwrap();
-        let display = displays.get(0).unwrap();
-        let display_mode = display.get_mode().unwrap();
+    // let (fullscreen_width, fullscreen_height) = {
+    //     let displays = video_subsystem.displays().unwrap();
+    //     let display = displays.get(0).unwrap();
+    //     let display_mode = display.get_mode().unwrap();
 
-        (display_mode.w, display_mode.h)
-    };
+    //     (display_mode.w, display_mode.h)
+    // };
 
-    let window_width = (0.5 * fullscreen_width as f32) as u32;
-    let window_height = {
-        let window_height = (0.75 * window_width as f32) as u32;
+    // let window_width = (0.5 * fullscreen_width as f32) as u32;
+    // let window_height = {
+    //     let window_height = (0.75 * window_width as f32) as u32;
 
-        if window_height > fullscreen_height as u32 {
-            fullscreen_height as u32
-        } else {
-            window_height
-        }
-    };
+    //     if window_height > fullscreen_height as u32 {
+    //         fullscreen_height as u32
+    //     } else {
+    //         window_height
+    //     }
+    // };
+    let window_width = 800;
+    let window_height = 600;
     let aspect_ratio = window_height as f32 / window_width as f32;
 
     let fov = (std::f64::consts::PI / 3.0) as f32;
@@ -145,7 +151,7 @@ pub fn main() -> ExitCode {
     let mut translation = Vector4 {
         x: 0.0,
         y: 0.0,
-        z: 2.5,
+        z: 5.0,
         w: 1.0,
     };
 
@@ -377,9 +383,15 @@ pub fn main() -> ExitCode {
             // The view matrix is invariant for each face
             let view_matrix = camera.view_matrix();
 
+            let znear = 0.1;
+            let zfar = 20.0;
+
+            // The frustum planes are invariant for each face
+            let frustum_planes = FrustumPlanes::new(znear, zfar, fov);
+
             // The projection matrix is invariant for each face
             let projection_matrix =
-                Matrix4::projection_matrix(fov, aspect_ratio, 0.1, 100.0);
+                Matrix4::projection_matrix(fov, aspect_ratio, znear, zfar);
 
             // loop over faces
             triangles_to_render.clear();
@@ -498,11 +510,14 @@ pub fn main() -> ExitCode {
                             ..Default::default()
                         };
 
+                        let mut triangles =
+                            clip_triangle(&frustum_planes, triangle);
+
                         project_triangles(
                             &projection_matrix,
                             window_width,
                             window_height,
-                            &mut vec![triangle],
+                            &mut triangles,
                             &mut triangles_to_render,
                         );
                     }
