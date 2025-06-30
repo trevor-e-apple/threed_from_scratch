@@ -1,5 +1,22 @@
 use crate::{matrix::Matrix4, triangle::Triangle, vector::Vector4};
 
+pub fn make_projection_matrix(
+    fov: f32,
+    aspect: f32,
+    znear: f32,
+    zfar: f32,
+) -> Matrix4 {
+    let mut result = Matrix4::zero();
+
+    result.data[0][0] = aspect * (1.0 / (fov / 2.0).tan());
+    result.data[1][1] = (1.0 / (fov / 2.0).tan());
+    result.data[2][2] = zfar / (zfar - znear);
+    result.data[2][3] = (-1.0 * znear * zfar) / (zfar - znear);
+    result.data[3][2] = 1.0;
+
+    result
+}
+
 fn perspective_projection(
     projection_matrix: &Matrix4,
     vector: &Vector4,

@@ -40,7 +40,7 @@ use vector::{calc_cross_product, Vector3, Vector4};
 use crate::{
     camera::Camera,
     clipping::{clip_triangle, FrustumPlanes},
-    projection::project_triangles,
+    projection::{make_projection_matrix, project_triangles},
 };
 
 const FRAMES_PER_SEC: f32 = 30.0;
@@ -391,7 +391,7 @@ pub fn main() -> ExitCode {
 
             // The projection matrix is invariant for each face
             let projection_matrix =
-                Matrix4::projection_matrix(fov_y, aspect_ratio_y, znear, zfar);
+                make_projection_matrix(fov_y, aspect_ratio_y, znear, zfar);
 
             // loop over faces
             triangles_to_render.clear();

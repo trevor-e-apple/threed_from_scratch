@@ -49,31 +49,6 @@ impl Matrix4 {
         }
     }
 
-    pub fn projection_matrix(
-        fov: f32,
-        aspect: f32,
-        znear: f32,
-        zfar: f32,
-    ) -> Self {
-        let mut result = Self::zero();
-
-        // let fov_cot = 1.0 / fov.tan();
-        /*
-        m.m[0][0] = aspect * (1 / tan(fov / 2));
-        m.m[1][1] = 1 / tan(fov / 2);
-        m.m[2][2] = zfar / (zfar - znear);
-        m.m[2][3] = (-zfar * znear) / (zfar - znear);
-        m.m[3][2] = 1.0;
-         */
-        result.data[0][0] = aspect * (1.0 / (fov / 2.0).tan());
-        result.data[1][1] = (1.0 / (fov / 2.0).tan());
-        result.data[2][2] = zfar / (zfar - znear);
-        result.data[2][3] = (-1.0 * znear * zfar) / (zfar - znear);
-        result.data[3][2] = 1.0;
-
-        result
-    }
-
     pub fn rotate_around_z(angle: f32) -> Self {
         let cos_angle = angle.cos();
         let sin_angle = angle.sin();
