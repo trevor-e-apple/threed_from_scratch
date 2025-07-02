@@ -122,10 +122,7 @@ impl FrustumPlanes {
     }
 }
 
-fn clip_polygon_against_plane(
-    polygon: &Polygon,
-    plane: &Plane,
-) -> Polygon {
+fn clip_polygon_against_plane(polygon: &Polygon, plane: &Plane) -> Polygon {
     if polygon.len() < 2 {
         return polygon.clone();
     }
@@ -138,8 +135,10 @@ fn clip_polygon_against_plane(
     let mut previous_vertex_index = polygon.len() - 1;
 
     while current_vertex_index < polygon.len() {
-        let (current_vertex, current_uv) = &polygon.vertices[current_vertex_index];
-        let (previous_vertex, previous_uv) = &polygon.vertices[previous_vertex_index];
+        let (current_vertex, current_uv) =
+            &polygon.vertices[current_vertex_index];
+        let (previous_vertex, previous_uv) =
+            &polygon.vertices[previous_vertex_index];
 
         let current_dot = Vector3::dot_product(
             &(current_vertex - &plane.position),
@@ -156,8 +155,8 @@ fn clip_polygon_against_plane(
             let t = previous_dot / (previous_dot - current_dot);
 
             let intersection_point =
-                previous_vertex + &(t * (current_vertex - previous_vertex));            
-            let intersection_uv = TextureUv{
+                previous_vertex + &(t * (current_vertex - previous_vertex));
+            let intersection_uv = TextureUv {
                 u: previous_uv.u + t * (current_uv.u - previous_uv.u),
                 v: previous_uv.v + t * (current_uv.v - previous_uv.v),
             };
@@ -175,8 +174,8 @@ fn clip_polygon_against_plane(
         previous_vertex_index = current_vertex_index - 1;
     }
 
-    Polygon { 
-        vertices: inside_vertices
+    Polygon {
+        vertices: inside_vertices,
     }
 }
 
@@ -187,9 +186,18 @@ pub fn clip_triangle(
     // Find the resulting polygon from all of the clipping
     let polygon: Polygon = Polygon {
         vertices: vec![
-            (Vector3::from_vector4(&triangle.points[0]), triangle.texel_coordinates[0].clone()),
-            (Vector3::from_vector4(&triangle.points[1]), triangle.texel_coordinates[1].clone()),
-            (Vector3::from_vector4(&triangle.points[2]), triangle.texel_coordinates[2].clone()),
+            (
+                Vector3::from_vector4(&triangle.points[0]),
+                triangle.texel_coordinates[0].clone(),
+            ),
+            (
+                Vector3::from_vector4(&triangle.points[1]),
+                triangle.texel_coordinates[1].clone(),
+            ),
+            (
+                Vector3::from_vector4(&triangle.points[2]),
+                triangle.texel_coordinates[2].clone(),
+            ),
         ],
     };
 
@@ -227,11 +235,7 @@ pub fn clip_triangle(
                         Vector4::from_vector3(vertex1),
                         Vector4::from_vector3(vertex2),
                     ],
-                    texel_coordinates: [
-                        uv0.clone(),
-                        uv1.clone(),
-                        uv2.clone(),
-                    ],
+                    texel_coordinates: [uv0.clone(), uv1.clone(), uv2.clone()],
                     color: triangle.color,
                 };
 

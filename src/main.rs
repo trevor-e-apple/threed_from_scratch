@@ -161,7 +161,7 @@ pub fn main() -> ExitCode {
     // Initialize light source
     // NOTE: the light direction is in camera space, not world space, since it is not
     // transformed via the view matrix
-    let light_source = LightSource::new(Vector3 {
+    let camera_light_source = LightSource::new(Vector3 {
         x: 0.0,
         y: 0.0,
         z: 1.0,
@@ -233,7 +233,7 @@ pub fn main() -> ExitCode {
                     camera.target = &camera.target + &delta;
                 }
                 Event::KeyDown {
-                    keycode: Some(Keycode::Up),
+                    keycode: Some(Keycode::I),
                     ..
                 } => {
                     // Move camera up
@@ -242,13 +242,42 @@ pub fn main() -> ExitCode {
                     camera.target = &camera.target + &delta;
                 }
                 Event::KeyDown {
-                    keycode: Some(Keycode::Down),
+                    keycode: Some(Keycode::K),
                     ..
                 } => {
                     // move camera down
                     let delta = -1.0 * CAMERA_UNITS_PER_FRAME * &camera.up;
                     camera.position = &camera.position + &delta;
                     camera.target = &camera.target + &delta;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => {
+                    // Pitch camera up
+                    let rotation_matrix = Matrix4::rotate_around_x(-0.02);
+                    let new_direction = Matrix4::mult_vector(
+                        &rotation_matrix,
+                        &Vector4::from_vector3(&camera_direction),
+                    );
+
+                    camera.target =
+                        camera.position + Vector3::from_vector4(&new_direction);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => {
+                    // Pitch camera down
+                    let rotation_matrix = Matrix4::rotate_around_x(0.02);
+
+                    let new_direction = Matrix4::mult_vector(
+                        &rotation_matrix,
+                        &Vector4::from_vector3(&camera_direction),
+                    );
+
+                    camera.target =
+                        camera.position + Vector3::from_vector4(&new_direction);
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Left),
@@ -479,7 +508,7 @@ pub fn main() -> ExitCode {
                     let light_intensity: f32 = {
                         let dot_product = Vector3::dot_product(
                             &face_normal,
-                            &light_source.direction,
+                            &camera_light_source.direction,
                         );
 
                         /*
@@ -500,8 +529,7 @@ pub fn main() -> ExitCode {
                         }
                     };
 
-                    let color =
-                        apply_intensity(face.color, light_intensity);
+                    let color = apply_intensity(face.color, light_intensity);
                     let triangle = Triangle {
                         points: transformed_vertices.clone(),
                         texel_coordinates: mesh.get_texel_coordinates(face),
