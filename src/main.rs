@@ -414,18 +414,21 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            // orientation.x += 0.0025;
-            // orientation.y += 0.0025;
-            // orientation.z += 0.0025;
-
-            // translation.x += 0.005;
-            // translation.z += 0.005;
-
-            // scale += 0.0001;
-
-            // camera.position.x += 0.0025;
-            // camera.position.y += 0.0025;
+            // Perform any updates to instances 
         }
+
+        /*
+         * Pipeline stages (in order)
+         * 
+         * World transforms
+         * Camera transforms
+         * Backface Culling
+         * Light intensity calculation (flat shading)
+         * Projection, perspective divide, and windowing transforms
+         * Frustum clipping
+         * Rendering triangles to color buffer
+         * Transfer color buffer to window
+         */
 
         // Transform and project
         {
@@ -629,7 +632,7 @@ pub fn main() -> ExitCode {
             }
         }
 
-        // render
+        // Render
         {
             color_buffer.clear(0xFF000000);
 
