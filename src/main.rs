@@ -161,6 +161,7 @@ pub fn main() -> ExitCode {
     // Initialize light source
     // NOTE: the light direction is in camera space, not world space, since it is not
     // transformed via the view matrix
+    let mut lighting_enabled = true;
     let camera_light_source = LightSource::new(Vector3 {
         x: 0.0,
         y: 0.0,
@@ -315,6 +316,9 @@ pub fn main() -> ExitCode {
                     // compute new target
                     camera.target = &camera.position
                         + &Vector3::from_vector4(&new_direction);
+                }
+                Event::KeyDown {keycode: Some(Keycode::L), .. } => {
+                    lighting_enabled = !lighting_enabled;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::C),
@@ -513,7 +517,7 @@ pub fn main() -> ExitCode {
                     // Lighting
                     // Note that lighting is currently applied *after* the view matrix transform, which means the
                     // "direction" of the light is always from the camera position.
-                    let light_intensity: f32 = {
+                    let light_intensity: f32 = if lighting_enabled {
                         let dot_product = Vector3::dot_product(
                             &face_normal,
                             &camera_light_source.direction,
@@ -535,6 +539,8 @@ pub fn main() -> ExitCode {
                         } else {
                             0.0
                         }
+                    } else {
+                        1.0
                     };
 
                     let triangle = Triangle {
