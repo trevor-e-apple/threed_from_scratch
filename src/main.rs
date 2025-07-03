@@ -537,11 +537,11 @@ pub fn main() -> ExitCode {
                         }
                     };
 
-                    let color = apply_intensity(face.color, light_intensity);
                     let triangle = Triangle {
                         points: transformed_vertices.clone(),
                         texel_coordinates: mesh.get_texel_coordinates(face),
-                        color,
+                        color: face.color,
+                        light_intensity,
                         ..Default::default()
                     };
 

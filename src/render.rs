@@ -1,8 +1,5 @@
 use crate::{
-    matrix::Matrix4,
-    texture::{Texture, TextureUv},
-    triangle::{get_sorted_triangle_vertices, Triangle},
-    vector::{Vector2, Vector2i, Vector4},
+    light_source::apply_intensity, matrix::Matrix4, texture::{Texture, TextureUv}, triangle::{get_sorted_triangle_vertices, Triangle}, vector::{Vector2, Vector2i, Vector4}
 };
 
 pub struct ColorBuffer {
@@ -264,6 +261,9 @@ pub fn draw_filled_triangle(
     triangle: &Triangle,
     color: u32,
 ) {
+    // Perform flat shading
+    let color = apply_intensity(color, triangle.light_intensity);
+
     // Find triangle vertex order
     let (vertex0, vertex1, vertex2) = get_sorted_triangle_vertices(triangle);
 
@@ -487,6 +487,7 @@ fn draw_texel(
     vertex1: &(Vector4, TextureUv),
     vertex2: &(Vector4, TextureUv),
     texture: &Texture,
+    light_intensity: f32,
 ) {
     // Calculate Barycentric coordinates
     //
@@ -569,7 +570,10 @@ fn draw_texel(
         ((texture.height - 1) as f32 * interpolated_v).abs() as usize;
 
     // Draw pixel
-    let pixel_color = texture.get_pixel(texture_x, texture_y);
+    let pixel_color = {
+        let pixel_color = texture.get_pixel(texture_x, texture_y);
+        apply_intensity(pixel_color, light_intensity)
+    };
     color_buffer.set_pixel_zcell(
         x as usize,
         y as usize,
@@ -666,6 +670,7 @@ pub fn draw_textured_triangle(
                     &vertex1,
                     &vertex2,
                     texture,
+                    triangle.light_intensity
                 );
             }
         }
@@ -716,6 +721,7 @@ pub fn draw_textured_triangle(
                     &vertex1,
                     &vertex2,
                     texture,
+                    triangle.light_intensity
                 );
             }
         }
