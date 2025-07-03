@@ -260,9 +260,14 @@ pub fn main() -> ExitCode {
                         &rotation_matrix,
                         &Vector4::from_vector3(&camera_direction),
                     );
+                    let new_up = Matrix4::mult_vector(
+                        &rotation_matrix,
+                        &Vector4::from_vector3(&camera.up),
+                    );
 
                     camera.target =
                         camera.position + Vector3::from_vector4(&new_direction);
+                    camera.up = Vector3::from_vector4(&new_up);
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Down),
@@ -275,9 +280,12 @@ pub fn main() -> ExitCode {
                         &rotation_matrix,
                         &Vector4::from_vector3(&camera_direction),
                     );
+                    let new_up =
+                        Matrix4::mult_vector(&rotation_matrix, &Vector4::from_vector3(&camera.up));
 
                     camera.target =
                         camera.position + Vector3::from_vector4(&new_direction);
+                    camera.up = Vector3::from_vector4(&new_up);
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Left),
