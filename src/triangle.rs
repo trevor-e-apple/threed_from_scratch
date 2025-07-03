@@ -14,6 +14,7 @@ pub struct Face {
 #[derive(Clone, Default)]
 pub struct Triangle {
     pub points: [Vector4; 3],
+    pub texture_handle: usize,
     pub texel_coordinates: [TextureUv; 3],
     pub color: u32,
     pub light_intensity: f32,

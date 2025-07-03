@@ -1,5 +1,9 @@
 use crate::{
-    light_source::apply_intensity, matrix::Matrix4, texture::{Texture, TextureUv}, triangle::{get_sorted_triangle_vertices, Triangle}, vector::{Vector2, Vector2i, Vector4}
+    light_source::apply_intensity,
+    matrix::Matrix4,
+    texture::{Texture, TextureUv},
+    triangle::{get_sorted_triangle_vertices, Triangle},
+    vector::{Vector2, Vector2i, Vector4},
 };
 
 pub struct ColorBuffer {
@@ -670,7 +674,7 @@ pub fn draw_textured_triangle(
                     &vertex1,
                     &vertex2,
                     texture,
-                    triangle.light_intensity
+                    triangle.light_intensity,
                 );
             }
         }
@@ -721,7 +725,7 @@ pub fn draw_textured_triangle(
                     &vertex1,
                     &vertex2,
                     texture,
-                    triangle.light_intensity
+                    triangle.light_intensity,
                 );
             }
         }

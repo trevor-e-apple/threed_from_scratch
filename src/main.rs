@@ -2,6 +2,7 @@ extern crate sdl3;
 
 mod camera;
 mod clipping;
+mod instance;
 mod light_source;
 mod matrix;
 mod mesh;
@@ -18,7 +19,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use light_source::{apply_intensity, LightSource};
+use light_source::LightSource;
 use matrix::Matrix4;
 use mesh::{load_obj_mesh, load_test_mesh};
 use render::{
@@ -40,6 +41,7 @@ use vector::{calc_cross_product, Vector3, Vector4};
 use crate::{
     camera::Camera,
     clipping::{clip_triangle, FrustumPlanes},
+    instance::Instance,
     projection::{make_projection_matrix, project_triangles},
 };
 
@@ -65,19 +67,43 @@ enum BackfaceCullingMode {
 }
 
 pub fn main() -> ExitCode {
-    // Grab arguments
-    let args: Vec<String> = env::args().collect();
+    // Load meshes and textures
+    let (meshes, textures) = {
+        // Grab arguments
+        let args: Vec<String> = env::args().collect();
 
-    let (mesh, texture) = if args.len() == 1 {
-        println!("No model path passed in. Using in-memory cube data");
-        (load_test_mesh(), load_test_texture())
-    } else if args.len() == 3 {
-        let model_path = args[1].clone();
-        let texture_path = args[2].clone();
-        (load_obj_mesh(&model_path), load_png_texture(&texture_path))
-    } else {
-        println!("Bad arguments");
-        return ExitCode::from(1);
+        if args.len() == 1 {
+            println!("No model path passed in. Using in-memory cube data");
+            (vec![load_test_mesh()], vec![load_test_texture()])
+        } else if args.len() > 1 {
+            let mut meshes = vec![];
+            let mut textures = vec![];
+
+            for arg_index in 0..(args.len() / 2) {
+                let model_path = match args.get((2 * arg_index) + 1) {
+                    Some(arg) => arg.clone(),
+                    None => {
+                        println!("Bad arguments");
+                        return ExitCode::from(1);
+                    }
+                };
+                let texture_path = match args.get((2 * arg_index) + 2) {
+                    Some(arg) => arg.clone(),
+                    None => {
+                        println!("Bad arguments");
+                        return ExitCode::from(1);
+                    }
+                };
+
+                meshes.push(load_obj_mesh(&model_path));
+                textures.push(load_png_texture(&texture_path));
+            }
+
+            (meshes, textures)
+        } else {
+            println!("Bad arguments");
+            return ExitCode::from(1);
+        }
     };
 
     // Init SDL
@@ -139,24 +165,33 @@ pub fn main() -> ExitCode {
     // Initialize camera
     let mut camera = Camera::new();
 
-    // Initialize model orientation
-    let mut orientation = Vector4 {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-        w: 1.0,
-    };
+    // Initialize instances of our models
+    // Currently, we only have one instance of each mesh that was passed in to the arguments
+    // Instances will be spaced out along the x axis
+    let instances: Vec<Instance> = {
+        let mut instances = vec![];
+        for mesh_index in 0..meshes.len() {
+            instances.push(Instance {
+                orientation: Vector4 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                    w: 1.0,
+                },
+                translation: Vector4 {
+                    x: 5.0 * mesh_index as f32,
+                    y: 0.0,
+                    z: 5.0,
+                    w: 1.0,
+                },
+                scale: 1.0,
+                mesh_handle: mesh_index,
+                texture_handle: mesh_index,
+            })
+        }
 
-    // Initialize model translation
-    let mut translation = Vector4 {
-        x: 0.0,
-        y: 0.0,
-        z: 5.0,
-        w: 1.0,
+        instances
     };
-
-    // Initialize model scale
-    let mut scale: f32 = 1.0;
 
     // Initialize light source
     // NOTE: the light direction is in camera space, not world space, since it is not
@@ -281,8 +316,10 @@ pub fn main() -> ExitCode {
                         &rotation_matrix,
                         &Vector4::from_vector3(&camera_direction),
                     );
-                    let new_up =
-                        Matrix4::mult_vector(&rotation_matrix, &Vector4::from_vector3(&camera.up));
+                    let new_up = Matrix4::mult_vector(
+                        &rotation_matrix,
+                        &Vector4::from_vector3(&camera.up),
+                    );
 
                     camera.target =
                         camera.position + Vector3::from_vector4(&new_direction);
@@ -317,7 +354,10 @@ pub fn main() -> ExitCode {
                     camera.target = &camera.position
                         + &Vector3::from_vector4(&new_direction);
                 }
-                Event::KeyDown {keycode: Some(Keycode::L), .. } => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::L),
+                    ..
+                } => {
                     lighting_enabled = !lighting_enabled;
                 }
                 Event::KeyDown {
@@ -389,116 +429,137 @@ pub fn main() -> ExitCode {
 
         // Transform and project
         {
-            // World matrix is invariant for each face
-            let world_matrix = {
-                let world_matrix = Matrix4::identity();
-
-                let world_matrix = Matrix4::mult_mat4(
-                    &Matrix4::scale(scale, scale, scale),
-                    &world_matrix,
-                );
-                let world_matrix = Matrix4::mult_mat4(
-                    &Matrix4::rotate_around_x(orientation.x),
-                    &world_matrix,
-                );
-                let world_matrix = Matrix4::mult_mat4(
-                    &Matrix4::rotate_around_y(orientation.y),
-                    &world_matrix,
-                );
-                let world_matrix = Matrix4::mult_mat4(
-                    &Matrix4::rotate_around_z(orientation.z),
-                    &world_matrix,
-                );
-
-                let translation_matrix = Matrix4::translate(
-                    translation.x,
-                    translation.y,
-                    translation.z,
-                );
-                let world_matrix =
-                    Matrix4::mult_mat4(&translation_matrix, &world_matrix);
-
-                world_matrix
-            };
-
-            // The view matrix is invariant for each face
+            // The view matrix is invariant for each instance
             let view_matrix = camera.view_matrix();
 
             let znear = 0.1;
             let zfar = 20.0;
 
-            // The frustum planes are invariant for each face
+            // The frustum planes are invariant for each mesh
             let frustum_planes = FrustumPlanes::new(znear, zfar, fov_x, fov_y);
 
-            // The projection matrix is invariant for each face
+            // The projection matrix is invariant for each mesh
             let projection_matrix =
                 make_projection_matrix(fov_y, aspect_ratio_y, znear, zfar);
 
-            // loop over faces
             triangles_to_render.clear();
-            for face in &mesh.faces {
-                let vertices: [Vector3; 3] = mesh.get_vertices(face);
 
-                let mut transformed_vertices: [Vector4; 3] = [
-                    Vector4 {
-                        ..Default::default()
-                    },
-                    Vector4 {
-                        ..Default::default()
-                    },
-                    Vector4 {
-                        ..Default::default()
-                    },
-                ];
+            // Transform and project meshes
+            for current_instance in &instances {
+                // World matrix is invariant for each face
+                let world_matrix = {
+                    let world_matrix = Matrix4::identity();
 
-                // Transform
-                for (index, vertex) in vertices.into_iter().enumerate() {
-                    // world transform
-                    let transformed_vertex = Matrix4::mult_vector(
+                    let world_matrix = Matrix4::mult_mat4(
+                        &Matrix4::scale(
+                            current_instance.scale,
+                            current_instance.scale,
+                            current_instance.scale,
+                        ),
                         &world_matrix,
-                        &Vector4::from_vector3(&vertex),
                     );
-                    // view transform
-                    let transformed_vertex =
-                        Matrix4::mult_vector(&view_matrix, &transformed_vertex);
-                    transformed_vertices[index] = transformed_vertex;
-                }
+                    let world_matrix = Matrix4::mult_mat4(
+                        &Matrix4::rotate_around_x(
+                            current_instance.orientation.x,
+                        ),
+                        &world_matrix,
+                    );
+                    let world_matrix = Matrix4::mult_mat4(
+                        &Matrix4::rotate_around_y(
+                            current_instance.orientation.y,
+                        ),
+                        &world_matrix,
+                    );
+                    let world_matrix = Matrix4::mult_mat4(
+                        &Matrix4::rotate_around_z(
+                            current_instance.orientation.z,
+                        ),
+                        &world_matrix,
+                    );
 
-                // Pull out face vectors (left-handed system)
-                /*
-                     A
-                    /  \
-                    C - B
-                */
-                let vector_a = &Vector3::from_vector4(&transformed_vertices[0]);
-                let vector_b = &Vector3::from_vector4(&transformed_vertices[1]);
-                let vector_c = &Vector3::from_vector4(&transformed_vertices[2]);
+                    let translation_matrix = Matrix4::translate(
+                        current_instance.translation.x,
+                        current_instance.translation.y,
+                        current_instance.translation.z,
+                    );
+                    let world_matrix =
+                        Matrix4::mult_mat4(&translation_matrix, &world_matrix);
 
-                // Find face normal
-                let face_normal: Vector3 = {
-                    let ab_vector = {
-                        let mut ab_vector = vector_b - vector_a;
-                        ab_vector.normalize();
-                        ab_vector
-                    };
-                    let ac_vector = {
-                        let mut ac_vector = vector_c - vector_a;
-                        ac_vector.normalize();
-                        ac_vector
-                    };
-                    let face_normal = {
-                        let mut face_normal =
-                            calc_cross_product(&ab_vector, &ac_vector);
-                        face_normal.normalize();
+                    world_matrix
+                };
+
+                let current_mesh = &meshes[current_instance.mesh_handle];
+                // Loop over faces
+                for face in &current_mesh.faces {
+                    let vertices: [Vector3; 3] =
+                        current_mesh.get_vertices(face);
+
+                    let mut transformed_vertices: [Vector4; 3] = [
+                        Vector4 {
+                            ..Default::default()
+                        },
+                        Vector4 {
+                            ..Default::default()
+                        },
+                        Vector4 {
+                            ..Default::default()
+                        },
+                    ];
+
+                    // Transform
+                    for (index, vertex) in vertices.into_iter().enumerate() {
+                        // world transform
+                        let transformed_vertex = Matrix4::mult_vector(
+                            &world_matrix,
+                            &Vector4::from_vector3(&vertex),
+                        );
+                        // view transform
+                        let transformed_vertex = Matrix4::mult_vector(
+                            &view_matrix,
+                            &transformed_vertex,
+                        );
+                        transformed_vertices[index] = transformed_vertex;
+                    }
+
+                    // Pull out face vectors (left-handed system)
+                    /*
+                         A
+                        /  \
+                        C - B
+                    */
+                    let vector_a =
+                        &Vector3::from_vector4(&transformed_vertices[0]);
+                    let vector_b =
+                        &Vector3::from_vector4(&transformed_vertices[1]);
+                    let vector_c =
+                        &Vector3::from_vector4(&transformed_vertices[2]);
+
+                    // Find face normal
+                    let face_normal: Vector3 = {
+                        let ab_vector = {
+                            let mut ab_vector = vector_b - vector_a;
+                            ab_vector.normalize();
+                            ab_vector
+                        };
+                        let ac_vector = {
+                            let mut ac_vector = vector_c - vector_a;
+                            ac_vector.normalize();
+                            ac_vector
+                        };
+                        let face_normal = {
+                            let mut face_normal =
+                                calc_cross_product(&ab_vector, &ac_vector);
+                            face_normal.normalize();
+                            face_normal
+                        };
+
                         face_normal
                     };
 
-                    face_normal
-                };
-
-                // Backface culling
-                let culled: bool =
-                    if culling_mode == BackfaceCullingMode::Enabled {
+                    // Backface culling
+                    let culled: bool = if culling_mode
+                        == BackfaceCullingMode::Enabled
+                    {
                         // Calculate the to-camera vector.
                         // Since this is performed after the view matrix transform,
                         // the camera is at the origin
@@ -512,55 +573,58 @@ pub fn main() -> ExitCode {
                         false
                     };
 
-                // Project
-                if !culled {
-                    // Lighting
-                    // Note that lighting is currently applied *after* the view matrix transform, which means the
-                    // "direction" of the light is always from the camera position.
-                    let light_intensity: f32 = if lighting_enabled {
-                        let dot_product = Vector3::dot_product(
-                            &face_normal,
-                            &camera_light_source.direction,
-                        );
+                    // Project
+                    if !culled {
+                        // Lighting
+                        // Note that lighting is currently applied *after* the view matrix transform, which means the
+                        // "direction" of the light is always from the camera position.
+                        let light_intensity: f32 = if lighting_enabled {
+                            let dot_product = Vector3::dot_product(
+                                &face_normal,
+                                &camera_light_source.direction,
+                            );
 
-                        /*
-                         * If the dot product is negative, then the normal and the light are pointing in opposite directions,
-                         * which means that there should be light
-                         *
-                         * If the dot product is 0, then the normal and the light are orthogonal, and there should be no light.
-                         *
-                         * If the dot product is positive, then the normal is pointing in the opposite direction of the light, and there
-                         * should be no light.
-                         *
-                         * Note that if both vectors are normalized, then the dot product shall be in the range [-1.0, 1.0]
-                         */
-                        if dot_product < 0.0 {
-                            -1.0 * dot_product
+                            /*
+                             * If the dot product is negative, then the normal and the light are pointing in opposite directions,
+                             * which means that there should be light
+                             *
+                             * If the dot product is 0, then the normal and the light are orthogonal, and there should be no light.
+                             *
+                             * If the dot product is positive, then the normal is pointing in the opposite direction of the light, and there
+                             * should be no light.
+                             *
+                             * Note that if both vectors are normalized, then the dot product shall be in the range [-1.0, 1.0]
+                             */
+                            if dot_product < 0.0 {
+                                -1.0 * dot_product
+                            } else {
+                                0.0
+                            }
                         } else {
-                            0.0
-                        }
-                    } else {
-                        1.0
-                    };
+                            1.0
+                        };
 
-                    let triangle = Triangle {
-                        points: transformed_vertices.clone(),
-                        texel_coordinates: mesh.get_texel_coordinates(face),
-                        color: face.color,
-                        light_intensity,
-                        ..Default::default()
-                    };
+                        let triangle = Triangle {
+                            points: transformed_vertices.clone(),
+                            texel_coordinates: current_mesh
+                                .get_texel_coordinates(face),
+                            color: face.color,
+                            light_intensity,
+                            texture_handle: current_instance.texture_handle,
+                            ..Default::default()
+                        };
 
-                    let mut triangles =
-                        clip_triangle(&frustum_planes, triangle);
+                        let mut triangles =
+                            clip_triangle(&frustum_planes, triangle);
 
-                    project_triangles(
-                        &projection_matrix,
-                        window_width,
-                        window_height,
-                        &mut triangles,
-                        &mut triangles_to_render,
-                    );
+                        project_triangles(
+                            &projection_matrix,
+                            window_width,
+                            window_height,
+                            &mut triangles,
+                            &mut triangles_to_render,
+                        );
+                    }
                 }
             }
         }
@@ -583,10 +647,11 @@ pub fn main() -> ExitCode {
                 || render_mode == RenderMode::WireframeTexturedTriangles
             {
                 for triangle in &triangles_to_render {
+                    let texture = &textures[triangle.texture_handle];
                     draw_textured_triangle(
                         &mut color_buffer,
                         &triangle,
-                        &texture,
+                        texture,
                     );
                 }
             }

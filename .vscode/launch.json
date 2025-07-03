@@ -3,7 +3,7 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [
+    "configurations": [        
         {
             "type": "lldb",
             "request": "launch",
@@ -40,6 +40,29 @@
             "args": [
                 "./test_assets/cube.obj",
                 "./test_assets/cube.png",
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Multiple Meshes",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=threed_from_scratch",
+                    "--package=threed_from_scratch"
+                ],
+                "filter": {
+                    "name": "threed_from_scratch",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "./test_assets/cube.obj",
+                "./test_assets/cube.png",
+                "./test_assets/f22.obj",
+                "./test_assets/f22.png",
             ],
             "cwd": "${workspaceFolder}"
         },
