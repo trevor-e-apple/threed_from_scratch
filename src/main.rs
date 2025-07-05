@@ -42,7 +42,7 @@ use crate::{
     camera::Camera,
     clipping::{clip_triangle, FrustumPlanes},
     instance::Instance,
-    projection::{make_projection_matrix, project_triangles},
+    projection::{make_projection_matrix, project_triangles}, render::parallelizable_draw_triangle,
 };
 
 const FRAMES_PER_SEC: f32 = 30.0;
@@ -58,6 +58,7 @@ enum RenderMode {
     WireframeFilledTriangles,
     TexturedTriangles,
     WireframeTexturedTriangles,
+    ParallelRasterizationTest,
 }
 
 #[derive(PartialEq)]
@@ -408,6 +409,12 @@ pub fn main() -> ExitCode {
                 } => {
                     render_mode = RenderMode::WireframeTexturedTriangles;
                 }
+                Event::KeyDown {
+                    keycode: Some(Keycode::_7),
+                    ..
+                } => {
+                    render_mode = RenderMode::ParallelRasterizationTest;
+                }
                 _ => {}
             }
         }
@@ -675,6 +682,34 @@ pub fn main() -> ExitCode {
                         0xFFFF0000,
                     );
                 }
+            }
+
+            if render_mode == RenderMode::ParallelRasterizationTest {
+                let triangle = Triangle {
+                    points: [
+                        Vector4 {
+                            x: 10.0,
+                            y: 2.0,
+                            z: 0.0,
+                            w: 0.0,
+                        },
+                        Vector4 {
+                            x: 20.0,
+                            y: 28.0,
+                            z: 0.0,
+                            w: 0.0,
+                        },
+                        Vector4 {
+                            x: 3.0,
+                            y: 21.0,
+                            z: 0.0,
+                            w: 0.0,
+                        },
+                    ],
+                    color: 0xFFFFFFFF,
+                    ..Default::default()
+                };
+                parallelizable_draw_triangle(&mut color_buffer, &triangle);
             }
 
             // write color buffer to texture

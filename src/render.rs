@@ -731,3 +731,26 @@ pub fn draw_textured_triangle(
         }
     }
 }
+
+fn point_in_triangle(x: i32, y: i32, triangle: &Triangle) -> bool {
+    true
+}
+
+pub fn parallelizable_draw_triangle(color_buffer: &mut ColorBuffer, triangle: &Triangle) {
+    // Find the bounding box
+    let xvals = [triangle.points[0].x as i32, triangle.points[1].x as i32, triangle.points[2].x as i32];
+    let yvals = [triangle.points[0].y as i32, triangle.points[1].y as i32, triangle.points[2].y as i32];
+
+    let xmin= *xvals.iter().min().expect("Missing x min");
+    let xmax = *xvals.iter().max().expect("Missing x max");
+    let ymin = *yvals.iter().min().expect("Missing y min");
+    let ymax = *yvals.iter().max().expect("Missing y max");
+
+    for x in xmin..=xmax {
+        for y in ymin..=ymax {
+            if point_in_triangle(x, y, triangle) {
+
+            }
+        }
+    }
+}

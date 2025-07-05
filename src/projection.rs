@@ -9,7 +9,7 @@ pub fn make_projection_matrix(
     let mut result = Matrix4::zero();
 
     result.data[0][0] = aspect * (1.0 / (fov / 2.0).tan());
-    result.data[1][1] = (1.0 / (fov / 2.0).tan());
+    result.data[1][1] = 1.0 / (fov / 2.0).tan();
     result.data[2][2] = zfar / (zfar - znear);
     result.data[2][3] = (-1.0 * znear * zfar) / (zfar - znear);
     result.data[3][2] = 1.0;
