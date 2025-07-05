@@ -238,7 +238,7 @@ pub fn clip_triangle(
                     texel_coordinates: [uv0.clone(), uv1.clone(), uv2.clone()],
                     color: triangle.color,
                     light_intensity: triangle.light_intensity,
-                    texture_handle: triangle.texture_handle
+                    texture_handle: triangle.texture_handle,
                 };
 
                 triangles_after_clipping.push(new_triangle);

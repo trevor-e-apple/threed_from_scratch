@@ -42,7 +42,8 @@ use crate::{
     camera::Camera,
     clipping::{clip_triangle, FrustumPlanes},
     instance::Instance,
-    projection::{make_projection_matrix, project_triangles}, render::parallelizable_draw_triangle,
+    projection::{make_projection_matrix, project_triangles},
+    render::parallelizable_draw_triangle,
 };
 
 const FRAMES_PER_SEC: f32 = 30.0;
@@ -421,12 +422,12 @@ pub fn main() -> ExitCode {
 
         // update
         {
-            // Perform any updates to instances 
+            // Perform any updates to instances
         }
 
         /*
          * Pipeline stages (in order)
-         * 
+         *
          * World transforms
          * Camera transforms
          * Backface Culling
@@ -667,7 +668,8 @@ pub fn main() -> ExitCode {
             }
 
             if !(render_mode == RenderMode::FilledTriangles
-                || render_mode == RenderMode::TexturedTriangles)
+                || render_mode == RenderMode::TexturedTriangles
+                || render_mode == RenderMode::ParallelRasterizationTest)
             {
                 for triangle in &triangles_to_render {
                     draw_triangle(&mut color_buffer, triangle, 0xFFFFFFFF);
@@ -688,20 +690,20 @@ pub fn main() -> ExitCode {
                 let triangle = Triangle {
                     points: [
                         Vector4 {
-                            x: 10.0,
-                            y: 2.0,
+                            x: 40.0,
+                            y: 40.0,
                             z: 0.0,
                             w: 0.0,
                         },
                         Vector4 {
-                            x: 20.0,
-                            y: 28.0,
+                            x: 80.0,
+                            y: 40.0,
                             z: 0.0,
                             w: 0.0,
                         },
                         Vector4 {
-                            x: 3.0,
-                            y: 21.0,
+                            x: 40.0,
+                            y: 80.0,
                             z: 0.0,
                             w: 0.0,
                         },
