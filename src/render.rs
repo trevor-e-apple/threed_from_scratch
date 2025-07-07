@@ -732,8 +732,10 @@ pub fn draw_textured_triangle(
     }
 }
 
-fn point_in_triangle(x: usize, y: usize, triangle: &Triangle) -> bool {
-    true
+fn edge_cross(a: &Vector2, b: &Vector2, p: &Vector2) -> i32 {
+    let ab = b - a;
+    let ap = p - a;
+    (ab.x * ap.y - ab.y * ap.x) as i32
 }
 
 pub fn parallelizable_draw_triangle(
@@ -742,14 +744,14 @@ pub fn parallelizable_draw_triangle(
 ) {
     // Find the bounding box
     let xvals = [
-        triangle.points[0].x as usize,
-        triangle.points[1].x as usize,
-        triangle.points[2].x as usize,
+        triangle.points[0].x as i32,
+        triangle.points[1].x as i32,
+        triangle.points[2].x as i32,
     ];
     let yvals = [
-        triangle.points[0].y as usize,
-        triangle.points[1].y as usize,
-        triangle.points[2].y as usize,
+        triangle.points[0].y as i32,
+        triangle.points[1].y as i32,
+        triangle.points[2].y as i32,
     ];
 
     let xmin = *xvals.iter().min().expect("Missing x min");
@@ -757,10 +759,22 @@ pub fn parallelizable_draw_triangle(
     let ymin = *yvals.iter().min().expect("Missing y min");
     let ymax = *yvals.iter().max().expect("Missing y max");
 
+    let v0 = Vector2::from_vector4(&triangle.points[0]);
+    let v1 = Vector2::from_vector4(&triangle.points[1]);
+    let v2 = Vector2::from_vector4(&triangle.points[2]);
+
     for x in xmin..=xmax {
         for y in ymin..=ymax {
-            if point_in_triangle(x, y, triangle) {
-                color_buffer.set_pixel(x, y, triangle.color);
+            let p = Vector2 {x: x as f32, y: y as f32};
+            let point_in_triangle = {
+                let w0 = edge_cross(&v1, &v2, &p);
+                let w1 = edge_cross(&v2, &v0, &p);
+                let w2 = edge_cross(&v0, &v1, &p);
+                
+                w0 >= 0 && w1 >=0 && w2 >=0
+            };
+            if point_in_triangle {
+                color_buffer.set_pixel(x as usize, y as usize, triangle.color);
             }
         }
     }
